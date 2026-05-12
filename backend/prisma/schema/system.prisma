@@ -1,0 +1,258 @@
+model SupportCase {
+  id              Int                @id @default(autoincrement())
+  patientId       Int?
+  insuranceCaseId Int?
+  appointmentId   Int?
+  assignedTo      Int?
+  type            SupportCaseType
+  priority        SupportCasePriority @default(MEDIUM)
+  status          SupportCaseStatus   @default(OPEN)
+  subject         String              @db.VarChar(500)
+  description     String?             @db.Text
+  resolutionNotes String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  patient       PatientProfile? @relation("PatientSupportCases", fields: [patientId], references: [id])
+  insuranceCase InsuranceCase?  @relation("InsuranceSupportCases", fields: [insuranceCaseId], references: [id])
+  appointment   Appointment?    @relation("AppointmentSupportCases", fields: [appointmentId], references: [id])
+  assignee      User?           @relation("SupportAssignee", fields: [assignedTo], references: [id])
+  messages      SupportMessage[]
+
+  @@index([patientId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([type])
+  @@map("support_cases")
+}
+
+model SupportMessage {
+  id            Int         @id @default(autoincrement())
+  supportCaseId Int
+  senderId      Int
+  messageType   MessageType @default(TEXT)
+  content       String      @db.Text
+  attachmentUrl String?     @db.VarChar(500)
+  sentAt        DateTime    @default(now())
+  readAt        DateTime?
+
+  supportCase SupportCase @relation(fields: [supportCaseId], references: [id], onDelete: Cascade)
+  sender      User        @relation("SupportMessageSender", fields: [senderId], references: [id])
+
+  @@index([supportCaseId])
+  @@map("support_messages")
+}
+
+model Conversation {
+  id            Int      @id @default(autoincrement())
+  appointmentId Int?     @unique
+  patientId     Int
+  doctorId      Int
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id])
+  patient     PatientProfile @relation("PatientConversations", fields: [patientId], references: [id])
+  doctor      DoctorProfile  @relation("DoctorConversations", fields: [doctorId], references: [id])
+  messages    Message[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@map("conversations")
+}
+
+model Message {
+  id             Int         @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
+  messageType    MessageType @default(TEXT)
+  content        String      @db.Text
+  attachmentUrl  String?     @db.VarChar(500)
+  sentAt         DateTime    @default(now())
+  readAt         DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model CallSession {
+  id              Int               @id @default(autoincrement())
+  appointmentId   Int
+  patientId       Int
+  doctorId        Int
+  sessionType     CallSessionType
+  provider        String            @default("mock") @db.VarChar(50)
+  sessionId       String?           @db.VarChar(255)
+  joinUrlPatient  String?           @db.VarChar(500)
+  joinUrlDoctor   String?           @db.VarChar(500)
+  status          CallSessionStatus @default(CREATED)
+  startedAt       DateTime?
+  endedAt         DateTime?
+  durationSeconds Int?
+  metadata        Json?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  appointment Appointment   @relation(fields: [appointmentId], references: [id])
+  doctor      DoctorProfile @relation("DoctorCallSessions", fields: [doctorId], references: [id])
+
+  @@index([appointmentId])
+  @@map("call_sessions")
+}
+
+model Payment {
+  id                   Int           @id @default(autoincrement())
+  appointmentId        Int?
+  patientId            Int
+  amount               Decimal       @db.Decimal(10, 2)
+  currency             String        @default("SAR") @db.VarChar(3)
+  method               PaymentMethod?
+  provider             String?       @db.VarChar(50)
+  transactionReference String?       @db.VarChar(255)
+  status               PaymentStatus @default(PENDING)
+  paidAt               DateTime?
+  rawPayload           Json?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id])
+  patient     PatientProfile @relation("PatientPayments", fields: [patientId], references: [id])
+
+  @@index([appointmentId])
+  @@index([patientId])
+  @@index([status])
+  @@map("payments")
+}
+
+model DoctorPayout {
+  id               Int          @id @default(autoincrement())
+  doctorId         Int
+  appointmentId    Int?
+  grossAmount      Decimal      @db.Decimal(10, 2)
+  commissionAmount Decimal      @db.Decimal(10, 2)
+  netAmount        Decimal      @db.Decimal(10, 2)
+  status           PayoutStatus @default(PENDING)
+  scheduledAt      DateTime?
+  paidAt           DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  doctor      DoctorProfile @relation(fields: [doctorId], references: [id])
+  appointment Appointment?  @relation(fields: [appointmentId], references: [id])
+
+  @@index([doctorId])
+  @@index([status])
+  @@map("doctor_payouts")
+}
+
+model Notification {
+  id                Int              @id @default(autoincrement())
+  userId            Int
+  titleAr           String           @db.VarChar(500)
+  titleEn           String           @db.VarChar(500)
+  bodyAr            String           @db.Text
+  bodyEn            String           @db.Text
+  type              NotificationType
+  isRead            Boolean          @default(false)
+  readAt            DateTime?
+  relatedEntityType String?          @db.VarChar(50)
+  relatedEntityId   Int?
+  createdAt         DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model SystemSetting {
+  id        Int         @id @default(autoincrement())
+  key       String      @unique @db.VarChar(255)
+  value     String      @db.Text
+  type      SettingType @default(STRING)
+  isPublic  Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@map("system_settings")
+}
+
+model AuditLog {
+  id         Int         @id @default(autoincrement())
+  actorId    Int?
+  entityType String      @db.VarChar(100)
+  entityId   Int?
+  action     AuditAction
+  oldValues  Json?
+  newValues  Json?
+  ipAddress  String?     @db.VarChar(45)
+  userAgent  String?     @db.VarChar(500)
+  createdAt  DateTime    @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  displayName String   @db.VarChar(255)
+  description String?  @db.Text
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  module      String   @db.VarChar(100)
+  action      String   @db.VarChar(50)
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  roles           RolePermission[]
+  userPermissions UserPermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           Int @id @default(autoincrement())
+  roleId       Int
+  permissionId Int
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserPermission {
+  id           Int     @id @default(autoincrement())
+  userId       Int
+  permissionId Int
+  granted      Boolean @default(true)
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
+  @@map("user_permissions")
+}

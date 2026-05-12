@@ -1,0 +1,151 @@
+model InsuranceProvider {
+  id        Int             @id @default(autoincrement())
+  nameAr    String          @db.VarChar(255)
+  nameEn    String          @db.VarChar(255)
+  code      String          @unique @db.VarChar(50)
+  logoUrl   String?         @db.VarChar(500)
+  apiMode   InsuranceApiMode @default(MANUAL)
+  isActive  Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  patientInsurances PatientInsurance[]
+  insuranceCases    InsuranceCase[]    @relation("ProviderInsuranceCases")
+  claimBatches      ClaimBatch[]
+  reconciliations   Reconciliation[]
+
+  @@map("insurance_providers")
+}
+
+model PatientInsurance {
+  id                 Int                         @id @default(autoincrement())
+  patientId          Int
+  providerId         Int
+  memberId           String                      @db.VarChar(100)
+  policyNumber       String?                     @db.VarChar(100)
+  expiryDate         DateTime?                   @db.Date
+  attachmentUrl      String?                     @db.VarChar(500)
+  isPrimary          Boolean                     @default(false)
+  verificationStatus InsuranceVerificationStatus @default(PENDING)
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+
+  patient  PatientProfile    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  provider InsuranceProvider @relation(fields: [providerId], references: [id])
+
+  @@index([patientId])
+  @@index([providerId])
+  @@map("patient_insurances")
+}
+
+model InsuranceCase {
+  id                Int                 @id @default(autoincrement())
+  patientId         Int
+  appointmentId     Int?
+  providerId        Int
+  caseType          InsuranceCaseType
+  requestType       InsuranceCaseRequestType
+  status            InsuranceCaseStatus @default(OPEN)
+  autoApproved      Boolean             @default(false)
+  externalReference String?             @db.VarChar(255)
+  submittedAt       DateTime            @default(now())
+  resolvedAt        DateTime?
+  notes             String?             @db.Text
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  patient     PatientProfile    @relation("PatientInsuranceCases", fields: [patientId], references: [id])
+  appointment Appointment?      @relation("AppointmentInsuranceCases", fields: [appointmentId], references: [id])
+  provider    InsuranceProvider @relation("ProviderInsuranceCases", fields: [providerId], references: [id])
+  approvals   InsuranceApproval[]
+  supportCases SupportCase[]    @relation("InsuranceSupportCases")
+
+  @@index([patientId])
+  @@index([appointmentId])
+  @@index([providerId])
+  @@index([status])
+  @@map("insurance_cases")
+}
+
+model InsuranceApproval {
+  id                 Int                     @id @default(autoincrement())
+  insuranceCaseId    Int
+  requestedProcedure String                  @db.VarChar(255)
+  approvalStatus     InsuranceApprovalStatus @default(PENDING)
+  requestedAmount    Decimal?                @db.Decimal(10, 2)
+  approvedAmount     Decimal?                @db.Decimal(10, 2)
+  decisionNotes      String?                 @db.Text
+  decidedBy          Int?
+  decidedAt          DateTime?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  insuranceCase InsuranceCase @relation(fields: [insuranceCaseId], references: [id], onDelete: Cascade)
+  decider       User?         @relation("InsuranceDecider", fields: [decidedBy], references: [id])
+
+  @@index([insuranceCaseId])
+  @@map("insurance_approvals")
+}
+
+model ClaimBatch {
+  id             Int                 @id @default(autoincrement())
+  providerId     Int
+  periodStart    DateTime            @db.Date
+  periodEnd      DateTime            @db.Date
+  submissionType ClaimSubmissionType
+  status         ClaimBatchStatus    @default(DRAFT)
+  submittedAt    DateTime?
+  totalAmount    Decimal             @default(0) @db.Decimal(12, 2)
+  totalClaims    Int                 @default(0)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  provider        InsuranceProvider @relation(fields: [providerId], references: [id])
+  items           ClaimItem[]
+  reconciliations Reconciliation[]
+
+  @@index([providerId])
+  @@index([status])
+  @@map("claim_batches")
+}
+
+model ClaimItem {
+  id                Int             @id @default(autoincrement())
+  claimBatchId      Int
+  appointmentId     Int
+  patientId         Int
+  doctorId          Int
+  amount            Decimal         @db.Decimal(10, 2)
+  status            ClaimItemStatus @default(PENDING)
+  externalReference String?         @db.VarChar(255)
+  notes             String?         @db.Text
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  claimBatch  ClaimBatch  @relation(fields: [claimBatchId], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+
+  @@index([claimBatchId])
+  @@index([appointmentId])
+  @@map("claim_items")
+}
+
+model Reconciliation {
+  id              Int                  @id @default(autoincrement())
+  providerId      Int
+  claimBatchId    Int?
+  referenceNumber String               @db.VarChar(100)
+  amountExpected  Decimal              @db.Decimal(12, 2)
+  amountReceived  Decimal              @db.Decimal(12, 2)
+  status          ReconciliationStatus @default(PENDING)
+  recordedAt      DateTime             @default(now())
+  notes           String?              @db.Text
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  provider   InsuranceProvider @relation(fields: [providerId], references: [id])
+  claimBatch ClaimBatch?       @relation(fields: [claimBatchId], references: [id])
+
+  @@index([providerId])
+  @@map("reconciliations")
+}

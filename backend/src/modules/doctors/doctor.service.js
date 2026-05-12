@@ -1,6 +1,12 @@
-const prisma = require('../../config/database');
-const { NotFoundError, BadRequestError } = require('../../shared/errors/AppError');
-const { buildPagination, buildSearchFilter } = require('../../utils/pagination');
+const { NotFoundError } = require('../../shared/errors/AppError');
+const { buildPagination } = require('../../utils/pagination');
+const DoctorRepository = require('./doctor.repository');
+const AppointmentRepository = require('../appointments/appointment.repository');
+const ReviewRepository = require('../reviews/review.repository');
+const DoctorPayoutRepository = require('../doctor-payouts/doctorPayout.repository');
+const DoctorAvailabilityRepository = require('./doctorAvailability.repository');
+const DoctorVerificationDocumentRepository = require('./doctorVerificationDocument.repository');
+const PatientRepository = require('../patients/patient.repository');
 
 class DoctorService {
   static async search(query) {
@@ -28,7 +34,7 @@ class DoctorService {
     }
 
     const [data, total] = await Promise.all([
-      prisma.doctorProfile.findMany({
+      DoctorRepository.findMany({
         where, skip, take: limit,
         orderBy: query.sortBy === 'rating' ? { ratingAverage: 'desc' } : query.sortBy === 'fee' ? { consultationFee: 'asc' } : { createdAt: 'desc' },
         include: {
@@ -37,14 +43,14 @@ class DoctorService {
           doctorServices: { include: { service: { select: { id: true, nameAr: true, nameEn: true, type: true } } } },
         },
       }),
-      prisma.doctorProfile.count({ where }),
+      DoctorRepository.count({ where }),
     ]);
 
     return { data, total, page, limit };
   }
 
   static async getById(doctorId) {
-    const doctor = await prisma.doctorProfile.findUnique({
+    const doctor = await DoctorRepository.findUnique({
       where: { id: parseInt(doctorId) },
       include: {
         user: { select: { id: true, fullName: true, avatarUrl: true } },
@@ -59,7 +65,7 @@ class DoctorService {
   }
 
   static async getProfile(userId) {
-    const profile = await prisma.doctorProfile.findUnique({
+    const profile = await DoctorRepository.findUnique({
       where: { userId },
       include: {
         user: { select: { id: true, fullName: true, email: true, phone: true, avatarUrl: true, preferredLanguage: true, darkModeEnabled: true } },
@@ -72,86 +78,90 @@ class DoctorService {
   }
 
   static async updateProfile(userId, data) {
-    const profile = await prisma.doctorProfile.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
-    return prisma.doctorProfile.update({ where: { userId }, data, include: { speciality: true } });
+    return DoctorRepository.update({ where: { userId }, data, include: { speciality: true } });
   }
 
   static async uploadVerificationDocument(userId, fileData) {
-    const profile = await prisma.doctorProfile.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
-    return prisma.doctorVerificationDocument.create({
+    return DoctorVerificationDocumentRepository.create({
       data: { doctorId: profile.id, ...fileData },
     });
   }
 
   static async getVerificationStatus(userId) {
-    const profile = await prisma.doctorProfile.findUnique({
+    const profile = await DoctorRepository.findUnique({
       where: { userId },
-      select: { verificationStatus: true, isPubliclyBookable: true },
+      select: { id: true, verificationStatus: true, isPubliclyBookable: true },
     });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
-    const documents = await prisma.doctorVerificationDocument.findMany({
-      where: { doctorId: (await prisma.doctorProfile.findUnique({ where: { userId } })).id },
+    const documents = await DoctorVerificationDocumentRepository.findMany({
+      where: { doctorId: profile.id },
       orderBy: { createdAt: 'desc' },
     });
 
-    return { ...profile, documents };
+    return { 
+      verificationStatus: profile.verificationStatus, 
+      isPubliclyBookable: profile.isPubliclyBookable, 
+      documents 
+    };
   }
 
   static async getAvailability(userId) {
-    const profile = await prisma.doctorProfile.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
-    return prisma.doctorAvailability.findMany({
+    return DoctorAvailabilityRepository.findMany({
       where: { doctorId: profile.id },
       orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
     });
   }
 
   static async createAvailability(userId, data) {
-    const profile = await prisma.doctorProfile.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
-    return prisma.doctorAvailability.create({ data: { doctorId: profile.id, ...data } });
+    return DoctorAvailabilityRepository.create({ data: { doctorId: profile.id, ...data } });
   }
 
   static async updateAvailability(userId, availabilityId, data) {
-    const profile = await prisma.doctorProfile.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
-    const slot = await prisma.doctorAvailability.findFirst({ where: { id: availabilityId, doctorId: profile.id } });
+    const slot = await DoctorAvailabilityRepository.findFirst({ where: { id: availabilityId, doctorId: profile.id } });
     if (!slot) throw new NotFoundError('Availability slot not found');
 
-    return prisma.doctorAvailability.update({ where: { id: availabilityId }, data });
+    return DoctorAvailabilityRepository.update({ where: { id: availabilityId }, data });
   }
 
   static async deleteAvailability(userId, availabilityId) {
-    const profile = await prisma.doctorProfile.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
-    const slot = await prisma.doctorAvailability.findFirst({ where: { id: availabilityId, doctorId: profile.id } });
+    const slot = await DoctorAvailabilityRepository.findFirst({ where: { id: availabilityId, doctorId: profile.id } });
     if (!slot) throw new NotFoundError('Availability slot not found');
 
-    return prisma.doctorAvailability.delete({ where: { id: availabilityId } });
+    return DoctorAvailabilityRepository.delete({ where: { id: availabilityId } });
   }
 
   static async getDashboardSummary(userId) {
-    const profile = await prisma.doctorProfile.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const [todayAppointments, totalAppointments, completedAppointments, avgRating, totalEarnings] = await Promise.all([
-      prisma.appointment.count({ where: { doctorId: profile.id, appointmentDate: { gte: today }, status: { in: ['PENDING', 'CONFIRMED'] } } }),
-      prisma.appointment.count({ where: { doctorId: profile.id } }),
-      prisma.appointment.count({ where: { doctorId: profile.id, status: 'COMPLETED' } }),
-      prisma.review.aggregate({ where: { doctorId: profile.id }, _avg: { rating: true } }),
-      prisma.doctorPayout.aggregate({ where: { doctorId: profile.id, status: 'PAID' }, _sum: { netAmount: true } }),
+      AppointmentRepository.count({ where: { doctorId: profile.id, appointmentDate: { gte: today }, status: { in: ['PENDING', 'CONFIRMED'] } } }),
+      AppointmentRepository.count({ where: { doctorId: profile.id } }),
+      AppointmentRepository.count({ where: { doctorId: profile.id, status: 'COMPLETED' } }),
+      ReviewRepository.aggregateForDoctor(profile.id, { _avg: { rating: true } }),
+      DoctorPayoutRepository.aggregateForDoctor(profile.id, { where: { status: 'PAID' }, _sum: { netAmount: true } }),
     ]);
 
     return {
@@ -164,7 +174,7 @@ class DoctorService {
   }
 
   static async getAppointments(userId, query) {
-    const profile = await prisma.doctorProfile.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
     const { page, limit, skip } = buildPagination(query);
@@ -173,7 +183,7 @@ class DoctorService {
     if (query.date) where.appointmentDate = new Date(query.date);
 
     const [data, total] = await Promise.all([
-      prisma.appointment.findMany({
+      AppointmentRepository.findMany({
         where, skip, take: limit, orderBy: { appointmentDate: 'desc' },
         include: {
           patient: { include: { user: { select: { fullName: true, avatarUrl: true } } } },
@@ -181,17 +191,17 @@ class DoctorService {
           service: { select: { nameAr: true, nameEn: true, type: true } },
         },
       }),
-      prisma.appointment.count({ where }),
+      AppointmentRepository.count({ where }),
     ]);
 
     return { data, total, page, limit };
   }
 
   static async getPatients(userId) {
-    const profile = await prisma.doctorProfile.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
-    const appointments = await prisma.appointment.findMany({
+    const appointments = await AppointmentRepository.findMany({
       where: { doctorId: profile.id },
       select: { patientId: true },
       distinct: ['patientId'],
@@ -199,34 +209,36 @@ class DoctorService {
 
     const patientIds = appointments.map((a) => a.patientId);
 
-    return prisma.patientProfile.findMany({
+    return PatientRepository.findMany({
       where: { id: { in: patientIds } },
       include: { user: { select: { id: true, fullName: true, email: true, phone: true, avatarUrl: true } } },
     });
   }
 
   static async getPerformance(userId) {
-    const profile = await prisma.doctorProfile.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
     const [totalReviews, avgRating, completedThisMonth, cancelledThisMonth] = await Promise.all([
-      prisma.review.count({ where: { doctorId: profile.id } }),
-      prisma.review.aggregate({ where: { doctorId: profile.id }, _avg: { rating: true } }),
-      prisma.appointment.count({ where: { doctorId: profile.id, status: 'COMPLETED', completedAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } } }),
-      prisma.appointment.count({ where: { doctorId: profile.id, status: 'CANCELLED', updatedAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } } }),
+      ReviewRepository.count({ where: { doctorId: profile.id } }),
+      ReviewRepository.aggregateForDoctor(profile.id, { _avg: { rating: true } }),
+      AppointmentRepository.count({ where: { doctorId: profile.id, status: 'COMPLETED', completedAt: { gte: startOfMonth } } }),
+      AppointmentRepository.count({ where: { doctorId: profile.id, status: 'CANCELLED', updatedAt: { gte: startOfMonth } } }),
     ]);
 
     return { totalReviews, averageRating: avgRating._avg.rating || 0, completedThisMonth, cancelledThisMonth };
   }
 
   static async getFinancialSummary(userId) {
-    const profile = await prisma.doctorProfile.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
     const [totalPaid, totalPending, recentPayouts] = await Promise.all([
-      prisma.doctorPayout.aggregate({ where: { doctorId: profile.id, status: 'PAID' }, _sum: { netAmount: true } }),
-      prisma.doctorPayout.aggregate({ where: { doctorId: profile.id, status: 'PENDING' }, _sum: { netAmount: true } }),
-      prisma.doctorPayout.findMany({ where: { doctorId: profile.id }, take: 10, orderBy: { createdAt: 'desc' } }),
+      DoctorPayoutRepository.aggregateForDoctor(profile.id, { where: { status: 'PAID' }, _sum: { netAmount: true } }),
+      DoctorPayoutRepository.aggregateForDoctor(profile.id, { where: { status: 'PENDING' }, _sum: { netAmount: true } }),
+      DoctorPayoutRepository.findMany({ where: { doctorId: profile.id }, take: 10, orderBy: { createdAt: 'desc' } }),
     ]);
 
     return {

@@ -7,22 +7,6 @@ const { ROLES } = require('../../constants');
 router.use(authenticate);
 router.use(authorize(ROLES.PATIENT));
 
-/**
- * @swagger
- * /patients/me/profile:
- *   get:
- *     tags: [Patients]
- *     summary: Get patient profile
- *     security: [{ bearerAuth: [] }]
- *     responses:
- *       200: { description: Patient profile }
- *   put:
- *     tags: [Patients]
- *     summary: Update patient profile
- *     security: [{ bearerAuth: [] }]
- *     responses:
- *       200: { description: Profile updated }
- */
 router.get('/me/profile', controller.getProfile);
 router.put('/me/profile', controller.updateProfile);
 

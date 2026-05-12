@@ -6,22 +6,6 @@ const { ROLES } = require('../../constants');
 
 router.use(authenticate);
 
-/**
- * @swagger
- * /appointments:
- *   post:
- *     tags: [Appointments]
- *     summary: Create appointment
- *     security: [{ bearerAuth: [] }]
- *     responses:
- *       201: { description: Appointment created }
- *   get:
- *     tags: [Appointments]
- *     summary: List appointments
- *     security: [{ bearerAuth: [] }]
- *     responses:
- *       200: { description: Appointment list }
- */
 router.post('/', authorize(ROLES.PATIENT), controller.create);
 router.get('/', controller.getAll);
 router.get('/:id', controller.getById);

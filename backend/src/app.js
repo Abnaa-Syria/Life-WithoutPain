@@ -11,37 +11,22 @@ const errorHandler = require('./middlewares/errorHandler');
 const { globalLimiter } = require('./middlewares/rateLimiter');
 const logger = require('./config/logger');
 
-// Module routes
-const authRoutes = require('./modules/auth/auth.route');
-const patientRoutes = require('./modules/patients/patient.route');
-const doctorRoutes = require('./modules/doctors/doctor.route');
-const specialityRoutes = require('./modules/specialities/speciality.route');
-const serviceRoutes = require('./modules/services/service.route');
-const appointmentRoutes = require('./modules/appointments/appointment.route');
-const insuranceProviderRoutes = require('./modules/insurance-providers/insuranceProvider.route');
-const insuranceCaseRoutes = require('./modules/insurance-cases/insuranceCase.route');
-const supportCaseRoutes = require('./modules/support-cases/supportCase.route');
-const conversationRoutes = require('./modules/conversations/conversation.route');
-const callSessionRoutes = require('./modules/call-sessions/callSession.route');
-const labTestRoutes = require('./modules/lab-tests/labTest.route');
-const reportRoutes = require('./modules/reports/report.route');
-const prescriptionRoutes = require('./modules/prescriptions/prescription.route');
-const paymentRoutes = require('./modules/payments/payment.route');
-const claimRoutes = require('./modules/claims/claim.route');
-const reconciliationRoutes = require('./modules/reconciliations/reconciliation.route');
-const doctorPayoutRoutes = require('./modules/doctor-payouts/doctorPayout.route');
-const notificationRoutes = require('./modules/notifications/notification.route');
-const reviewRoutes = require('./modules/reviews/review.route');
-const settingRoutes = require('./modules/settings/setting.route');
-const auditLogRoutes = require('./modules/audit-logs/auditLog.route');
-const adminRoutes = require('./modules/admin/admin.route');
-const dashboardRoutes = require('./modules/dashboard/dashboard.route');
+const loadRoutes = require('./utils/routeLoader');
 
 const app = express();
 
 // Security middleware
 app.use(helmet());
-app.use(cors({ origin: config.cors.origin, credentials: true }));
+
+// CORS configuration
+const corsOptions = {
+  origin: config.env === 'development' ? '*' : config.cors.origin,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
+app.use(cors(corsOptions));
+
 app.use(compression());
 
 // Rate limiting
@@ -73,30 +58,13 @@ app.get('/api-docs.json', (req, res) => {
 // API routes
 const api = config.apiPrefix;
 
-app.use(`${api}/auth`, authRoutes);
-app.use(`${api}/patients`, patientRoutes);
-app.use(`${api}/doctors`, doctorRoutes);
-app.use(`${api}/specialities`, specialityRoutes);
-app.use(`${api}/services`, serviceRoutes);
-app.use(`${api}/appointments`, appointmentRoutes);
-app.use(`${api}/insurance-providers`, insuranceProviderRoutes);
-app.use(`${api}/insurance-cases`, insuranceCaseRoutes);
-app.use(`${api}/support-cases`, supportCaseRoutes);
-app.use(`${api}/conversations`, conversationRoutes);
-app.use(`${api}/call-sessions`, callSessionRoutes);
-app.use(`${api}/lab-tests`, labTestRoutes);
-app.use(`${api}/reports`, reportRoutes);
-app.use(`${api}/prescriptions`, prescriptionRoutes);
-app.use(`${api}/payments`, paymentRoutes);
-app.use(`${api}/claims`, claimRoutes);
-app.use(`${api}/reconciliations`, reconciliationRoutes);
-app.use(`${api}/doctor-payouts`, doctorPayoutRoutes);
-app.use(`${api}/notifications`, notificationRoutes);
-app.use(`${api}/reviews`, reviewRoutes);
-app.use(`${api}/settings`, settingRoutes);
-app.use(`${api}/audit-logs`, auditLogRoutes);
+// Automatically load all routes from modules
+loadRoutes(app, api);
+
+// Custom routes that don't follow the pattern can be added here manually if needed
+// adminRoutes is still used temporarily until its routes are fully migrated
+const adminRoutes = require('./modules/admin/admin.route');
 app.use(`${api}/admin`, adminRoutes);
-app.use(`${api}/dashboard`, dashboardRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -2,7 +2,7 @@ const prisma = require('../../config/database');
 const { NotFoundError, BadRequestError, ForbiddenError } = require('../../shared/errors/AppError');
 const { APPOINTMENT_STATUS_TRANSITIONS } = require('../../constants');
 const { buildPagination } = require('../../utils/pagination');
-const NotificationService = require('../../shared/notifications/NotificationService');
+const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 
 class AppointmentService {
   static async create(userId, data) {
@@ -65,16 +65,8 @@ class AppointmentService {
       },
     });
 
-    await NotificationService.create({
-      userId: doctor.userId,
-      titleAr: 'موعد جديد',
-      titleEn: 'New Appointment',
-      bodyAr: `لديك موعد جديد في ${data.appointmentDate}`,
-      bodyEn: `You have a new appointment on ${data.appointmentDate}`,
-      type: 'APPOINTMENT',
-      relatedEntityType: 'Appointment',
-      relatedEntityId: appointment.id,
-    });
+    // Emit event for side effects (notifications, etc)
+    eventEmitter.emit(EVENTS.APPOINTMENT.CREATED, appointment);
 
     return appointment;
   }

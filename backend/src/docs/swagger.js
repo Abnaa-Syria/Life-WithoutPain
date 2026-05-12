@@ -111,7 +111,11 @@ const options = {
       { name: 'Audit Logs', description: 'Audit trail' },
     ],
   },
-  apis: ['./src/modules/**/route*.js', './src/modules/**/*.route.js'],
+  apis: [
+    './src/docs/swagger/*.js',
+    './src/modules/**/route*.js',
+    './src/modules/**/*.route.js'
+  ],
 };
 
 const swaggerSpec = swaggerJsdoc(options);

@@ -104,53 +104,6 @@ router.delete('/users/:id', asyncHandler(async (req, res) => {
 }));
 
 // ═══════════════════════════════════════════
-//  DOCTORS – full CRUD + verification
-// ═══════════════════════════════════════════
-router.get('/doctors', asyncHandler(async (req, res) => {
-  const { page, limit, skip } = buildPagination(req.query);
-  const where = {};
-  if (req.query.verificationStatus) where.verificationStatus = req.query.verificationStatus;
-  if (req.query.search) where.user = { fullName: { contains: req.query.search } };
-  const [data, total] = await Promise.all([
-    prisma.doctorProfile.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { user: { select: { id: true, fullName: true, email: true, phone: true, status: true } }, speciality: true } }),
-    prisma.doctorProfile.count({ where }),
-  ]);
-  return paginatedResponse(res, { data, total, page, limit });
-}));
-router.get('/doctors/:id', asyncHandler(async (req, res) => {
-  const data = await prisma.doctorProfile.findUnique({ where: { id: parseInt(req.params.id) }, include: { user: true, speciality: true, verificationDocuments: true, doctorServices: { include: { service: true } } } });
-  if (!data) throw new NotFoundError('Doctor not found');
-  return successResponse(res, { data });
-}));
-router.put('/doctors/:id', asyncHandler(async (req, res) => {
-  const data = await prisma.doctorProfile.update({ where: { id: parseInt(req.params.id) }, data: req.body, include: { user: { select: { fullName: true } }, speciality: true } });
-  createAuditLog({ actorId: req.user.id, entityType: 'DoctorProfile', entityId: data.id, action: 'UPDATE', newValues: req.body, req });
-  return successResponse(res, { data });
-}));
-router.delete('/doctors/:id', asyncHandler(async (req, res) => {
-  const doc = await prisma.doctorProfile.findUnique({ where: { id: parseInt(req.params.id) } });
-  if (doc) await prisma.user.update({ where: { id: doc.userId }, data: { deletedAt: new Date(), status: 'INACTIVE' } });
-  createAuditLog({ actorId: req.user.id, entityType: 'DoctorProfile', entityId: parseInt(req.params.id), action: 'DELETE', req });
-  return successResponse(res, { data: null, message: 'Doctor deactivated' });
-}));
-router.patch('/doctors/:id/approve', asyncHandler(async (req, res) => {
-  const data = await prisma.doctorProfile.update({ where: { id: parseInt(req.params.id) }, data: { verificationStatus: 'APPROVED', isPubliclyBookable: true } });
-  const doc = await prisma.doctorProfile.findUnique({ where: { id: data.id }, select: { userId: true } });
-  await prisma.notification.create({ data: { userId: doc.userId, titleAr: 'تم قبول حسابك', titleEn: 'Account Approved', bodyAr: 'تم التحقق من حسابك بنجاح.', bodyEn: 'Your account has been verified.', type: 'VERIFICATION' } });
-  createAuditLog({ actorId: req.user.id, entityType: 'DoctorProfile', entityId: data.id, action: 'APPROVE', req });
-  return successResponse(res, { data, message: 'Doctor approved' });
-}));
-router.patch('/doctors/:id/reject', asyncHandler(async (req, res) => {
-  const data = await prisma.doctorProfile.update({ where: { id: parseInt(req.params.id) }, data: { verificationStatus: 'REJECTED', isPubliclyBookable: false } });
-  createAuditLog({ actorId: req.user.id, entityType: 'DoctorProfile', entityId: data.id, action: 'REJECT', newValues: { reason: req.body.reason }, req });
-  return successResponse(res, { data, message: 'Doctor rejected' });
-}));
-router.patch('/doctors/:id/status', asyncHandler(async (req, res) => {
-  const data = await prisma.doctorProfile.update({ where: { id: parseInt(req.params.id) }, data: req.body });
-  return successResponse(res, { data });
-}));
-
-// ═══════════════════════════════════════════
 //  PATIENTS – full CRUD
 // ═══════════════════════════════════════════
 router.get('/patients', asyncHandler(async (req, res) => {
@@ -183,16 +136,6 @@ router.delete('/patients/:id', asyncHandler(async (req, res) => {
   createAuditLog({ actorId: req.user.id, entityType: 'PatientProfile', entityId: parseInt(req.params.id), action: 'DELETE', req });
   return successResponse(res, { data: null, message: 'Patient deactivated' });
 }));
-
-// ═══════════════════════════════════════════
-//  SPECIALITIES – full CRUD
-// ═══════════════════════════════════════════
-const specCrud = crud('speciality', { searchFields: ['nameAr', 'nameEn'], entityLabel: 'Speciality', defaultOrder: { sortOrder: 'asc' } });
-router.get('/specialities', specCrud.list);
-router.get('/specialities/:id', specCrud.getOne);
-router.post('/specialities', specCrud.create);
-router.put('/specialities/:id', specCrud.update);
-router.delete('/specialities/:id', specCrud.remove);
 
 // ═══════════════════════════════════════════
 //  SERVICES – full CRUD

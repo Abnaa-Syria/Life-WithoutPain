@@ -8,6 +8,9 @@ const startServer = async () => {
     await prisma.$connect();
     logger.info({ msg: 'Database connected successfully' });
 
+    // Initialize application events
+    require('./shared/events')();
+
     app.listen(config.port, () => {
       logger.info({ msg: `Server running on port ${config.port}` });
       logger.info({ msg: `API: http://localhost:${config.port}${config.apiPrefix}` });

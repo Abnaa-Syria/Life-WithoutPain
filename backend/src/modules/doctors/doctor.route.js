@@ -4,25 +4,6 @@ const { authenticate, authorize, optionalAuth } = require('../../middlewares/aut
 const { uploadSingle } = require('../../middlewares/upload');
 const { ROLES } = require('../../constants');
 
-/**
- * @swagger
- * /doctors/search:
- *   get:
- *     tags: [Doctors]
- *     summary: Search for doctors
- *     parameters:
- *       - in: query
- *         name: specialityId
- *         schema: { type: integer }
- *       - in: query
- *         name: city
- *         schema: { type: string }
- *       - in: query
- *         name: search
- *         schema: { type: string }
- *     responses:
- *       200: { description: Doctor list }
- */
 router.get('/search', optionalAuth, controller.search);
 router.get('/:id', optionalAuth, controller.getById);
 
