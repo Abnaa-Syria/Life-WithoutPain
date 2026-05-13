@@ -177,7 +177,7 @@ async function main() {
       await prisma.doctorVerificationDocument.create({
         data: {
           doctorId: profile.id,
-          fileUrl: `/uploads/mock/doctor-${profile.id}-doc-${i + 1}.pdf`,
+          fileUrl: i % 2 === 0 ? `/uploads/download.jpeg` : `/uploads/sample.pdf`,
           fileType: 'LICENSE',
           reviewStatus: d.verificationStatus === 'APPROVED' ? 'APPROVED' : d.verificationStatus === 'REJECTED' ? 'REJECTED' : 'PENDING',
           reviewNotes: d.verificationStatus === 'REJECTED' ? 'Document is not clear' : null,
@@ -278,8 +278,8 @@ async function main() {
     // Medical files
     await prisma.medicalFile.createMany({
       data: [
-        { patientId: patientProfile.id, uploadedBy: user.id, category: 'LAB_RESULT', fileUrl: `/uploads/mock/patient-${patientProfile.id}-lab.pdf`, mimeType: 'application/pdf', title: 'نتيجة تحليل', description: 'ملف تجريبي' },
-        { patientId: patientProfile.id, uploadedBy: user.id, category: 'INSURANCE_DOCUMENT', fileUrl: `/uploads/mock/patient-${patientProfile.id}-insurance.pdf`, mimeType: 'application/pdf', title: 'ملف تأمين', description: 'ملف تجريبي' },
+        { patientId: patientProfile.id, uploadedBy: user.id, category: 'LAB_RESULT', fileUrl: `/uploads/sample.pdf`, mimeType: 'application/pdf', title: 'نتيجة تحليل', description: 'ملف تجريبي' },
+        { patientId: patientProfile.id, uploadedBy: user.id, category: 'INSURANCE_DOCUMENT', fileUrl: `/uploads/download.jpeg`, mimeType: 'image/jpeg', title: 'ملف تأمين', description: 'ملف تجريبي' },
       ],
       skipDuplicates: true,
     });
@@ -301,7 +301,7 @@ async function main() {
           memberId: `MEM-${patient.id}-A`,
           policyNumber: `POL-${patient.id}-A`,
           expiryDate: daysFromNow(365),
-          attachmentUrl: `/uploads/mock/insurance-${patient.id}-primary.pdf`,
+          attachmentUrl: `/uploads/sample.pdf`,
           isPrimary: true,
           verificationStatus: 'VERIFIED',
         },
@@ -311,7 +311,7 @@ async function main() {
           memberId: `MEM-${patient.id}-B`,
           policyNumber: `POL-${patient.id}-B`,
           expiryDate: daysFromNow(120),
-          attachmentUrl: `/uploads/mock/insurance-${patient.id}-secondary.pdf`,
+          attachmentUrl: `/uploads/download.jpeg`,
           isPrimary: false,
           verificationStatus: patient.id % 2 === 0 ? 'PENDING' : 'REJECTED',
         },
@@ -377,7 +377,8 @@ async function main() {
     // Appointment attachments
     await prisma.appointmentAttachment.createMany({
       data: [
-        { appointmentId: appointment.id, fileUrl: `/uploads/mock/appointment-${appointment.id}-1.pdf`, type: 'DOCUMENT', uploadedBy: patient.userId },
+        { appointmentId: appointment.id, fileUrl: `/uploads/download.jpeg`, type: 'IMAGE', uploadedBy: patient.userId },
+        { appointmentId: appointment.id, fileUrl: `/uploads/sample.pdf`, type: 'DOCUMENT', uploadedBy: patient.userId },
       ],
       skipDuplicates: true,
     });
@@ -542,7 +543,7 @@ async function main() {
     data: {
       labTestRequestId: labReq.id,
       uploadedBy: (await prisma.patientProfile.findUnique({ where: { id: completedAppointment.patientId } })).userId,
-      fileUrl: `/uploads/mock/lab-result-${labReq.id}.pdf`,
+      fileUrl: `/uploads/sample.pdf`,
       notes: 'نتيجة طبيعية',
       reviewedByDoctor: true,
       reviewedAt: now(),
@@ -564,7 +565,7 @@ async function main() {
       clinicalFindings: 'لا توجد علامات خطيرة',
       vitals: { bp: '120/80', hr: 75 },
       recommendations: 'راحة، سوائل، متابعة بعد أسبوع',
-      pdfUrl: `/uploads/reports/report-${completedAppointment.id}.pdf`,
+      pdfUrl: `/uploads/sample.pdf`,
     },
   });
 
@@ -577,7 +578,7 @@ async function main() {
       notes: 'التزم بالجرعات',
       qrCodeValue: `RX-${completedAppointment.id}`,
       digitalSealValue: `SEAL-${completedAppointment.id}`,
-      pdfUrl: `/uploads/prescriptions/prescription-${completedAppointment.id}.pdf`,
+      pdfUrl: `https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf`,
       items: {
         create: [
           { medicineName: 'Paracetamol', dosage: '500mg', frequency: '2/day', duration: '5 days', instructions: 'After meals' },

@@ -32,9 +32,9 @@ export default function ClaimsPage() {
 
   const columns = [
     { header: t('claims.id') || 'Claim ID', accessorKey: 'id' },
-    { header: t('claims.provider') || 'Provider', accessorKey: 'insuranceProvider.nameAr' },
-    { header: t('claims.amount') || 'Amount', accessorKey: 'totalAmount', cell: ({ row }) => `${row.original.totalAmount} ر.س` },
-    { header: t('claims.patient') || 'Patient', accessorKey: 'patient.user.fullName' },
+    { header: t('claims.provider') || 'Provider', accessorKey: 'claimBatch.provider.nameAr' },
+    { header: t('claims.amount') || 'Amount', accessorKey: 'amount', cell: ({ row }) => `${row.original.amount} ر.س` },
+    { header: t('claims.patient') || 'Patient', accessorKey: 'appointment.patient.user.fullName' },
     { 
       header: t('common.status'), 
       accessorKey: 'status',
@@ -44,7 +44,7 @@ export default function ClaimsPage() {
         return <Badge variant={variants[status]}>{t(`status.${status.toLowerCase()}`) || status}</Badge>;
       }
     },
-    { header: t('claims.date') || 'Submitted At', accessorKey: 'submittedAt', cell: ({ row }) => row.original.submittedAt ? new Date(row.original.submittedAt).toLocaleDateString() : '-' },
+    { header: t('claims.date') || 'Submitted At', accessorKey: 'createdAt', cell: ({ row }) => row.original.createdAt ? new Date(row.original.createdAt).toLocaleDateString() : '-' },
   ];
 
   const renderActions = (claim) => (

@@ -232,11 +232,11 @@ function AppRoutes() {
               entityName="المطالبات" endpoint="/admin/claims" titleField="id"
               sections={[
                 { title: "معلومات المطالبة", icon: FileText, fields: [
-                  { label: "شركة التأمين", key: "insuranceProvider.nameAr" },
-                  { label: "المبلغ الإجمالي", key: "totalAmount", render: (v) => `${v} ر.س` },
+                  { label: "شركة التأمين", key: "claimBatch.provider.nameAr" },
+                  { label: "المبلغ", key: "amount", render: (v) => `${v} ر.س` },
                   { label: "الحالة", key: "status" },
-                  { label: "المريض", key: "patient.user.fullName" },
-                  { label: "تاريخ التقديم", key: "submittedAt", render: (v) => v ? new Date(v).toLocaleDateString() : '-' },
+                  { label: "المريض", key: "appointment.patient.user.fullName" },
+                  { label: "تاريخ الإنشاء", key: "createdAt", render: (v) => v ? new Date(v).toLocaleDateString() : '-' },
                 ]}
               ]}
             />

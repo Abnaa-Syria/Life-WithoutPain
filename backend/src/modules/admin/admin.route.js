@@ -295,6 +295,19 @@ router.delete('/payments/:id', asyncHandler(async (req, res) => {
 // ═══════════════════════════════════════════
 //  CLAIMS – full CRUD
 // ═══════════════════════════════════════════
+const claimCrud = crud('claimItem', {
+  include: { 
+    claimBatch: { include: { provider: true } }, 
+    appointment: { include: { patient: { include: { user: true } } } } 
+  },
+  entityLabel: 'Claim',
+  filterFn: (q) => ({ ...(q.status ? { status: q.status } : {}) })
+});
+router.get('/claims', claimCrud.list);
+router.get('/claims/:id', claimCrud.getOne);
+router.put('/claims/:id', claimCrud.update);
+router.delete('/claims/:id', claimCrud.remove);
+
 router.get('/claims/batches', asyncHandler(async (req, res) => {
   const { page, limit, skip } = buildPagination(req.query);
   const where = {};
