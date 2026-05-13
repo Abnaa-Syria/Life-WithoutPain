@@ -431,4 +431,13 @@ router.get('/audit-logs', asyncHandler(async (req, res) => {
   return paginatedResponse(res, { data, total, page, limit });
 }));
 
+router.get('/audit-logs/:id', asyncHandler(async (req, res) => {
+  const data = await prisma.auditLog.findUnique({ 
+    where: { id: parseInt(req.params.id) }, 
+    include: { actor: { select: { id: true, fullName: true, email: true, role: true } } } 
+  });
+  if (!data) throw new NotFoundError('Audit log not found');
+  return successResponse(res, { data });
+}));
+
 module.exports = router;

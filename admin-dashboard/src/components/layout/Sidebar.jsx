@@ -1,68 +1,158 @@
-import { NavLink } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import {
-  LayoutDashboard, Users, Stethoscope, UserCheck, Heart, Briefcase,
-  Calendar, Shield, HeadphonesIcon, CreditCard, FileText, Pill,
-  Bell, Star, Settings, ScrollText, Building2, Receipt, Wallet, FlaskConical,
+import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { 
+  LayoutDashboard, Users, Heart, Stethoscope, Calendar, 
+  Shield, CreditCard, Headphones, History, Settings, 
+  LogOut, ChevronLeft, ChevronRight, Menu, X, 
+  Activity, Star, Briefcase, FileText, Bell
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../hooks/useAuth';
+import useLanguage from '../../hooks/useLanguage';
+import Avatar from '../ui/Avatar';
 
-const menuItems = [
-  { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'] },
-  { path: '/users', label: 'المستخدمون', icon: Users, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-  { path: '/patients', label: 'المرضى', icon: Heart, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'SUPPORT_STAFF'] },
-  { path: '/doctors', label: 'الأطباء', icon: Stethoscope, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-  { path: '/doctor-verification', label: 'التحقق من الأطباء', icon: UserCheck, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-  { path: '/specialities', label: 'التخصصات', icon: Briefcase, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-  { path: '/services', label: 'الخدمات', icon: Briefcase, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-  { path: '/appointments', label: 'المواعيد', icon: Calendar, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-  { path: '/insurance-providers', label: 'شركات التأمين', icon: Building2, roles: ['SUPER_ADMIN', 'INSURANCE_STAFF'] },
-  { path: '/insurance-cases', label: 'حالات التأمين', icon: Shield, roles: ['SUPER_ADMIN', 'INSURANCE_STAFF', 'MEDICAL_ADMIN'] },
-  { path: '/support-cases', label: 'حالات الدعم', icon: HeadphonesIcon, roles: ['SUPER_ADMIN', 'SUPPORT_STAFF'] },
-  { path: '/lab-tests', label: 'الفحوصات المخبرية', icon: FlaskConical, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-  { path: '/payments', label: 'المدفوعات', icon: CreditCard, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
-  { path: '/claims', label: 'المطالبات', icon: Receipt, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
-  { path: '/doctor-payouts', label: 'مستحقات الأطباء', icon: Wallet, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
-  { path: '/reconciliations', label: 'التسويات', icon: Receipt, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
-  { path: '/reports', label: 'التقارير الطبية', icon: FileText, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-  { path: '/prescriptions', label: 'الوصفات الطبية', icon: Pill, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-  { path: '/notifications', label: 'الإشعارات', icon: Bell, roles: ['SUPER_ADMIN'] },
-  { path: '/reviews', label: 'التقييمات', icon: Star, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-  { path: '/settings', label: 'الإعدادات', icon: Settings, roles: ['SUPER_ADMIN'] },
-  { path: '/audit-logs', label: 'سجل العمليات', icon: ScrollText, roles: ['SUPER_ADMIN'] },
-];
+const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen }) => {
+  const { t } = useTranslation();
+  const { user, logout } = useAuth();
+  const { isRTL } = useLanguage();
+  const navigate = useNavigate();
 
-export default function Sidebar({ isOpen }) {
-  const { user } = useAuth();
+  const navItems = [
+    { icon: LayoutDashboard, label: t('sidebar.dashboard'), path: '/', roles: ['ANY'] },
+    { icon: Users, label: t('sidebar.users'), path: '/users', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Heart, label: t('sidebar.patients'), path: '/patients', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'SUPPORT_STAFF'] },
+    { icon: Stethoscope, label: t('sidebar.doctors'), path: '/doctors', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Activity, label: t('sidebar.specialities'), path: '/specialities', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Briefcase, label: t('sidebar.services'), path: '/services', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Calendar, label: t('sidebar.appointments'), path: '/appointments', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Shield, label: t('sidebar.insurance_cases'), path: '/insurance-cases', roles: ['SUPER_ADMIN', 'INSURANCE_STAFF', 'MEDICAL_ADMIN'] },
+    { icon: FileText, label: t('sidebar.claims'), path: '/claims', roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
+    { icon: CreditCard, label: t('sidebar.payments'), path: '/payments', roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
+    { icon: Headphones, label: t('sidebar.support_cases'), path: '/support-cases', roles: ['SUPER_ADMIN', 'SUPPORT_STAFF'] },
+    { icon: Star, label: t('sidebar.reviews'), path: '/reviews', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: History, label: t('sidebar.audit_logs'), path: '/audit-logs', roles: ['SUPER_ADMIN'] },
+    { icon: Settings, label: t('sidebar.settings'), path: '/settings', roles: ['SUPER_ADMIN'] },
+  ];
 
-  const filteredMenu = menuItems.filter((item) => item.roles.includes(user?.role));
+  const filteredItems = navItems.filter(item => 
+    item.roles.includes('ANY') || (user && item.roles.includes(user.role))
+  );
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const SidebarContent = (
+    <div className="flex flex-col h-full bg-[var(--bg-sidebar)] text-white overflow-hidden">
+      {/* Logo Section */}
+      <div className="flex items-center gap-3 px-6 py-8">
+        <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
+          <Activity size={24} className="text-white" />
+        </div>
+        {!isCollapsed && (
+          <span className="text-xl font-bold tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-2">
+            Life<span className="text-indigo-400">Pain</span>
+          </span>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-hide">
+        {filteredItems.map((item, idx) => (
+          <NavLink
+            key={idx}
+            to={item.path}
+            className={({ isActive }) => `
+              flex items-center gap-3 px-3 py-3 rounded-xl transition-all group
+              ${isActive 
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
+              ${isCollapsed ? 'justify-center' : ''}
+            `}
+            title={isCollapsed ? item.label : ''}
+          >
+            <item.icon size={22} className={`shrink-0 ${isCollapsed ? '' : ''}`} />
+            {!isCollapsed && (
+              <span className="text-sm font-medium animate-in fade-in slide-in-from-left-2">
+                {item.label}
+              </span>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* User Section */}
+      <div className="p-4 border-t border-slate-800">
+        <div className={`flex items-center gap-3 p-2 rounded-2xl ${isCollapsed ? 'justify-center' : 'bg-slate-800/50'}`}>
+          <Avatar name={user?.fullName} size="sm" />
+          {!isCollapsed && (
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <p className="text-sm font-semibold truncate">{user?.fullName}</p>
+              <p className="text-xs text-slate-400 truncate">{t(`common.roles.${user?.role}`)}</p>
+            </div>
+          )}
+          {!isCollapsed && (
+            <button 
+              onClick={handleLogout}
+              className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+            >
+              <LogOut size={18} />
+            </button>
+          )}
+        </div>
+        {isCollapsed && (
+          <button 
+            onClick={handleLogout}
+            className="w-full mt-4 flex justify-center p-3 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-colors"
+          >
+            <LogOut size={20} />
+          </button>
+        )}
+      </div>
+
+      {/* Collapse Toggle */}
+      <button 
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className={`absolute bottom-24 hidden md:flex items-center justify-center w-8 h-8 bg-slate-800 border border-slate-700 rounded-full text-slate-400 hover:text-white transition-all transform
+          ${isRTL ? (isCollapsed ? '-left-4' : '-left-4 rotate-180') : (isCollapsed ? '-right-4' : '-right-4 rotate-180')}
+        `}
+      >
+        <ChevronLeft size={16} />
+      </button>
+    </div>
+  );
 
   return (
-    <aside className={`fixed top-0 right-0 z-40 h-screen pt-16 transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'} w-64 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 overflow-y-auto`}>
-      <div className="px-3 py-4">
-        <div className="px-4 py-3 mb-4">
-          <h2 className="text-lg font-bold text-primary-600 dark:text-primary-400">حياة بلا ألم</h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">لوحة الإدارة</p>
-        </div>
-        <nav className="space-y-1">
-          {filteredMenu.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/'}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
+    <>
+      {/* Desktop Sidebar */}
+      <aside 
+        className={`fixed inset-y-0 hidden md:block z-[50] transition-all duration-300 ease-in-out
+          ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}
+          ${isRTL ? 'right-0' : 'left-0'}
+        `}
+      >
+        {SidebarContent}
+      </aside>
+
+      {/* Mobile Drawer */}
+      <div 
+        className={`fixed inset-0 z-[100] md:hidden bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300
+          ${isMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+        `}
+        onClick={() => setIsMobileOpen(false)}
+      >
+        <aside 
+          className={`absolute inset-y-0 w-[260px] bg-[var(--bg-sidebar)] transition-transform duration-300 ease-in-out
+            ${isRTL ? (isMobileOpen ? 'right-0' : 'translate-x-full') : (isMobileOpen ? 'left-0' : '-translate-x-full')}
+          `}
+          onClick={e => e.stopPropagation()}
+        >
+          {SidebarContent}
+        </aside>
       </div>
-    </aside>
+    </>
   );
-}
+};
+
+export default Sidebar;

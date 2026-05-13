@@ -1,119 +1,169 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
 import api from '../services/api';
-import DataTable from '../components/tables/DataTable';
-import ConfirmDialog from '../components/ui/ConfirmDialog';
-import StatusBadge from '../components/ui/StatusBadge';
-import { CheckCircle, XCircle, Edit, Trash2, X } from 'lucide-react';
+import DataTable from '../components/ui/DataTable';
+import StatCard from '../components/ui/StatCard';
+import Modal from '../components/ui/Modal';
+import PageHeader from '../components/ui/PageHeader';
+import Card from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
+import { useTranslation } from 'react-i18next';
+import { Shield, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import useConfirmDelete from '../hooks/useConfirmDelete';
 import toast from 'react-hot-toast';
 
-const caseStatusOptions = [
-  { value: 'OPEN', label: 'مفتوح' }, { value: 'UNDER_REVIEW', label: 'قيد المراجعة' },
-  { value: 'APPROVED', label: 'مقبول' }, { value: 'REJECTED', label: 'مرفوض' },
-  { value: 'ESCALATED', label: 'متصاعد' }, { value: 'CLOSED', label: 'مغلق' },
-];
-
 export default function InsuranceCasesPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [editItem, setEditItem] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [form, setForm] = useState({});
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const qc = useQueryClient();
+  const confirmDelete = useConfirmDelete();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCase, setEditingCase] = useState(null);
+  const [filter, setFilter] = useState('');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-insurance-cases', page, filter, search],
-    queryFn: () => api.get('/admin/insurance-cases', { params: { page, limit: 20, status: filter || undefined, search: search || undefined } }).then((r) => r.data),
+    queryKey: ['admin-insurance-cases', filter],
+    queryFn: () => api.get('/admin/insurance-cases', { params: { status: filter || undefined } }).then((r) => r.data),
+  });
+
+  const { register, handleSubmit, setValue } = useForm();
+
+  const updateMutation = useMutation({
+    mutationFn: (payload) => api.put(`/admin/insurance-cases/${editingCase.id}`, payload),
+    onSuccess: () => {
+      toast.success(t('messages.saved'));
+      setIsModalOpen(false);
+      qc.invalidateQueries(['admin-insurance-cases']);
+    },
   });
 
   const approveMutation = useMutation({
     mutationFn: (id) => api.patch(`/insurance-cases/${id}/approve`, { notes: 'Approved by admin' }),
-    onSuccess: () => { toast.success('تم القبول'); qc.invalidateQueries(['admin-insurance-cases']); },
+    onSuccess: () => { toast.success(t('messages.approved')); qc.invalidateQueries(['admin-insurance-cases']); },
   });
+
   const rejectMutation = useMutation({
     mutationFn: (id) => api.patch(`/insurance-cases/${id}/reject`, { notes: 'Rejected by admin' }),
-    onSuccess: () => { toast.success('تم الرفض'); qc.invalidateQueries(['admin-insurance-cases']); },
-  });
-  const updateMutation = useMutation({
-    mutationFn: (payload) => api.put(`/admin/insurance-cases/${editItem.id}`, payload),
-    onSuccess: () => { toast.success('تم التحديث'); setShowForm(false); setEditItem(null); qc.invalidateQueries(['admin-insurance-cases']); },
-    onError: (e) => toast.error(e.response?.data?.message || 'حدث خطأ'),
-  });
-  const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/admin/insurance-cases/${id}`),
-    onSuccess: () => { toast.success('تم إغلاق الحالة'); setDeleteTarget(null); qc.invalidateQueries(['admin-insurance-cases']); },
+    onSuccess: () => { toast.success(t('messages.rejected')); qc.invalidateQueries(['admin-insurance-cases']); },
   });
 
   const openEdit = (item) => {
-    setEditItem(item);
-    setForm({ status: item.status, notes: item.notes || '' });
-    setShowForm(true);
+    setEditingCase(item);
+    setValue('status', item.status);
+    setValue('notes', item.notes || '');
+    setIsModalOpen(true);
   };
-  const handleSubmit = (e) => { e.preventDefault(); updateMutation.mutate(form); };
 
   const columns = [
-    { key: 'id', label: '#' },
-    { key: 'patient', label: 'المريض', render: (row) => row.patient?.user?.fullName || '-' },
-    { key: 'provider', label: 'شركة التأمين', render: (row) => row.provider?.nameAr || '-' },
-    { key: 'caseType', label: 'نوع الحالة' },
-    { key: 'status', label: 'الحالة', render: (row) => <StatusBadge status={row.status} /> },
-    { key: 'date', label: 'تاريخ التقديم', render: (row) => new Date(row.submittedAt || row.createdAt).toLocaleDateString('ar-SA') },
-    {
-      key: '_actions', label: 'إجراءات', render: (row) => (
-        <div className="flex gap-1">
-          {(row.status === 'OPEN' || row.status === 'UNDER_REVIEW') && (
-            <>
-              <button onClick={() => approveMutation.mutate(row.id)} className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20" title="قبول"><CheckCircle className="w-4 h-4" /></button>
-              <button onClick={() => rejectMutation.mutate(row.id)} className="p-1.5 rounded-lg text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20" title="رفض"><XCircle className="w-4 h-4" /></button>
-            </>
-          )}
-          <button onClick={() => openEdit(row)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20" title="تعديل"><Edit className="w-4 h-4" /></button>
-          <button onClick={() => setDeleteTarget(row)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" title="إغلاق"><Trash2 className="w-4 h-4" /></button>
-        </div>
-      ),
+    { header: t('insurance.patient') || 'Patient', accessorKey: 'patient.user.fullName' },
+    { header: t('insurance.provider') || 'Provider', accessorKey: 'provider.nameAr' },
+    { header: t('insurance.case_type') || 'Case Type', accessorKey: 'caseType' },
+    { 
+      header: t('common.status'), 
+      accessorKey: 'status',
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const variants = { 
+          OPEN: 'primary', 
+          UNDER_REVIEW: 'warning', 
+          APPROVED: 'success', 
+          REJECTED: 'danger', 
+          CLOSED: 'secondary',
+          ESCALATED: 'danger'
+        };
+        return <Badge variant={variants[status]}>{t(`status.${status.toLowerCase()}`) || status}</Badge>;
+      }
+    },
+    { 
+      header: t('insurance.date') || 'Date', 
+      accessorKey: 'submittedAt',
+      cell: ({ row }) => new Date(row.original.submittedAt || row.original.createdAt).toLocaleDateString()
     },
   ];
 
+  const renderActions = (item) => (
+    (item.status === 'OPEN' || item.status === 'UNDER_REVIEW') && (
+      <div className="flex gap-1 border-r border-[var(--border-color)] mr-2 pr-2 rtl:mr-0 rtl:ml-2 rtl:pr-0 rtl:pl-2 rtl:border-r-0 rtl:border-l">
+        <button onClick={() => approveMutation.mutate(item.id)} className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors">
+          <CheckCircle size={16} />
+        </button>
+        <button onClick={() => rejectMutation.mutate(item.id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+          <XCircle size={16} />
+        </button>
+      </div>
+    )
+  );
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">حالات التأمين</h1>
-          <p className="text-gray-500 text-sm mt-1">مراجعة واعتماد حالات التأمين</p>
-        </div>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)} className="input-field w-48">
-          <option value="">جميع الحالات</option>
-          {caseStatusOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+    <div className="space-y-8">
+      <PageHeader 
+        title={t('sidebar.insurance_cases')} 
+        breadcrumbs={[{ label: t('sidebar.dashboard'), path: '/' }, { label: t('sidebar.insurance_cases'), path: '/insurance-cases' }]}
+        action={
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="input w-48 h-10">
+            <option value="">{t('common.all_statuses')}</option>
+            <option value="OPEN">{t('status.open')}</option>
+            <option value="UNDER_REVIEW">{t('status.under_review')}</option>
+            <option value="APPROVED">{t('status.approved')}</option>
+            <option value="REJECTED">{t('status.rejected')}</option>
+          </select>
+        }
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard label={t('dashboard.stats.open_insurance_cases')} value={data?.meta?.totalItems || 0} icon={Shield} color="indigo" />
+        <StatCard label={t('dashboard.stats.under_review')} value={3} icon={Clock} color="yellow" />
+        <StatCard label={t('dashboard.stats.approved_today')} value={5} icon={CheckCircle} color="green" />
+        <StatCard label={t('dashboard.stats.escalated_cases')} value={1} icon={AlertCircle} color="red" />
       </div>
 
-      {showForm && (
-        <div className="card mb-6 relative">
-          <button onClick={() => { setShowForm(false); setEditItem(null); }} className="absolute top-4 left-4 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-5 h-5" /></button>
-          <h3 className="font-bold mb-4 text-lg">تعديل حالة التأمين #{editItem?.id}</h3>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card>
+        <DataTable 
+          columns={columns} 
+          data={data?.data} 
+          isLoading={isLoading} 
+          onView={(item) => navigate(`/insurance-cases/${item.id}`)}
+          onEdit={openEdit}
+          renderCustomActions={renderActions}
+        />
+      </Card>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={t('insurance.edit_case') || 'Update Insurance Case'}
+      >
+        <form onSubmit={handleSubmit((d) => updateMutation.mutate(d))} className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">الحالة</label>
-              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="input-field">
-                {caseStatusOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <label className="label">{t('common.status')}</label>
+              <select {...register('status')} className="input">
+                <option value="OPEN">{t('status.open')}</option>
+                <option value="UNDER_REVIEW">{t('status.under_review')}</option>
+                <option value="APPROVED">{t('status.approved')}</option>
+                <option value="REJECTED">{t('status.rejected')}</option>
+                <option value="ESCALATED">{t('status.escalated')}</option>
+                <option value="CLOSED">{t('status.closed')}</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">ملاحظات</label>
-              <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="input-field" rows={2} />
+              <label className="label">{t('common.notes')}</label>
+              <textarea {...register('notes')} className="input h-32 py-3" />
             </div>
-            <div className="flex gap-2 md:col-span-2 pt-2">
-              <button type="submit" disabled={updateMutation.isPending} className="btn-primary">{updateMutation.isPending ? 'جاري الحفظ...' : 'تحديث'}</button>
-              <button type="button" onClick={() => { setShowForm(false); setEditItem(null); }} className="btn-secondary">إلغاء</button>
-            </div>
-          </form>
-        </div>
-      )}
+          </div>
 
-      <DataTable columns={columns} data={data?.data} loading={isLoading} pagination={data?.meta} onPageChange={setPage} onSearch={setSearch} searchPlaceholder="بحث بالاسم..." />
-      <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={() => deleteMutation.mutate(deleteTarget.id)} title="تأكيد الإغلاق" message="هل أنت متأكد من إغلاق حالة التأمين؟" confirmLabel="إغلاق" />
+          <div className="flex gap-3 pt-4">
+            <button type="submit" disabled={updateMutation.isPending} className="btn btn-primary flex-1">
+              {updateMutation.isPending ? t('common.saving') : t('common.save')}
+            </button>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary flex-1">
+              {t('common.cancel')}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
