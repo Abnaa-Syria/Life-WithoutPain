@@ -15,8 +15,10 @@ const {
   refreshTokenSchema,
 } = require('./auth.validator');
 
+const { uploadSingle } = require('../../middlewares/upload');
+
 router.post('/register/patient', authLimiter, validate(registerPatientSchema), controller.registerPatient);
-router.post('/register/doctor', authLimiter, validate(registerDoctorSchema), controller.registerDoctor);
+router.post('/register/doctor', authLimiter, uploadSingle('licenseFile'), validate(registerDoctorSchema), controller.registerDoctor);
 router.post('/login', authLimiter, validate(loginSchema), controller.login);
 router.post('/verify-otp', otpLimiter, validate(verifyOtpSchema), controller.verifyOtp);
 router.post('/resend-otp', otpLimiter, validate(resendOtpSchema), controller.resendOtp);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import DetailsHeader from '../components/ui/DetailsHeader';
@@ -10,15 +10,35 @@ import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import Badge from '../components/ui/Badge';
 import Avatar from '../components/ui/Avatar';
 import FilePreviewer from '../components/ui/FilePreviewer';
-import { Stethoscope, FileText, Briefcase, Activity, CheckCircle, Clock, Maximize2 } from 'lucide-react';
+import { Stethoscope, FileText, Briefcase, Activity, CheckCircle, Clock, Maximize2, UserCheck, UserX } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function DoctorDetailsPage() {
   const { t } = useTranslation();
   const { id } = useParams();
+  const queryClient = useQueryClient();
 
   const { data: response, isLoading } = useQuery({
     queryKey: ['doctor', id],
     queryFn: () => api.get(`/admin/doctors/${id}`).then(res => res.data),
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: () => api.patch(`/admin/doctors/${id}/approve`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['doctor', id]);
+      toast.success(t('doctors.approved_success') || 'Doctor approved successfully');
+    },
+    onError: () => toast.error(t('common.error') || 'An error occurred'),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: () => api.patch(`/admin/doctors/${id}/reject`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['doctor', id]);
+      toast.success(t('doctors.rejected_success') || 'Doctor rejected successfully');
+    },
+    onError: () => toast.error(t('common.error') || 'An error occurred'),
   });
 
   if (isLoading) return <LoadingSkeleton type="table" />;
@@ -28,12 +48,31 @@ export default function DoctorDetailsPage() {
 
   const documents = doctor.verificationDocuments?.map(d => ({ url: d.fileUrl, name: d.type })) || [];
 
+  const actions = [];
+  if (doctor.verificationStatus === 'PENDING') {
+    actions.push(
+      {
+        label: t('common.approve') || 'Approve',
+        icon: UserCheck,
+        onClick: () => approveMutation.mutate(),
+        className: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30 border-emerald-100 dark:border-emerald-800'
+      },
+      {
+        label: t('common.reject') || 'Reject',
+        icon: UserX,
+        onClick: () => rejectMutation.mutate(),
+        className: 'bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:hover:bg-rose-900/30 border-rose-100 dark:border-rose-800'
+      }
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <DetailsHeader 
         title={doctor.user?.fullName}
         subtitle={`${doctor.title} • ${doctor.speciality?.nameAr}`}
         backPath="/doctors"
+        actions={actions}
         badges={[
           { label: t(`status.${doctor.verificationStatus?.toLowerCase()}`), className: doctor.verificationStatus === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }
         ]}

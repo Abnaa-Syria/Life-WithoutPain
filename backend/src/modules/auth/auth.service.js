@@ -53,7 +53,7 @@ class AuthService {
     };
   }
 
-  static async registerDoctor({ fullName, email, phone, password, specialityId, licenseNumber, preferredLanguage }) {
+  static async registerDoctor({ fullName, email, phone, password, specialityId, licenseNumber, licenseUrl, title, workplace, city, preferredLanguage }) {
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { phone }], deletedAt: null },
     });
@@ -73,8 +73,12 @@ class AuthService {
         preferredLanguage: preferredLanguage || 'ar',
         doctorProfile: {
           create: {
-            specialityId: specialityId || null,
+            specialityId: specialityId ? parseInt(specialityId) : null,
             licenseNumber: licenseNumber || null,
+            licenseUrl: licenseUrl || null,
+            title: title || null,
+            workplace: workplace || null,
+            city: city || null,
             verificationStatus: 'PENDING',
             isPubliclyBookable: false,
           },
@@ -119,6 +123,13 @@ class AuthService {
 
     if (user.status !== 'ACTIVE') {
       throw new UnauthorizedError('Account is not active');
+    }
+
+    if (user.role === 'DOCTOR') {
+      const doctorProfile = await prisma.doctorProfile.findUnique({ where: { userId: user.id } });
+      if (doctorProfile && doctorProfile.verificationStatus !== 'APPROVED') {
+        throw new UnauthorizedError('Your account is pending admin approval');
+      }
     }
 
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);

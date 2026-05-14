@@ -68,7 +68,21 @@
     "logout": "تسجيل الخروج",
     "profile": "الملف الشخصي",
     "services": "الخدمات",
-    "reports": "التقارير"
+    "reports": "التقارير",
+    "medications": "الأدوية",
+    "medical_tests": "الفحوصات الطبية",
+    "reviews": "التقييمات",
+    "settings": "الإعدادات"
+  },
+  "medical": {
+    "prescriptions": "الوصفات الطبية",
+    "reports": "التقارير الطبية",
+    "medications": "الأدوية الأساسية",
+    "symptoms": "الأعراض",
+    "diagnosis": "التشخيص",
+    "summary": "الملخص",
+    "clinical_findings": "النتائج السريرية",
+    "recommendations": "التوصيات"
   },
   "dashboard": {
     "greeting_SUPER_ADMIN": "مرحباً بك في لوحة إدارة النظام",

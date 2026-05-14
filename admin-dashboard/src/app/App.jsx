@@ -27,7 +27,9 @@ import AppointmentDetailsPage from '../pages/AppointmentDetailsPage';
 import InsuranceCaseDetailsPage from '../pages/InsuranceCaseDetailsPage';
 import SupportCaseDetailsPage from '../pages/SupportCaseDetailsPage';
 import AuditLogDetailsPage from '../pages/AuditLogDetailsPage';
-import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Bell, Star, Settings } from 'lucide-react';
+import MedicationsPage from '../pages/MedicationsPage';
+import MedicalTestsPage from '../pages/MedicalTestsPage';
+import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Bell, Star, Settings, Pill, ClipboardList } from 'lucide-react';
 
 const ALL_ADMIN = ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'];
 const ADMIN_MED = ['SUPER_ADMIN', 'MEDICAL_ADMIN'];
@@ -116,6 +118,9 @@ function AppRoutes() {
             />
           </ProtectedRoute>
         } />
+
+        <Route path="medications" element={<ProtectedRoute roles={ADMIN_MED}><MedicationsPage /></ProtectedRoute>} />
+        <Route path="medical-tests" element={<ProtectedRoute roles={ADMIN_MED}><MedicalTestsPage /></ProtectedRoute>} />
 
         <Route path="appointments" element={<ProtectedRoute roles={ADMIN_MED}><AppointmentsPage /></ProtectedRoute>} />
         <Route path="appointments/:id" element={<ProtectedRoute roles={ADMIN_MED}><AppointmentDetailsPage /></ProtectedRoute>} />

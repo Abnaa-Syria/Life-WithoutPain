@@ -247,6 +247,32 @@ class DoctorService {
       recentPayouts,
     };
   }
+
+  static async approveDoctor(id) {
+    const doctor = await DoctorRepository.findUnique({ where: { id: parseInt(id) } });
+    if (!doctor) throw new NotFoundError('Doctor not found');
+
+    return DoctorRepository.update({
+      where: { id: parseInt(id) },
+      data: {
+        verificationStatus: 'APPROVED',
+        isPubliclyBookable: true,
+      },
+    });
+  }
+
+  static async rejectDoctor(id, notes) {
+    const doctor = await DoctorRepository.findUnique({ where: { id: parseInt(id) } });
+    if (!doctor) throw new NotFoundError('Doctor not found');
+
+    return DoctorRepository.update({
+      where: { id: parseInt(id) },
+      data: {
+        verificationStatus: 'REJECTED',
+        isPubliclyBookable: false,
+      },
+    });
+  }
 }
 
 module.exports = DoctorService;

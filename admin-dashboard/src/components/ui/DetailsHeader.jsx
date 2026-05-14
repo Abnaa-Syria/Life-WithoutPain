@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useLanguage from '../../hooks/useLanguage';
 
-const DetailsHeader = ({ title, subtitle, badges = [], onEdit, onDelete, backPath }) => {
+const DetailsHeader = ({ title, subtitle, badges = [], onEdit, onDelete, backPath, actions = [] }) => {
   const { t } = useTranslation();
   const { isRTL } = useLanguage();
   const navigate = useNavigate();
@@ -32,6 +32,16 @@ const DetailsHeader = ({ title, subtitle, badges = [], onEdit, onDelete, backPat
       </div>
 
       <div className="flex items-center gap-3">
+        {actions.map((action, idx) => (
+          <button 
+            key={idx} 
+            onClick={action.onClick} 
+            className={`btn px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 font-medium ${action.className || 'btn-primary'}`}
+          >
+            {action.icon && <action.icon size={18} />}
+            {action.label}
+          </button>
+        ))}
         {onEdit && (
           <button onClick={onEdit} className="btn btn-secondary py-2.5">
             <Edit size={18} />

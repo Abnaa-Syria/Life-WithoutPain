@@ -68,7 +68,21 @@
     "logout": "Logout",
     "profile": "Profile",
     "services": "Services",
-    "reports": "Reports"
+    "reports": "Reports",
+    "medications": "Medications",
+    "medical_tests": "Medical Tests",
+    "reviews": "Reviews",
+    "settings": "Settings"
+  },
+  "medical": {
+    "prescriptions": "Prescriptions",
+    "reports": "Medical Reports",
+    "medications": "Main Medications",
+    "symptoms": "Symptoms",
+    "diagnosis": "Diagnosis",
+    "summary": "Summary",
+    "clinical_findings": "Clinical Findings",
+    "recommendations": "Recommendations"
   },
   "dashboard": {
     "greeting_SUPER_ADMIN": "Welcome to System Admin Dashboard",

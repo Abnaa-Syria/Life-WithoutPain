@@ -8,7 +8,8 @@ const registerPatient = asyncHandler(async (req, res) => {
 });
 
 const registerDoctor = asyncHandler(async (req, res) => {
-  const result = await AuthService.registerDoctor(req.body);
+  const licenseUrl = req.file ? `/uploads/${req.file.filename}` : null;
+  const result = await AuthService.registerDoctor({ ...req.body, licenseUrl });
   return createdResponse(res, { data: result, message: 'Doctor registered successfully. Please verify your phone with OTP.' });
 });
 

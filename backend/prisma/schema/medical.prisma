@@ -278,3 +278,29 @@ model Review {
   @@index([doctorId])
   @@map("reviews")
 }
+
+model Medication {
+  id          Int      @id @default(autoincrement())
+  nameAr      String   @db.VarChar(255)
+  nameEn      String   @db.VarChar(255)
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("medications")
+}
+
+model MedicalTest {
+  id          Int      @id @default(autoincrement())
+  nameAr      String   @db.VarChar(255)
+  nameEn      String   @db.VarChar(255)
+  categoryAr  String?  @db.VarChar(100)
+  categoryEn  String?  @db.VarChar(100)
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("medical_tests")
+}

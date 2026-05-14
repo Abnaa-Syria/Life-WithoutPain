@@ -117,7 +117,18 @@ router.get('/patients', asyncHandler(async (req, res) => {
   return paginatedResponse(res, { data, total, page, limit });
 }));
 router.get('/patients/:id', asyncHandler(async (req, res) => {
-  const data = await prisma.patientProfile.findUnique({ where: { id: parseInt(req.params.id) }, include: { user: true, medicalProfile: true, familyMembers: true, insurances: { include: { provider: true } } } });
+  const data = await prisma.patientProfile.findUnique({ 
+    where: { id: parseInt(req.params.id) }, 
+    include: { 
+      user: true, 
+      medicalProfile: true, 
+      familyMembers: true, 
+      insurances: { include: { provider: true } },
+      prescriptions: { include: { items: true, doctor: { include: { user: { select: { fullName: true } } } } }, orderBy: { createdAt: 'desc' } },
+      reports: { include: { doctor: { include: { user: { select: { fullName: true } } } } }, orderBy: { createdAt: 'desc' } },
+      medicalFiles: true
+    } 
+  });
   if (!data) throw new NotFoundError('Patient not found');
   return successResponse(res, { data });
 }));
@@ -452,5 +463,25 @@ router.get('/audit-logs/:id', asyncHandler(async (req, res) => {
   if (!data) throw new NotFoundError('Audit log not found');
   return successResponse(res, { data });
 }));
+
+// ═══════════════════════════════════════════
+//  MEDICATIONS – full CRUD
+// ═══════════════════════════════════════════
+const medCrud = crud('medication', { searchFields: ['nameAr', 'nameEn'], entityLabel: 'Medication' });
+router.get('/medications', medCrud.list);
+router.get('/medications/:id', medCrud.getOne);
+router.post('/medications', medCrud.create);
+router.put('/medications/:id', medCrud.update);
+router.delete('/medications/:id', medCrud.remove);
+
+// ═══════════════════════════════════════════
+//  MEDICAL TESTS – full CRUD
+// ═══════════════════════════════════════════
+const testCrud = crud('medicalTest', { searchFields: ['nameAr', 'nameEn', 'categoryAr', 'categoryEn'], entityLabel: 'MedicalTest' });
+router.get('/medical-tests', testCrud.list);
+router.get('/medical-tests/:id', testCrud.getOne);
+router.post('/medical-tests', testCrud.create);
+router.put('/medical-tests/:id', testCrud.update);
+router.delete('/medical-tests/:id', testCrud.remove);
 
 module.exports = router;

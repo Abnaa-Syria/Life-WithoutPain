@@ -16,6 +16,9 @@ const registerDoctorSchema = z.object({
   password: passwordSchema,
   specialityId: z.number().int().positive().optional(),
   licenseNumber: z.string().min(3).max(100).optional(),
+  title: z.string().min(2).max(100).optional(),
+  workplace: z.string().min(2).max(255).optional(),
+  city: z.string().min(2).max(100).optional(),
   preferredLanguage: z.enum(['ar', 'en']).default('ar'),
 });
 
