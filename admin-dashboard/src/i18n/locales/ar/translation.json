@@ -51,7 +51,48 @@
       "ACCOUNTANT": "محاسب"
     },
     "male": "ذكر",
-    "female": "أنثى"
+    "female": "أنثى",
+    "name_ar": "الاسم بالعربي",
+    "name_en": "الاسم بالإنجليزي",
+    "description": "الوصف",
+    "description_ar": "الوصف بالعربي",
+    "description_en": "الوصف بالإنجليزي",
+    "type": "النوع",
+    "is_active": "نشط",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "select": "اختر",
+    "saving": "جاري الحفظ...",
+    "selected": "محدد",
+    "pagination_info": "عرض {{start}} إلى {{end}} من أصل {{total}} مدخل",
+    "all_statuses": "جميع الحالات",
+    "approve": "موافقة",
+    "reject": "رفض",
+    "approved": "تمت الموافقة بنجاح",
+    "rejected": "تم الرفض",
+    "summary": "الملخص",
+    "attachments": "المرفقات",
+    "category_ar": "التصنيف (عربي)",
+    "category_en": "التصنيف (إنجليزي)",
+    "yes": "نعم",
+    "no": "لا",
+    "title": "العنوان",
+    "title_ar": "العنوان بالعربي",
+    "title_en": "العنوان بالإنجليزي",
+    "body_ar": "المحتوى بالعربي",
+    "body_en": "المحتوى بالإنجليزي",
+    "key": "المفتاح",
+    "value": "القيمة",
+    "is_public": "عام",
+    "manual": "يدوي",
+    "sort_order": "الترتيب",
+    "personal_info": "المعلومات الأساسية",
+    "user_id": "معرف المستخدم",
+    "types": {
+      "string": "نص",
+      "number": "رقم",
+      "boolean": "منطقي"
+    }
   },
   "sidebar": {
     "dashboard": "لوحة التحكم",
@@ -60,6 +101,7 @@
     "appointments": "المواعيد",
     "specialities": "التخصصات",
     "insurance_cases": "حالات التأمين",
+    "insurance_providers": "شركات التأمين",
     "claims": "المطالبات",
     "payments": "المدفوعات",
     "support_cases": "حالات الدعم",
@@ -72,7 +114,9 @@
     "medications": "الأدوية",
     "medical_tests": "الفحوصات الطبية",
     "reviews": "التقييمات",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "reconciliations": "التسويات",
+    "notifications": "الإشعارات"
   },
   "medical": {
     "prescriptions": "الوصفات الطبية",
@@ -82,7 +126,15 @@
     "diagnosis": "التشخيص",
     "summary": "الملخص",
     "clinical_findings": "النتائج السريرية",
-    "recommendations": "التوصيات"
+    "recommendations": "التوصيات",
+    "manage_tests": "متابعة طلبات الفحوصات",
+    "test_info": "معلومات الفحص",
+    "all_reports": "جميع التقارير الطبية",
+    "report_details": "معلومات التقرير",
+    "all_prescriptions": "جميع الوصفات الطبية",
+    "prescription_details": "معلومات الوصفة",
+    "medications_count": "عدد الأدوية",
+    "visit_reason": "سبب الزيارة"
   },
   "dashboard": {
     "greeting_SUPER_ADMIN": "مرحباً بك في لوحة إدارة النظام",
@@ -91,6 +143,8 @@
     "greeting_SUPPORT_STAFF": "مرحباً بك في لوحة الدعم الفني",
     "greeting_ACCOUNTANT": "مرحباً بك في لوحة المحاسبة",
     "overview": "نظرة عامة على أداء المنصة",
+    "revenue_trend": "اتجاه الإيرادات",
+    "appointment_activity": "نشاط المواعيد",
     "stats": {
       "total_patients": "إجمالي المرضى",
       "total_doctors": "إجمالي الأطباء",
@@ -104,7 +158,9 @@
       "total_appointments": "إجمالي المواعيد",
       "completed_today": "مكتملة اليوم",
       "cancelled_today": "ملغاة اليوم",
-      "pending_confirmation": "بانتظار التأكيد"
+      "pending_confirmation": "بانتظار التأكيد",
+      "approved_doctors": "الأطباء المعتمدين",
+      "average_rating": "متوسط التقييم"
     }
   },
   "appointments": {
@@ -158,12 +214,19 @@
     "city": "المدينة",
     "bio": "السيرة الذاتية",
     "documents": "وثائق التحقق",
-    "services": "الخدمات المقدمة"
+    "services": "الخدمات المقدمة",
+    "edit_doctor": "تعديل ملف الطبيب",
+    "publicly_bookable": "قابل للحجز العام",
+    "fee": "الرسوم"
   },
   "services": {
     "name": "اسم الخدمة",
     "type": "النوع",
-    "description": "الوصف"
+    "description": "الوصف",
+    "manage": "إدارة خدمات المنصة",
+    "add": "إضافة خدمة",
+    "edit": "تعديل الخدمة",
+    "details": "معلومات الخدمة"
   },
   "insurance": {
     "provider": "شركة التأمين",
@@ -173,7 +236,12 @@
     "submitted_at": "تاريخ التقديم",
     "approvals": "الموافقات والسجل",
     "policy_number": "رقم البوليصة",
-    "expiry_date": "تاريخ الانتهاء"
+    "expiry_date": "تاريخ الانتهاء",
+    "manage_providers": "إدارة شركات التأمين",
+    "api_mode": "وضع التكامل",
+    "add_provider": "إضافة شركة",
+    "edit_provider": "تعديل الشركة",
+    "provider_details": "معلومات الشركة"
   },
   "status": {
     "pending": "قيد الانتظار",
@@ -182,6 +250,49 @@
     "cancelled": "ملغي",
     "no_show": "عدم حضور",
     "approved": "تمت الموافقة",
-    "rejected": "مرفوض"
+    "rejected": "مرفوض",
+    "sample_collected": "تم جمع العينة",
+    "processing": "قيد المعالجة",
+    "paid": "مدفوع",
+    "failed": "فشل",
+    "matched": "متطابق",
+    "discrepancy": "فرق"
+  },
+  "payouts": {
+    "title": "مستحقات الأطباء",
+    "subtitle": "إدارة عمولات ومستحقات الأطباء",
+    "gross_amount": "المبلغ الإجمالي",
+    "commission": "العمولة",
+    "net_amount": "صافي المبلغ",
+    "info": "معلومات المستحق"
+  },
+  "reconciliations": {
+    "manage": "إدارة تسويات المطالبات",
+    "reference_number": "رقم المرجع",
+    "expected_amount": "المبلغ المتوقع",
+    "received_amount": "المبلغ المستلم",
+    "details": "معلومات التسوية"
+  },
+  "notifications": {
+    "manage": "إدارة إشعارات النظام",
+    "is_read": "مقروء",
+    "send": "إرسال إشعار",
+    "content": "محتوى الإشعار",
+    "types": {
+      "system": "نظام",
+      "appointment": "موعد",
+      "payment": "دفع",
+      "insurance": "تأمين",
+      "verification": "تحقق"
+    }
+  },
+  "reviews": {
+    "subtitle": "تقييمات المرضى للأطباء",
+    "details": "تفاصيل التقييم"
+  },
+  "settings": {
+    "manage": "إعدادات النظام",
+    "add": "إضافة إعداد",
+    "details": "تفاصيل الإعداد"
   }
 }

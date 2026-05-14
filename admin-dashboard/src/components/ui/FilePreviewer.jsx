@@ -115,7 +115,9 @@ const FilePreviewer = ({ files = [], height = "500px" }) => {
               <Document
                 file={fileUrl}
                 onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={(err) => console.error('PDF Load Error:', err)}
                 loading={<div className="p-12 text-slate-500 font-medium italic">{t('common.loading_pdf') || 'Loading PDF...'}</div>}
+                error={<div className="p-12 text-red-500 font-medium">{t('common.preview_not_available') || 'Preview not available'}</div>}
                 className="shadow-xl"
               >
                 <Page 

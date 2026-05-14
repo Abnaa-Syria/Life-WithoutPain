@@ -8,7 +8,7 @@ import DetailsSection from '../components/ui/DetailsSection';
 import DetailItem from '../components/ui/DetailItem';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import Badge from '../components/ui/Badge';
-import { User, Activity, Shield, Users, FileText, Pill, ClipboardList, Paperclip } from 'lucide-react';
+import { User, Activity, Shield, Users, FileText, Pill, ClipboardList, Paperclip, Clock } from 'lucide-react';
 import Tabs from '../components/ui/Tabs';
 import FilePreviewer from '../components/ui/FilePreviewer';
 

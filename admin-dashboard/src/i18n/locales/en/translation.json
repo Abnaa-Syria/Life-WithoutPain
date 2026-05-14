@@ -51,7 +51,48 @@
       "ACCOUNTANT": "Accountant"
     },
     "male": "Male",
-    "female": "Female"
+    "female": "Female",
+    "name_ar": "Name (AR)",
+    "name_en": "Name (EN)",
+    "description": "Description",
+    "description_ar": "Description (AR)",
+    "description_en": "Description (EN)",
+    "type": "Type",
+    "is_active": "Is Active",
+    "active": "Active",
+    "inactive": "Inactive",
+    "select": "Select",
+    "saving": "Saving...",
+    "selected": "Selected",
+    "pagination_info": "Showing {{start}} to {{end}} of {{total}} entries",
+    "all_statuses": "All Statuses",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approved": "Approved successfully",
+    "rejected": "Rejected",
+    "summary": "Summary",
+    "attachments": "Attachments",
+    "category_ar": "Category (AR)",
+    "category_en": "Category (EN)",
+    "yes": "Yes",
+    "no": "No",
+    "title": "Title",
+    "title_ar": "Title (AR)",
+    "title_en": "Title (EN)",
+    "body_ar": "Content (AR)",
+    "body_en": "Content (EN)",
+    "key": "Key",
+    "value": "Value",
+    "is_public": "Public",
+    "manual": "Manual",
+    "sort_order": "Sort Order",
+    "personal_info": "Personal Information",
+    "user_id": "User ID",
+    "types": {
+      "string": "String",
+      "number": "Number",
+      "boolean": "Boolean"
+    }
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -60,6 +101,7 @@
     "appointments": "Appointments",
     "specialities": "Specialities",
     "insurance_cases": "Insurance Cases",
+    "insurance_providers": "Insurance Providers",
     "claims": "Claims",
     "payments": "Payments",
     "support_cases": "Support Cases",
@@ -72,7 +114,9 @@
     "medications": "Medications",
     "medical_tests": "Medical Tests",
     "reviews": "Reviews",
-    "settings": "Settings"
+    "settings": "Settings",
+    "reconciliations": "Reconciliations",
+    "notifications": "Notifications"
   },
   "medical": {
     "prescriptions": "Prescriptions",
@@ -82,7 +126,15 @@
     "diagnosis": "Diagnosis",
     "summary": "Summary",
     "clinical_findings": "Clinical Findings",
-    "recommendations": "Recommendations"
+    "recommendations": "Recommendations",
+    "manage_tests": "Manage Medical Tests",
+    "test_info": "Test Information",
+    "all_reports": "All Medical Reports",
+    "report_details": "Report Details",
+    "all_prescriptions": "All Prescriptions",
+    "prescription_details": "Prescription Details",
+    "medications_count": "Medications Count",
+    "visit_reason": "Visit Reason"
   },
   "dashboard": {
     "greeting_SUPER_ADMIN": "Welcome to System Admin Dashboard",
@@ -91,6 +143,8 @@
     "greeting_SUPPORT_STAFF": "Welcome to Support Dashboard",
     "greeting_ACCOUNTANT": "Welcome to Accountant Dashboard",
     "overview": "Platform performance overview",
+    "revenue_trend": "Revenue Trend",
+    "appointment_activity": "Appointment Activity",
     "stats": {
       "total_patients": "Total Patients",
       "total_doctors": "Total Doctors",
@@ -104,7 +158,9 @@
       "total_appointments": "Total Appointments",
       "completed_today": "Completed Today",
       "cancelled_today": "Cancelled Today",
-      "pending_confirmation": "Pending Confirmation"
+      "pending_confirmation": "Pending Confirmation",
+      "approved_doctors": "Approved Doctors",
+      "average_rating": "Average Rating"
     }
   },
   "appointments": {
@@ -154,16 +210,23 @@
     "consultation_fee": "Consultation Fee",
     "follow_up_fee": "Follow-up Fee",
     "professional_info": "Professional Information",
-    "title": "Title",
+    "title": "Professional Title",
     "city": "City",
     "bio": "Biography",
     "documents": "Verification Documents",
-    "services": "Offered Services"
+    "services": "Offered Services",
+    "edit_doctor": "Edit Doctor Profile",
+    "publicly_bookable": "Publicly Bookable",
+    "fee": "Fee"
   },
   "services": {
     "name": "Service Name",
     "type": "Type",
-    "description": "Description"
+    "description": "Description",
+    "manage": "Manage platform services",
+    "add": "Add Service",
+    "edit": "Edit Service",
+    "details": "Service Details"
   },
   "insurance": {
     "provider": "Insurance Provider",
@@ -173,7 +236,12 @@
     "submitted_at": "Submitted At",
     "approvals": "Approvals & History",
     "policy_number": "Policy Number",
-    "expiry_date": "Expiry Date"
+    "expiry_date": "Expiry Date",
+    "manage_providers": "Manage Insurance Providers",
+    "api_mode": "Integration Mode",
+    "add_provider": "Add Provider",
+    "edit_provider": "Edit Provider",
+    "provider_details": "Provider Details"
   },
   "status": {
     "pending": "Pending",
@@ -182,6 +250,49 @@
     "cancelled": "Cancelled",
     "no_show": "No Show",
     "approved": "Approved",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "sample_collected": "Sample Collected",
+    "processing": "Processing",
+    "paid": "Paid",
+    "failed": "Failed",
+    "matched": "Matched",
+    "discrepancy": "Discrepancy"
+  },
+  "payouts": {
+    "title": "Doctor Payouts",
+    "subtitle": "Manage commissions and doctor payouts",
+    "gross_amount": "Gross Amount",
+    "commission": "Commission",
+    "net_amount": "Net Amount",
+    "info": "Payout Information"
+  },
+  "reconciliations": {
+    "manage": "Manage Claim Reconciliations",
+    "reference_number": "Reference Number",
+    "expected_amount": "Expected Amount",
+    "received_amount": "Received Amount",
+    "details": "Reconciliation Details"
+  },
+  "notifications": {
+    "manage": "Manage System Notifications",
+    "is_read": "Read",
+    "send": "Send Notification",
+    "content": "Notification Content",
+    "types": {
+      "system": "System",
+      "appointment": "Appointment",
+      "payment": "Payment",
+      "insurance": "Insurance",
+      "verification": "Verification"
+    }
+  },
+  "reviews": {
+    "subtitle": "Patient Reviews for Doctors",
+    "details": "Review Details"
+  },
+  "settings": {
+    "manage": "System Settings",
+    "add": "Add Setting",
+    "details": "Setting Details"
   }
 }

@@ -1,33 +1,50 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, FileText, Image as ImageIcon } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const ImageUpload = ({ value, onChange, multiple = false, accept = 'image/*' }) => {
   const { t } = useTranslation();
-  const [previews, setPreviews] = useState(value ? (Array.isArray(value) ? value : [value]) : []);
+  const [previews, setPreviews] = useState(() => {
+    if (!value) return [];
+    if (Array.isArray(value)) {
+      return value.map(v => typeof v === 'string' ? { url: v, isUrl: true } : { ...v, preview: URL.createObjectURL(v), isUrl: false });
+    }
+    return typeof value === 'string' ? [{ url: value, isUrl: true }] : [{ ...value, preview: URL.createObjectURL(value), isUrl: false }];
+  });
+
+  useEffect(() => {
+    return () => {
+      previews.forEach(p => !p.isUrl && p.preview && URL.revokeObjectURL(p.preview));
+    };
+  }, []);
 
   const onDrop = useCallback((acceptedFiles) => {
-    const newFiles = acceptedFiles.map(file => Object.assign(file, {
-      preview: URL.createObjectURL(file)
+    const newFiles = acceptedFiles.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      isUrl: false
     }));
     
     if (multiple) {
       setPreviews(prev => [...prev, ...newFiles]);
-      onChange([...previews, ...acceptedFiles]);
+      onChange([...previews.map(p => p.file || p.url), ...acceptedFiles]);
     } else {
-      setPreviews([newFiles[0]]);
+      setPreviews(newFiles);
       onChange(acceptedFiles[0]);
     }
   }, [multiple, onChange, previews]);
 
   const removeFile = (index) => {
     const newPreviews = [...previews];
-    newPreviews.splice(index, 1);
+    const removed = newPreviews.splice(index, 1)[0];
+    if (removed && !removed.isUrl && removed.preview) {
+      URL.revokeObjectURL(removed.preview);
+    }
     setPreviews(newPreviews);
     
     if (multiple) {
-      onChange(newPreviews);
+      onChange(newPreviews.map(p => p.file || p.url));
     } else {
       onChange(null);
     }
@@ -61,10 +78,10 @@ const ImageUpload = ({ value, onChange, multiple = false, accept = 'image/*' }) 
 
       {previews.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {previews.map((file, idx) => (
+          {previews.map((item, idx) => (
             <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-[var(--border-color)]">
               <img 
-                src={typeof file === 'string' ? file : file.preview} 
+                src={item.preview || item.url} 
                 alt="preview" 
                 className="w-full h-full object-cover"
               />

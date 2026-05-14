@@ -37,7 +37,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static files
-app.use('/uploads', express.static(path.join(__dirname, '..', config.upload.dir)));
+const uploadsDir = path.resolve(__dirname, '..', config.upload.dir);
+app.use('/uploads', express.static(uploadsDir));
 
 // Request logging
 app.use((req, res, next) => {

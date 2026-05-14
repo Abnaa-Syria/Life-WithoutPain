@@ -578,7 +578,7 @@ async function main() {
       notes: 'التزم بالجرعات',
       qrCodeValue: `RX-${completedAppointment.id}`,
       digitalSealValue: `SEAL-${completedAppointment.id}`,
-      pdfUrl: `https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf`,
+      pdfUrl: `/uploads/sample.pdf`,
       items: {
         create: [
           { medicineName: 'Paracetamol', dosage: '500mg', frequency: '2/day', duration: '5 days', instructions: 'After meals' },

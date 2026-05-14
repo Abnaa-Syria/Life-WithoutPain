@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import '../i18n';
 import '../styles/globals.css';
 import { AuthProvider, useAuth } from '../hooks/useAuth';
@@ -39,6 +40,7 @@ const ADMIN_ACC = ['SUPER_ADMIN', 'ACCOUNTANT'];
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
+  const { t } = useTranslation();
 
   if (loading) return null;
 
@@ -62,16 +64,16 @@ function AppRoutes() {
         <Route path="specialities" element={<ProtectedRoute roles={ADMIN_MED}><SpecialitiesPage /></ProtectedRoute>} />
         <Route path="specialities/:id" element={
           <ProtectedRoute roles={ADMIN_MED}>
-            <GenericDetailsPage 
-              entityName="التخصصات" endpoint="/admin/specialities" titleField="nameAr"
-              sections={[
-                { title: "المعلومات الأساسية", icon: Info, fields: [
-                  { label: "الاسم بالعربي", key: "nameAr" },
-                  { label: "الاسم بالإنجليزي", key: "nameEn" },
-                  { label: "الترتيب", key: "sortOrder" },
-                  { label: "نشط", key: "isActive", render: (v) => v ? "نعم" : "لا" },
-                ]}
-              ]}
+             <GenericDetailsPage 
+               entityName={t('sidebar.specialities')} endpoint="/admin/specialities" titleField="nameAr"
+               sections={[
+                 { title: t('common.personal_info') || "المعلومات الأساسية", icon: Info, fields: [
+                   { label: t('common.name_ar'), key: "nameAr" },
+                   { label: t('common.name_en'), key: "nameEn" },
+                   { label: t('common.sort_order') || "الترتيب", key: "sortOrder" },
+                   { label: t('common.is_active'), key: "isActive", render: (v) => v ? t('common.active') : t('common.inactive') },
+                 ]}
+               ]}
             />
           </ProtectedRoute>
         } />
@@ -80,41 +82,41 @@ function AppRoutes() {
         <Route path="services" element={
           <ProtectedRoute roles={ADMIN_MED}>
             <CrudPage
-              title="الخدمات" subtitle="إدارة خدمات المنصة" endpoint="/admin/services" queryKey="admin-services"
+              title={t('sidebar.services')} subtitle={t('services.manage') || 'Manage platform services'} endpoint="/admin/services" queryKey="admin-services"
               detailPath="/services"
               columns={[
                 { key: 'id', label: '#' },
-                { key: 'nameAr', label: 'الاسم (عربي)' },
-                { key: 'nameEn', label: 'الاسم (إنجليزي)' },
-                { key: 'type', label: 'النوع' },
-                { key: 'isActive', label: 'الحالة', render: (row) => row.isActive ? <span className="badge-success">نشط</span> : <span className="badge-warning">غير نشط</span> },
+                { key: 'nameAr', label: t('common.name_ar') },
+                { key: 'nameEn', label: t('common.name_en') },
+                { key: 'type', label: t('common.type') || t('services.type') },
+                { key: 'isActive', label: t('common.status'), render: (row) => row.isActive ? <span className="badge-success">{t('common.active')}</span> : <span className="badge-warning">{t('common.inactive')}</span> },
               ]}
               formFields={[
-                { name: 'nameAr', label: 'الاسم بالعربي', required: true },
-                { name: 'nameEn', label: 'الاسم بالإنجليزي', required: true },
-                { name: 'type', label: 'النوع', type: 'select', required: true, options: [{ value: 'REMOTE', label: 'عن بعد' }, { value: 'HOME', label: 'منزلي' }, { value: 'CLINIC', label: 'عيادة' }] },
-                { name: 'descriptionAr', label: 'الوصف بالعربي', type: 'textarea' },
-                { name: 'descriptionEn', label: 'الوصف بالإنجليزي', type: 'textarea' },
-                { name: 'isActive', label: 'نشط', type: 'boolean', defaultValue: true },
+                { name: 'nameAr', label: t('common.name_ar'), required: true },
+                { name: 'nameEn', label: t('common.name_en'), required: true },
+                { name: 'type', label: t('common.type') || t('services.type'), type: 'select', required: true, options: [{ value: 'REMOTE', label: t('appointments.types.online') }, { value: 'HOME', label: t('appointments.types.home_visit') }, { value: 'CLINIC', label: t('appointments.types.clinic') }] },
+                { name: 'descriptionAr', label: t('common.description_ar'), type: 'textarea' },
+                { name: 'descriptionEn', label: t('common.description_en'), type: 'textarea' },
+                { name: 'isActive', label: t('common.is_active'), type: 'boolean', defaultValue: true },
               ]}
-              createLabel="إضافة خدمة" editLabel="تعديل الخدمة"
+              createLabel={t('services.add') || t('common.add_new')} editLabel={t('services.edit') || t('common.edit')}
             />
           </ProtectedRoute>
         } />
         <Route path="services/:id" element={
           <ProtectedRoute roles={ADMIN_MED}>
-            <GenericDetailsPage 
-              entityName="الخدمات" endpoint="/admin/services" titleField="nameAr"
-              sections={[
-                { title: "معلومات الخدمة", icon: Briefcase, fields: [
-                  { label: "الاسم بالعربي", key: "nameAr" },
-                  { label: "الاسم بالإنجليزي", key: "nameEn" },
-                  { label: "النوع", key: "type" },
-                  { label: "الحالة", key: "isActive", render: (v) => v ? "نشط" : "غير نشط" },
-                  { label: "الوصف بالعربي", key: "descriptionAr", fullWidth: true },
-                  { label: "الوصف بالإنجليزي", key: "descriptionEn", fullWidth: true },
-                ]}
-              ]}
+             <GenericDetailsPage 
+               entityName={t('sidebar.services')} endpoint="/admin/services" titleField="nameAr"
+               sections={[
+                 { title: t('services.details') || "معلومات الخدمة", icon: Briefcase, fields: [
+                   { label: t('common.name_ar'), key: "nameAr" },
+                   { label: t('common.name_en'), key: "nameEn" },
+                   { label: t('common.type'), key: "type" },
+                   { label: t('common.status'), key: "isActive", render: (v) => v ? t('common.active') : t('common.inactive') },
+                   { label: t('common.description_ar'), key: "descriptionAr", fullWidth: true },
+                   { label: t('common.description_en'), key: "descriptionEn", fullWidth: true },
+                 ]}
+               ]}
             />
           </ProtectedRoute>
         } />
@@ -150,22 +152,7 @@ function AppRoutes() {
             />
           </ProtectedRoute>
         } />
-        <Route path="insurance-providers/:id" element={
-          <ProtectedRoute roles={ADMIN_INS}>
-            <GenericDetailsPage 
-              entityName="شركات التأمين" endpoint="/admin/insurance-providers" titleField="nameAr"
-              sections={[
-                { title: "معلومات الشركة", icon: Shield, fields: [
-                  { label: "الاسم بالعربي", key: "nameAr" },
-                  { label: "الاسم بالإنجليزي", key: "nameEn" },
-                  { label: "الرمز", key: "code" },
-                  { label: "وضع التكامل", key: "apiMode" },
-                  { label: "الحالة", key: "isActive", render: (v) => v ? "نشط" : "غير نشط" },
-                ]}
-              ]}
-            />
-          </ProtectedRoute>
-        } />
+        <Route path="insurance-providers/:id" element={<ProtectedRoute roles={ADMIN_INS}><GenericDetailsPage title="تفاصيل شركة التأمين" endpoint="/admin/insurance-providers" fields={[{ label: "وضع التكامل", key: "apiMode" }, { label: "الحالة", key: "isActive", render: (v) => v ? "نشط" : "غير نشط" }]} /></ProtectedRoute>} />
 
         <Route path="insurance-cases" element={<ProtectedRoute roles={ADMIN_INS}><InsuranceCasesPage /></ProtectedRoute>} />
         <Route path="insurance-cases/:id" element={<ProtectedRoute roles={ADMIN_INS}><InsuranceCaseDetailsPage /></ProtectedRoute>} />
@@ -177,35 +164,35 @@ function AppRoutes() {
         <Route path="lab-tests" element={
           <ProtectedRoute roles={ADMIN_MED}>
             <CrudPage
-              title="الفحوصات المخبرية" subtitle="متابعة طلبات الفحوصات" endpoint="/admin/lab-tests" queryKey="admin-lab-tests"
+              title={t('sidebar.medical_tests')} subtitle={t('medical.manage_tests') || "متابعة طلبات الفحوصات"} endpoint="/admin/lab-tests" queryKey="admin-lab-tests"
               canCreate={false} detailPath="/lab-tests"
               columns={[
                 { key: 'id', label: '#' },
-                { key: 'title', label: 'العنوان' },
-                { key: 'patient', label: 'المريض', render: (row) => row.patient?.user?.fullName || '-' },
-                { key: 'doctor', label: 'الطبيب', render: (row) => row.doctor?.user?.fullName || '-' },
-                { key: 'status', label: 'الحالة', render: (row) => <StatusBadge status={row.status} /> },
+                { key: 'title', label: t('common.title') || "العنوان" },
+                { key: 'patient', label: t('appointments.patient'), render: (row) => row.patient?.user?.fullName || '-' },
+                { key: 'doctor', label: t('appointments.doctor'), render: (row) => row.doctor?.user?.fullName || '-' },
+                { key: 'status', label: t('common.status'), render: (row) => <StatusBadge status={row.status} /> },
               ]}
               formFields={[
-                { name: 'title', label: 'العنوان', required: true },
-                { name: 'status', label: 'الحالة', type: 'select', options: [{ value: 'PENDING', label: 'قيد الانتظار' }, { value: 'SAMPLE_COLLECTED', label: 'تم جمع العينة' }, { value: 'PROCESSING', label: 'قيد المعالجة' }, { value: 'COMPLETED', label: 'مكتمل' }, { value: 'CANCELLED', label: 'ملغي' }] },
-                { name: 'notes', label: 'ملاحظات', type: 'textarea' },
+                { name: 'title', label: t('common.title') || "العنوان", required: true },
+                { name: 'status', label: t('common.status'), type: 'select', options: [{ value: 'PENDING', label: t('status.pending') }, { value: 'SAMPLE_COLLECTED', label: t('status.sample_collected') || 'تم جمع العينة' }, { value: 'PROCESSING', label: t('status.processing') || 'قيد المعالجة' }, { value: 'COMPLETED', label: t('status.completed') }, { value: 'CANCELLED', label: t('status.cancelled') }] },
+                { name: 'notes', label: t('common.notes'), type: 'textarea' },
               ]}
-              editLabel="تعديل الفحص" deleteConfirmMessage="هل أنت متأكد من حذف هذا الفحص؟"
+              editLabel={t('common.edit')} deleteConfirmMessage={t('common.confirm.delete_text')}
             />
           </ProtectedRoute>
         } />
         <Route path="lab-tests/:id" element={
           <ProtectedRoute roles={ADMIN_MED}>
             <GenericDetailsPage 
-              entityName="الفحوصات المخبرية" endpoint="/admin/lab-tests" titleField="title"
+              entityName={t('sidebar.medical_tests')} endpoint="/admin/lab-tests" titleField="title"
               sections={[
-                { title: "معلومات الفحص", icon: Activity, fields: [
-                  { label: "العنوان", key: "title" },
-                  { label: "المريض", key: "patient.user.fullName" },
-                  { label: "الطبيب", key: "doctor.user.fullName" },
-                  { label: "الحالة", key: "status" },
-                  { label: "ملاحظات", key: "notes", fullWidth: true },
+                { title: t('medical.test_info') || "معلومات الفحص", icon: Activity, fields: [
+                  { label: t('common.title') || "العنوان", key: "title" },
+                  { label: t('appointments.patient'), key: "patient.user.fullName" },
+                  { label: t('appointments.doctor'), key: "doctor.user.fullName" },
+                  { label: t('common.status'), key: "status" },
+                  { label: t('common.notes'), key: "notes", fullWidth: true },
                 ]}
               ]}
             />
@@ -252,23 +239,23 @@ function AppRoutes() {
         <Route path="doctor-payouts" element={
           <ProtectedRoute roles={ADMIN_ACC}>
             <CrudPage
-              title="مستحقات الأطباء" subtitle="إدارة عمولات ومستحقات الأطباء" endpoint="/admin/doctor-payouts" queryKey="admin-doctor-payouts"
+              title={t('payouts.title') || "مستحقات الأطباء"} subtitle={t('payouts.subtitle') || "إدارة عمولات ومستحقات الأطباء"} endpoint="/admin/doctor-payouts" queryKey="admin-doctor-payouts"
               detailPath="/doctor-payouts"
               columns={[
                 { key: 'id', label: '#' },
-                { key: 'doctor', label: 'الطبيب', render: (row) => row.doctor?.user?.fullName || '-' },
-                { key: 'grossAmount', label: 'المبلغ الإجمالي', render: (row) => `${row.grossAmount} ر.س` },
-                { key: 'commissionAmount', label: 'العمولة', render: (row) => `${row.commissionAmount} ر.س` },
-                { key: 'netAmount', label: 'صافي المبلغ', render: (row) => `${row.netAmount} ر.س` },
-                { key: 'status', label: 'الحالة', render: (row) => <StatusBadge status={row.status} /> },
+                { key: 'doctor', label: t('appointments.doctor'), render: (row) => row.doctor?.user?.fullName || '-' },
+                { key: 'grossAmount', label: t('payouts.gross_amount') || 'المبلغ الإجمالي', render: (row) => `${row.grossAmount} ر.س` },
+                { key: 'commissionAmount', label: t('payouts.commission') || 'العمولة', render: (row) => `${row.commissionAmount} ر.س` },
+                { key: 'netAmount', label: t('payouts.net_amount') || 'صافي المبلغ', render: (row) => `${row.netAmount} ر.س` },
+                { key: 'status', label: t('common.status'), render: (row) => <StatusBadge status={row.status} /> },
               ]}
               formFields={[
-                { name: 'status', label: 'الحالة', type: 'select', required: true, options: [{ value: 'PENDING', label: 'قيد الانتظار' }, { value: 'PROCESSING', label: 'قيد المعالجة' }, { value: 'PAID', label: 'مدفوع' }, { value: 'FAILED', label: 'فشل' }] },
-                { name: 'grossAmount', label: 'المبلغ الإجمالي', type: 'number' },
-                { name: 'commissionAmount', label: 'العمولة', type: 'number' },
-                { name: 'netAmount', label: 'صافي المبلغ', type: 'number' },
+                { name: 'status', label: t('common.status'), type: 'select', required: true, options: [{ value: 'PENDING', label: t('status.pending') }, { value: 'PROCESSING', label: t('status.processing') }, { value: 'PAID', label: t('status.paid') || 'مدفوع' }, { value: 'FAILED', label: t('status.failed') || 'فشل' }] },
+                { name: 'grossAmount', label: t('payouts.gross_amount') || 'المبلغ الإجمالي', type: 'number' },
+                { name: 'commissionAmount', label: t('payouts.commission') || 'العمولة', type: 'number' },
+                { name: 'netAmount', label: t('payouts.net_amount') || 'صافي المبلغ', type: 'number' },
               ]}
-              editLabel="تعديل المستحق" deleteConfirmMessage="هل أنت متأكد من حذف هذا المستحق؟"
+              editLabel={t('common.edit')} deleteConfirmMessage={t('common.confirm.delete_text')}
               canCreate={false}
             />
           </ProtectedRoute>
@@ -293,16 +280,16 @@ function AppRoutes() {
         {/* Reconciliations – full CRUD */}
         <Route path="reconciliations" element={
           <ProtectedRoute roles={ADMIN_ACC}>
-            <CrudPage
-              title="التسويات" subtitle="إدارة تسويات المطالبات" endpoint="/admin/reconciliations" queryKey="admin-reconciliations"
-              detailPath="/reconciliations"
+             <CrudPage
+               title={t('sidebar.reconciliations') || "التسويات"} subtitle={t('reconciliations.manage') || "إدارة تسويات المطالبات"} endpoint="/admin/reconciliations" queryKey="admin-reconciliations"
+               detailPath="/reconciliations"
               columns={[
                 { key: 'id', label: '#' },
-                { key: 'provider', label: 'شركة التأمين', render: (row) => row.provider?.nameAr || '-' },
-                { key: 'referenceNumber', label: 'رقم المرجع' },
-                { key: 'amountExpected', label: 'المبلغ المتوقع', render: (row) => `${row.amountExpected} ر.س` },
-                { key: 'amountReceived', label: 'المبلغ المستلم', render: (row) => `${row.amountReceived} ر.س` },
-                { key: 'status', label: 'الحالة', render: (row) => <StatusBadge status={row.status} /> },
+                 { key: 'provider', label: t('insurance.provider'), render: (row) => row.provider?.nameAr || '-' },
+                 { key: 'referenceNumber', label: t('reconciliations.reference_number') || 'رقم المرجع' },
+                 { key: 'amountExpected', label: t('reconciliations.expected_amount') || 'المبلغ المتوقع', render: (row) => `${row.amountExpected} ر.س` },
+                 { key: 'amountReceived', label: t('reconciliations.received_amount') || 'المبلغ المستلم', render: (row) => `${row.amountReceived} ر.س` },
+                 { key: 'status', label: t('common.status'), render: (row) => <StatusBadge status={row.status} /> },
               ]}
               formFields={[
                 { name: 'referenceNumber', label: 'رقم المرجع', required: true },
@@ -311,22 +298,22 @@ function AppRoutes() {
                 { name: 'status', label: 'الحالة', type: 'select', required: true, options: [{ value: 'MATCHED', label: 'متطابق' }, { value: 'DISCREPANCY', label: 'فرق' }, { value: 'PENDING', label: 'قيد الانتظار' }] },
                 { name: 'notes', label: 'ملاحظات', type: 'textarea' },
               ]}
-              createLabel="إضافة تسوية" editLabel="تعديل التسوية"
+               createLabel={t('common.add_new')} editLabel={t('common.edit')}
             />
           </ProtectedRoute>
         } />
         <Route path="reconciliations/:id" element={
           <ProtectedRoute roles={ADMIN_ACC}>
-            <GenericDetailsPage 
-              entityName="التسويات" endpoint="/admin/reconciliations" titleField="referenceNumber"
+             <GenericDetailsPage 
+               entityName={t('sidebar.reconciliations') || "التسويات"} endpoint="/admin/reconciliations" titleField="referenceNumber"
               sections={[
-                { title: "معلومات التسوية", icon: FileText, fields: [
-                  { label: "شركة التأمين", key: "provider.nameAr" },
-                  { label: "رقم المرجع", key: "referenceNumber" },
-                  { label: "المبلغ المتوقع", key: "amountExpected", render: (v) => `${v} ر.س` },
-                  { label: "المبلغ المستلم", key: "amountReceived", render: (v) => `${v} ر.س` },
-                  { label: "الحالة", key: "status" },
-                  { label: "ملاحظات", key: "notes", fullWidth: true },
+                 { title: t('reconciliations.details') || "معلومات التسوية", icon: FileText, fields: [
+                   { label: t('insurance.provider'), key: "provider.nameAr" },
+                   { label: t('reconciliations.reference_number') || 'رقم المرجع', key: "referenceNumber" },
+                   { label: t('reconciliations.expected_amount') || 'المبلغ المتوقع', key: "amountExpected", render: (v) => `${v} ر.س` },
+                   { label: t('reconciliations.received_amount') || 'المبلغ المستلم', key: "amountReceived", render: (v) => `${v} ر.س` },
+                   { label: t('common.status'), key: "status" },
+                   { label: t('common.notes'), key: "notes", fullWidth: true },
                 ]}
               ]}
             />
@@ -337,37 +324,37 @@ function AppRoutes() {
         <Route path="reports" element={
           <ProtectedRoute roles={ADMIN_MED}>
             <CrudPage
-              title="التقارير الطبية" subtitle="جميع التقارير الطبية" endpoint="/admin/reports" queryKey="admin-reports"
+              title={t('medical.reports')} subtitle={t('medical.all_reports') || "جميع التقارير الطبية"} endpoint="/admin/reports" queryKey="admin-reports"
               canCreate={false} detailPath="/reports"
               columns={[
                 { key: 'id', label: '#' },
-                { key: 'patient', label: 'المريض', render: (row) => row.patient?.user?.fullName || '-' },
-                { key: 'doctor', label: 'الطبيب', render: (row) => row.doctor?.user?.fullName || '-' },
-                { key: 'diagnosis', label: 'التشخيص', render: (row) => (row.diagnosis || '-').substring(0, 50) },
-                { key: 'date', label: 'التاريخ', render: (row) => new Date(row.createdAt).toLocaleDateString('ar-SA') },
+                { key: 'patient', label: t('appointments.patient'), render: (row) => row.patient?.user?.fullName || '-' },
+                { key: 'doctor', label: t('appointments.doctor'), render: (row) => row.doctor?.user?.fullName || '-' },
+                { key: 'diagnosis', label: t('medical.diagnosis'), render: (row) => (row.diagnosis || '-').substring(0, 50) },
+                { key: 'date', label: t('common.created_at'), render: (row) => new Date(row.createdAt).toLocaleDateString() },
               ]}
               formFields={[
-                { name: 'visitReason', label: 'سبب الزيارة', type: 'textarea' },
-                { name: 'diagnosis', label: 'التشخيص', type: 'textarea' },
-                { name: 'summary', label: 'الملخص', type: 'textarea', fullWidth: true },
-                { name: 'recommendations', label: 'التوصيات', type: 'textarea', fullWidth: true },
+                { name: 'visitReason', label: t('medical.visit_reason') || 'سبب الزيارة', type: 'textarea' },
+                { name: 'diagnosis', label: t('medical.diagnosis'), type: 'textarea' },
+                { name: 'summary', label: t('common.summary'), type: 'textarea', fullWidth: true },
+                { name: 'recommendations', label: t('medical.recommendations'), type: 'textarea', fullWidth: true },
               ]}
-              editLabel="تعديل التقرير" deleteConfirmMessage="هل أنت متأكد من حذف هذا التقرير؟"
+              editLabel={t('common.edit')} deleteConfirmMessage={t('common.confirm.delete_text')}
             />
           </ProtectedRoute>
         } />
         <Route path="reports/:id" element={
           <ProtectedRoute roles={ADMIN_MED}>
             <GenericDetailsPage 
-              entityName="التقارير الطبية" endpoint="/admin/reports" titleField="id"
+              entityName={t('medical.reports')} endpoint="/admin/reports" titleField="id"
               sections={[
-                { title: "معلومات التقرير", icon: FileText, fields: [
-                  { label: "المريض", key: "patient.user.fullName" },
-                  { label: "الطبيب", key: "doctor.user.fullName" },
-                  { label: "سبب الزيارة", key: "visitReason", fullWidth: true },
-                  { label: "التشخيص", key: "diagnosis", fullWidth: true },
-                  { label: "الملخص", key: "summary", fullWidth: true },
-                  { label: "التوصيات", key: "recommendations", fullWidth: true },
+                { title: t('medical.report_details') || "معلومات التقرير", icon: FileText, fields: [
+                  { label: t('appointments.patient'), key: "patient.user.fullName" },
+                  { label: t('appointments.doctor'), key: "doctor.user.fullName" },
+                  { label: t('medical.visit_reason') || 'سبب الزيارة', key: "visitReason", fullWidth: true },
+                  { label: t('medical.diagnosis'), key: "diagnosis", fullWidth: true },
+                  { label: t('common.summary'), key: "summary", fullWidth: true },
+                  { label: t('medical.recommendations'), key: "recommendations", fullWidth: true },
                 ]}
               ]}
             />
@@ -378,34 +365,34 @@ function AppRoutes() {
         <Route path="prescriptions" element={
           <ProtectedRoute roles={ADMIN_MED}>
             <CrudPage
-              title="الوصفات الطبية" subtitle="جميع الوصفات الطبية" endpoint="/admin/prescriptions" queryKey="admin-prescriptions"
+              title={t('medical.prescriptions')} subtitle={t('medical.all_prescriptions') || "جميع الوصفات الطبية"} endpoint="/admin/prescriptions" queryKey="admin-prescriptions"
               canCreate={false} detailPath="/prescriptions"
               columns={[
                 { key: 'id', label: '#' },
-                { key: 'patient', label: 'المريض', render: (row) => row.patient?.user?.fullName || '-' },
-                { key: 'doctor', label: 'الطبيب', render: (row) => row.doctor?.user?.fullName || '-' },
-                { key: 'diagnosis', label: 'التشخيص', render: (row) => (row.diagnosis || '-').substring(0, 50) },
-                { key: 'items', label: 'عدد الأدوية', render: (row) => row.items?.length || 0 },
-                { key: 'date', label: 'التاريخ', render: (row) => new Date(row.createdAt).toLocaleDateString('ar-SA') },
+                { key: 'patient', label: t('appointments.patient'), render: (row) => row.patient?.user?.fullName || '-' },
+                { key: 'doctor', label: t('appointments.doctor'), render: (row) => row.doctor?.user?.fullName || '-' },
+                { key: 'diagnosis', label: t('medical.diagnosis'), render: (row) => (row.diagnosis || '-').substring(0, 50) },
+                { key: 'items', label: t('medical.medications_count') || 'عدد الأدوية', render: (row) => row.items?.length || 0 },
+                { key: 'date', label: t('common.created_at'), render: (row) => new Date(row.createdAt).toLocaleDateString() },
               ]}
               formFields={[
-                { name: 'diagnosis', label: 'التشخيص', type: 'textarea' },
-                { name: 'notes', label: 'ملاحظات', type: 'textarea' },
+                { name: 'diagnosis', label: t('medical.diagnosis'), type: 'textarea' },
+                { name: 'notes', label: t('common.notes'), type: 'textarea' },
               ]}
-              editLabel="تعديل الوصفة" deleteConfirmMessage="هل أنت متأكد من حذف هذه الوصفة؟"
+              editLabel={t('common.edit')} deleteConfirmMessage={t('common.confirm.delete_text')}
             />
           </ProtectedRoute>
         } />
         <Route path="prescriptions/:id" element={
           <ProtectedRoute roles={ADMIN_MED}>
             <GenericDetailsPage 
-              entityName="الوصفات الطبية" endpoint="/admin/prescriptions" titleField="id"
+              entityName={t('medical.prescriptions')} endpoint="/admin/prescriptions" titleField="id"
               sections={[
-                { title: "معلومات الوصفة", icon: Activity, fields: [
-                  { label: "المريض", key: "patient.user.fullName" },
-                  { label: "الطبيب", key: "doctor.user.fullName" },
-                  { label: "التشخيص", key: "diagnosis", fullWidth: true },
-                  { label: "ملاحظات", key: "notes", fullWidth: true },
+                { title: t('medical.prescription_details') || "معلومات الوصفة", icon: Activity, fields: [
+                  { label: t('appointments.patient'), key: "patient.user.fullName" },
+                  { label: t('appointments.doctor'), key: "doctor.user.fullName" },
+                  { label: t('medical.diagnosis'), key: "diagnosis", fullWidth: true },
+                  { label: t('common.notes'), key: "notes", fullWidth: true },
                 ]}
               ]}
             />
@@ -416,15 +403,15 @@ function AppRoutes() {
         <Route path="notifications" element={
           <ProtectedRoute roles={['SUPER_ADMIN']}>
             <CrudPage
-              title="الإشعارات" subtitle="إدارة إشعارات النظام" endpoint="/admin/notifications" queryKey="admin-notifications"
+              title={t('sidebar.notifications') || "الإشعارات"} subtitle={t('notifications.manage') || "إدارة إشعارات النظام"} endpoint="/admin/notifications" queryKey="admin-notifications"
               detailPath="/notifications"
               columns={[
                 { key: 'id', label: '#' },
-                { key: 'titleAr', label: 'العنوان (عربي)' },
-                { key: 'titleEn', label: 'العنوان (إنجليزي)' },
-                { key: 'type', label: 'النوع' },
-                { key: 'isRead', label: 'مقروء', render: (row) => row.isRead ? 'نعم' : 'لا' },
-                { key: 'date', label: 'التاريخ', render: (row) => new Date(row.createdAt).toLocaleDateString('ar-SA') },
+                { key: 'titleAr', label: t('common.name_ar') },
+                { key: 'titleEn', label: t('common.name_en') },
+                { key: 'type', label: t('common.type') },
+                { key: 'isRead', label: t('notifications.is_read') || 'مقروء', render: (row) => row.isRead ? t('common.yes') || 'نعم' : t('common.no') || 'لا' },
+                { key: 'date', label: t('common.created_at'), render: (row) => new Date(row.createdAt).toLocaleDateString() },
               ]}
               formFields={[
                 { name: 'userId', label: 'معرف المستخدم', type: 'number', required: true },
@@ -441,15 +428,15 @@ function AppRoutes() {
         <Route path="notifications/:id" element={
           <ProtectedRoute roles={['SUPER_ADMIN']}>
             <GenericDetailsPage 
-              entityName="الإشعارات" endpoint="/admin/notifications" titleField="titleAr"
+              entityName={t('sidebar.notifications') || "الإشعارات"} endpoint="/admin/notifications" titleField="titleAr"
               sections={[
-                { title: "محتوى الإشعار", icon: Bell, fields: [
-                  { label: "العنوان بالعربي", key: "titleAr" },
-                  { label: "العنوان بالإنجليزي", key: "titleEn" },
-                  { label: "النوع", key: "type" },
-                  { label: "مقروء", key: "isRead", render: (v) => v ? "نعم" : "لا" },
-                  { label: "المحتوى بالعربي", key: "bodyAr", fullWidth: true },
-                  { label: "المحتوى بالإنجليزي", key: "bodyEn", fullWidth: true },
+                { title: t('notifications.content') || "محتوى الإشعار", icon: Bell, fields: [
+                  { label: t('common.title_ar') || 'العنوان بالعربي', key: "titleAr" },
+                  { label: t('common.title_en') || 'العنوان بالإنجليزي', key: "titleEn" },
+                  { label: t('common.type'), key: "type" },
+                  { label: t('notifications.is_read') || 'مقروء', key: "isRead", render: (v) => v ? t('common.yes') : t('common.no') },
+                  { label: t('common.body_ar') || 'المحتوى بالعربي', key: "bodyAr", fullWidth: true },
+                  { label: t('common.body_en') || 'المحتوى بالإنجليزي', key: "bodyEn", fullWidth: true },
                 ]}
               ]}
             />
@@ -460,36 +447,36 @@ function AppRoutes() {
         <Route path="reviews" element={
           <ProtectedRoute roles={ADMIN_MED}>
             <CrudPage
-              title="التقييمات" subtitle="تقييمات المرضى للأطباء" endpoint="/admin/reviews" queryKey="admin-reviews"
+              title={t('sidebar.reviews') || "التقييمات"} subtitle={t('reviews.subtitle') || "تقييمات المرضى للأطباء"} endpoint="/admin/reviews" queryKey="admin-reviews"
               canCreate={false} detailPath="/reviews"
               columns={[
                 { key: 'id', label: '#' },
-                { key: 'patient', label: 'المريض', render: (row) => row.patient?.user?.fullName || '-' },
-                { key: 'doctor', label: 'الطبيب', render: (row) => row.doctor?.user?.fullName || '-' },
-                { key: 'rating', label: 'التقييم', render: (row) => `${row.rating}/5` },
-                { key: 'comment', label: 'التعليق', render: (row) => (row.comment || '-').substring(0, 60) },
-                { key: 'isVisible', label: 'مرئي', render: (row) => row.isVisible ? 'نعم' : 'لا' },
+                { key: 'patient', label: t('appointments.patient'), render: (row) => row.patient?.user?.fullName || '-' },
+                { key: 'doctor', label: t('appointments.doctor'), render: (row) => row.doctor?.user?.fullName || '-' },
+                { key: 'rating', label: t('doctors.rating'), render: (row) => `${row.rating}/5` },
+                { key: 'comment', label: t('common.notes'), render: (row) => (row.comment || '-').substring(0, 60) },
+                { key: 'isVisible', label: t('common.is_active'), render: (row) => row.isVisible ? t('common.yes') : t('common.no') },
               ]}
               formFields={[
-                { name: 'rating', label: 'التقييم', type: 'number' },
-                { name: 'comment', label: 'التعليق', type: 'textarea' },
-                { name: 'isVisible', label: 'مرئي', type: 'boolean', defaultValue: true },
+                { name: 'rating', label: t('doctors.rating'), type: 'number' },
+                { name: 'comment', label: t('common.notes'), type: 'textarea' },
+                { name: 'isVisible', label: t('common.is_active'), type: 'boolean', defaultValue: true },
               ]}
-              editLabel="تعديل التقييم" deleteConfirmMessage="هل أنت متأكد من حذف هذا التقييم؟"
+              editLabel={t('common.edit')} deleteConfirmMessage={t('common.confirm.delete_text')}
             />
           </ProtectedRoute>
         } />
         <Route path="reviews/:id" element={
           <ProtectedRoute roles={ADMIN_MED}>
             <GenericDetailsPage 
-              entityName="التقييمات" endpoint="/admin/reviews" titleField="id"
+              entityName={t('sidebar.reviews') || "التقييمات"} endpoint="/admin/reviews" titleField="id"
               sections={[
-                { title: "تفاصيل التقييم", icon: Star, fields: [
-                  { label: "المريض", key: "patient.user.fullName" },
-                  { label: "الطبيب", key: "doctor.user.fullName" },
-                  { label: "التقييم", key: "rating", render: (v) => `${v}/5` },
-                  { label: "مرئي", key: "isVisible", render: (v) => v ? "نعم" : "لا" },
-                  { label: "التعليق", key: "comment", fullWidth: true },
+                { title: t('reviews.details') || "تفاصيل التقييم", icon: Star, fields: [
+                  { label: t('appointments.patient'), key: "patient.user.fullName" },
+                  { label: t('appointments.doctor'), key: "doctor.user.fullName" },
+                  { label: t('doctors.rating'), key: "rating", render: (v) => `${v}/5` },
+                  { label: t('common.is_active'), key: "isVisible", render: (v) => v ? t('common.yes') : t('common.no') },
+                  { label: t('common.notes'), key: "comment", fullWidth: true },
                 ]}
               ]}
             />
@@ -500,35 +487,35 @@ function AppRoutes() {
         <Route path="settings" element={
           <ProtectedRoute roles={['SUPER_ADMIN']}>
             <CrudPage
-              title="الإعدادات" subtitle="إعدادات النظام" endpoint="/admin/settings" queryKey="admin-settings"
+              title={t('sidebar.settings')} subtitle={t('settings.manage') || "إعدادات النظام"} endpoint="/admin/settings" queryKey="admin-settings"
               detailPath="/settings"
               columns={[
                 { key: 'id', label: '#' },
-                { key: 'key', label: 'المفتاح' },
-                { key: 'value', label: 'القيمة' },
-                { key: 'type', label: 'النوع' },
-                { key: 'isPublic', label: 'عام', render: (row) => row.isPublic ? 'نعم' : 'لا' },
+                { key: 'key', label: t('common.key') || 'المفتاح' },
+                { key: 'value', label: t('common.value') || 'القيمة' },
+                { key: 'type', label: t('common.type') },
+                { key: 'isPublic', label: t('common.is_public') || 'عام', render: (row) => row.isPublic ? t('common.yes') : t('common.no') },
               ]}
               formFields={[
-                { name: 'key', label: 'المفتاح', required: true },
-                { name: 'value', label: 'القيمة', required: true },
-                { name: 'type', label: 'النوع', type: 'select', required: true, options: [{ value: 'STRING', label: 'نص' }, { value: 'NUMBER', label: 'رقم' }, { value: 'BOOLEAN', label: 'منطقي' }, { value: 'JSON', label: 'JSON' }] },
-                { name: 'isPublic', label: 'عام', type: 'boolean', defaultValue: false },
+                { name: 'key', label: t('common.key') || 'المفتاح', required: true },
+                { name: 'value', label: t('common.value') || 'القيمة', required: true },
+                { name: 'type', label: t('common.type'), type: 'select', required: true, options: [{ value: 'STRING', label: t('common.types.string') || 'نص' }, { value: 'NUMBER', label: t('common.types.number') || 'رقم' }, { value: 'BOOLEAN', label: t('common.types.boolean') || 'منطقي' }, { value: 'JSON', label: 'JSON' }] },
+                { name: 'isPublic', label: t('common.is_public') || 'عام', type: 'boolean', defaultValue: false },
               ]}
-              createLabel="إضافة إعداد" editLabel="تعديل الإعداد"
+              createLabel={t('settings.add') || "إضافة إعداد"} editLabel={t('common.edit')}
             />
           </ProtectedRoute>
         } />
         <Route path="settings/:id" element={
           <ProtectedRoute roles={['SUPER_ADMIN']}>
             <GenericDetailsPage 
-              entityName="الإعدادات" endpoint="/admin/settings" titleField="key"
+              entityName={t('sidebar.settings')} endpoint="/admin/settings" titleField="key"
               sections={[
-                { title: "تفاصيل الإعداد", icon: Settings, fields: [
-                  { label: "المفتاح", key: "key" },
-                  { label: "القيمة", key: "value" },
-                  { label: "النوع", key: "type" },
-                  { label: "عام", key: "isPublic", render: (v) => v ? "نعم" : "لا" },
+                { title: t('settings.details') || "تفاصيل الإعداد", icon: Settings, fields: [
+                  { label: t('common.key') || 'المفتاح', key: "key" },
+                  { label: t('common.value') || 'القيمة', key: "value" },
+                  { label: t('common.type'), key: "type" },
+                  { label: t('common.is_public') || 'عام', key: "isPublic", render: (v) => v ? t('common.yes') : t('common.no') },
                 ]}
               ]}
             />

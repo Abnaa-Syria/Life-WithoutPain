@@ -89,7 +89,9 @@ export default function CrudPage({
   const columns = columnsDef.map(col => ({
     header: col.label,
     accessorKey: col.key,
-    cell: col.render ? ({ row }) => col.render(row.original) : undefined
+    cell: col.render 
+      ? ({ row }) => col.render(row.original) 
+      : ({ getValue }) => getValue() ?? '-'
   }));
 
   return (

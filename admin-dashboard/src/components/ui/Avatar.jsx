@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const Avatar = ({ src, name, size = 'md', className = '' }) => {
+  const [imgError, setImgError] = useState(false);
   const sizeMap = {
     sm: 'w-8 h-8 text-xs',
     md: 'w-10 h-10 text-sm',
@@ -19,11 +20,12 @@ const Avatar = ({ src, name, size = 'md', className = '' }) => {
 
   return (
     <div className={`relative shrink-0 ${sizeMap[size]} ${className}`}>
-      {src ? (
+      {src && !imgError ? (
         <img
           src={src}
           alt={name}
           className="w-full h-full rounded-xl object-cover border border-[var(--border-color)]"
+          onError={() => setImgError(true)}
         />
       ) : (
         <div className="w-full h-full rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold border border-indigo-200 dark:border-indigo-800">
