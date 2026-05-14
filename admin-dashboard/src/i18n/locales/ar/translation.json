@@ -134,7 +134,12 @@
     "all_prescriptions": "جميع الوصفات الطبية",
     "prescription_details": "معلومات الوصفة",
     "medications_count": "عدد الأدوية",
-    "visit_reason": "سبب الزيارة"
+    "visit_reason": "سبب الزيارة",
+    "clinical_exam": "الفحص السريري",
+    "test_type": "نوع الفحص",
+    "test_value": "النتيجة/القيمة",
+    "next_appointment": "الموعد القادم",
+    "report_attachments": "مرفقات التقرير"
   },
   "dashboard": {
     "greeting_SUPER_ADMIN": "مرحباً بك في لوحة إدارة النظام",

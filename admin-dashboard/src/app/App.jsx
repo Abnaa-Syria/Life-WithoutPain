@@ -30,7 +30,7 @@ import SupportCaseDetailsPage from '../pages/SupportCaseDetailsPage';
 import AuditLogDetailsPage from '../pages/AuditLogDetailsPage';
 import MedicationsPage from '../pages/MedicationsPage';
 import MedicalTestsPage from '../pages/MedicalTestsPage';
-import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Bell, Star, Settings, Pill, ClipboardList } from 'lucide-react';
+import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Bell, Star, Settings, Pill, ClipboardList, Calendar, Paperclip } from 'lucide-react';
 
 const ALL_ADMIN = ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'];
 const ADMIN_MED = ['SUPER_ADMIN', 'MEDICAL_ADMIN'];
@@ -338,6 +338,7 @@ function AppRoutes() {
                 { name: 'diagnosis', label: t('medical.diagnosis'), type: 'textarea' },
                 { name: 'summary', label: t('common.summary'), type: 'textarea', fullWidth: true },
                 { name: 'recommendations', label: t('medical.recommendations'), type: 'textarea', fullWidth: true },
+                { name: 'nextAppointmentDate', label: t('medical.next_appointment'), type: 'date' },
               ]}
               editLabel={t('common.edit')} deleteConfirmMessage={t('common.confirm.delete_text')}
             />
@@ -355,6 +356,52 @@ function AppRoutes() {
                   { label: t('medical.diagnosis'), key: "diagnosis", fullWidth: true },
                   { label: t('common.summary'), key: "summary", fullWidth: true },
                   { label: t('medical.recommendations'), key: "recommendations", fullWidth: true },
+                  { label: t('medical.next_appointment'), key: "nextAppointmentDate", render: (v) => v ? new Date(v).toLocaleDateString() : '-' },
+                ]},
+                { title: t('medical.clinical_exam') || "الفحص السريري", icon: Activity, fields: [
+                  { label: "", key: "clinicalExam", fullWidth: true, render: (v) => {
+                    if (!v || !Array.isArray(v)) return '-';
+                    return (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left border-collapse">
+                          <thead>
+                            <tr className="border-b border-[var(--border-color)]">
+                              <th className="py-2 px-4 font-semibold text-[var(--text-muted)]">{t('medical.test_type')}</th>
+                              <th className="py-2 px-4 font-semibold text-[var(--text-muted)]">{t('medical.test_value')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {v.map((item, idx) => (
+                              <tr key={idx} className="border-b border-[var(--border-color)] last:border-0">
+                                <td className="py-2 px-4">{item.type}</td>
+                                <td className="py-2 px-4 font-medium">{item.value}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  }}
+                ]},
+                { title: t('medical.report_attachments') || "مرفقات التقرير", icon: Paperclip, fields: [
+                  { label: "", key: "attachments", fullWidth: true, render: (v) => {
+                    if (!v || v.length === 0) return '-';
+                    return (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                        {v.map((att, idx) => (
+                          <a key={idx} href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-indigo-400 transition-colors group">
+                            <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                              <FileText size={20} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{att.fileUrl.split('/').pop()}</p>
+                              <p className="text-xs text-[var(--text-muted)] uppercase">{att.type}</p>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    );
+                  }}
                 ]}
               ]}
             />

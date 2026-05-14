@@ -243,19 +243,35 @@ model MedicalReport {
   symptoms         String?  @db.Text
   clinicalFindings String?  @db.Text
   vitals           Json?
+  clinicalExam     Json?
+  nextAppointmentDate DateTime?
   recommendations  String?  @db.Text
   pdfUrl           String?  @db.VarChar(500)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  appointment Appointment    @relation(fields: [appointmentId], references: [id])
-  patient     PatientProfile @relation("PatientReports", fields: [patientId], references: [id])
-  doctor      DoctorProfile  @relation("DoctorReports", fields: [doctorId], references: [id])
+  appointment Appointment               @relation(fields: [appointmentId], references: [id])
+  patient     PatientProfile            @relation("PatientReports", fields: [patientId], references: [id])
+  doctor      DoctorProfile             @relation("DoctorReports", fields: [doctorId], references: [id])
+  attachments MedicalReportAttachment[]
 
   @@index([appointmentId])
   @@index([patientId])
   @@index([doctorId])
   @@map("medical_reports")
+}
+
+model MedicalReportAttachment {
+  id        Int            @id @default(autoincrement())
+  reportId  Int
+  fileUrl   String         @db.VarChar(500)
+  type      AttachmentType @default(DOCUMENT)
+  createdAt DateTime       @default(now())
+
+  report MedicalReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@map("medical_report_attachments")
 }
 
 model Review {

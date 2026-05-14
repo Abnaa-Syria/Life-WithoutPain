@@ -553,20 +553,62 @@ async function main() {
   // ─────────────────────────────────────────────────────────────
   // 10) Reports + prescriptions (with items) for completed appointment
   // ─────────────────────────────────────────────────────────────
+  // 10.1) Detailed Demo Report for a specific patient
+  const patient1 = patients[0];
+  const doctor1 = approvedDoctors[0];
+  
   const report = await prisma.medicalReport.create({
     data: {
       appointmentId: completedAppointment.id,
-      patientId: completedAppointment.patientId,
-      doctorId: completedAppointment.doctorId,
-      visitReason: 'ألم في الرأس',
-      diagnosis: 'صداع توتري',
-      summary: 'تمت المعاينة ووضع خطة علاجية',
-      symptoms: 'صداع، أرق',
-      clinicalFindings: 'لا توجد علامات خطيرة',
-      vitals: { bp: '120/80', hr: 75 },
-      recommendations: 'راحة، سوائل، متابعة بعد أسبوع',
+      patientId: patient1.id,
+      doctorId: doctor1.id,
+      visitReason: 'متابعة دورية وفحص سنوي',
+      diagnosis: 'حالة مستقرة - لا توجد مشاكل حادة',
+      summary: 'تم إجراء الفحص السريري الشامل ومراجعة التاريخ المرضي. المريض يلتزم بنمط حياة صحي.',
+      symptoms: 'لا يوجد',
+      clinicalFindings: 'فحص الصدر والبطن سليم. لا توجد علامات التهاب.',
+      vitals: { bp: '118/75', hr: 72, temp: '36.8' },
+      clinicalExam: [
+        { type: 'ضغط الدم (BP)', value: '118/75 mmHg' },
+        { type: 'النبض (Heart Rate)', value: '72 bpm' },
+        { type: 'درجة الحرارة (Temp)', value: '36.8 C' },
+        { type: 'مستوى الأكسجين (SpO2)', value: '99%' },
+        { type: 'الوزن (Weight)', value: '78 kg' },
+        { type: 'الطول (Height)', value: '175 cm' }
+      ],
+      nextAppointmentDate: daysFromNow(90),
+      recommendations: 'الاستمرار على ممارسة الرياضة، شرب الماء بكثرة، تقليل الأملاح في الطعام.',
       pdfUrl: `/uploads/sample.pdf`,
+      attachments: {
+        create: [
+          { fileUrl: '/uploads/sample.pdf', type: 'DOCUMENT' },
+          { fileUrl: '/uploads/download.jpeg', type: 'IMAGE' }
+        ]
+      }
     },
+  });
+
+  // 10.2) Another report for variety
+  const patient2 = patients[1];
+  const doctor2 = approvedDoctors[1] || doctor1;
+  const inProgressAppt = appointmentRecords.find(a => a.status === 'IN_PROGRESS') || completedAppointment;
+
+  await prisma.medicalReport.create({
+    data: {
+      appointmentId: inProgressAppt.id,
+      patientId: patient2.id,
+      doctorId: doctor2.id,
+      visitReason: 'ألم حاد في الركبة اليمنى',
+      diagnosis: 'التهاب في الأوتار',
+      summary: 'ألم ناتج عن إجهاد بدني زائد.',
+      clinicalExam: [
+        { type: 'اختبار الحركة', value: 'محدود في الركبة اليمنى' },
+        { type: 'مستوى الألم', value: '7/10' }
+      ],
+      nextAppointmentDate: daysFromNow(7),
+      recommendations: 'وضع كمادات باردة، راحة تامة للقدم، استخدام المسكنات عند الضرورة.',
+      pdfUrl: `/uploads/sample.pdf`,
+    }
   });
 
   const prescription = await prisma.prescription.create({

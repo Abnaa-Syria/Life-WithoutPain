@@ -22,6 +22,7 @@ class ReportService {
         include: {
           patient: { include: { user: { select: { fullName: true } } } },
           doctor: { include: { user: { select: { fullName: true } } } },
+          attachments: true,
         },
       }),
       MedicalReportRepository.count({ where }),
@@ -36,6 +37,7 @@ class ReportService {
         patient: { include: { user: { select: { fullName: true } } } },
         doctor: { include: { user: { select: { fullName: true } }, speciality: true } },
         appointment: true,
+        attachments: true,
       },
     });
     if (!data) throw new NotFoundError('Report not found');

@@ -134,7 +134,12 @@
     "all_prescriptions": "All Prescriptions",
     "prescription_details": "Prescription Details",
     "medications_count": "Medications Count",
-    "visit_reason": "Visit Reason"
+    "visit_reason": "Visit Reason",
+    "clinical_exam": "Clinical Examination",
+    "test_type": "Test Type",
+    "test_value": "Result/Value",
+    "next_appointment": "Next Appointment",
+    "report_attachments": "Report Attachments"
   },
   "dashboard": {
     "greeting_SUPER_ADMIN": "Welcome to System Admin Dashboard",
