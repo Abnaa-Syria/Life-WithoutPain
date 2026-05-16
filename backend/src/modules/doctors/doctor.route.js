@@ -4,10 +4,7 @@ const { authenticate, authorize, optionalAuth } = require('../../middlewares/aut
 const { uploadSingle } = require('../../middlewares/upload');
 const { ROLES } = require('../../constants');
 
-router.get('/search', optionalAuth, controller.search);
-router.get('/:id', optionalAuth, controller.getById);
-
-// Protected doctor routes
+// Protected doctor routes (must be before /:id)
 router.get('/me/profile', authenticate, authorize(ROLES.DOCTOR), controller.getProfile);
 router.put('/me/profile', authenticate, authorize(ROLES.DOCTOR), controller.updateProfile);
 router.post('/me/verification-documents', authenticate, authorize(ROLES.DOCTOR), uploadSingle('file'), controller.uploadVerificationDocument);
@@ -21,5 +18,9 @@ router.get('/me/appointments', authenticate, authorize(ROLES.DOCTOR), controller
 router.get('/me/patients', authenticate, authorize(ROLES.DOCTOR), controller.getPatients);
 router.get('/me/performance', authenticate, authorize(ROLES.DOCTOR), controller.getPerformance);
 router.get('/me/financial-summary', authenticate, authorize(ROLES.DOCTOR), controller.getFinancialSummary);
+
+// Public discovery routes
+router.get('/search', optionalAuth, controller.search);
+router.get('/:id', optionalAuth, controller.getById);
 
 module.exports = router;

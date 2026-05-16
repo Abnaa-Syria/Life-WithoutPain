@@ -7,6 +7,7 @@ const swaggerUi = require('swagger-ui-express');
 
 const config = require('./config');
 const swaggerSpec = require('./docs/swagger');
+const doctorAppSwaggerSpec = swaggerSpec.doctorAppSwaggerSpec;
 const errorHandler = require('./middlewares/errorHandler');
 const { globalLimiter } = require('./middlewares/rateLimiter');
 const logger = require('./config/logger');
@@ -50,10 +51,25 @@ app.use((req, res, next) => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Haya Bila Alam API Docs',
+  swaggerOptions: {
+    docExpansion: 'none',
+    tagsSorter: 'alpha',
+    operationsSorter: 'alpha',
+    persistAuthorization: true,
+  },
 }));
 app.get('/api-docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
+});
+
+app.use('/api-docs/doctor', swaggerUi.serve, swaggerUi.setup(doctorAppSwaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Doctor App API Docs',
+}));
+app.get('/api-docs/doctor.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(doctorAppSwaggerSpec);
 });
 
 // API routes

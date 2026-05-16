@@ -63,6 +63,19 @@ class AuthService {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
+    const profileCreate = {
+      licenseNumber: licenseNumber || null,
+      title: title || null,
+      workplace: workplace || null,
+      city: city || null,
+      verificationStatus: 'PENDING',
+      isPubliclyBookable: false,
+    };
+
+    if (specialityId) {
+      profileCreate.speciality = { connect: { id: parseInt(specialityId, 10) } };
+    }
+
     const user = await prisma.user.create({
       data: {
         fullName,
@@ -71,21 +84,20 @@ class AuthService {
         passwordHash,
         role: 'DOCTOR',
         preferredLanguage: preferredLanguage || 'ar',
-        doctorProfile: {
-          create: {
-            specialityId: specialityId ? parseInt(specialityId) : null,
-            licenseNumber: licenseNumber || null,
-            licenseUrl: licenseUrl || null,
-            title: title || null,
-            workplace: workplace || null,
-            city: city || null,
-            verificationStatus: 'PENDING',
-            isPubliclyBookable: false,
-          },
-        },
+        doctorProfile: { create: profileCreate },
       },
       include: { doctorProfile: true },
     });
+
+    if (licenseUrl && user.doctorProfile) {
+      await prisma.doctorVerificationDocument.create({
+        data: {
+          doctorId: user.doctorProfile.id,
+          fileUrl: licenseUrl,
+          fileType: 'LICENSE',
+        },
+      });
+    }
 
     const otpCode = generateOTP(config.otp.length);
     await prisma.otpCode.create({
@@ -382,6 +394,48 @@ class AuthService {
       });
     }
     return { message: 'Logged out successfully' };
+  }
+
+  static async registerDoctorMobile({ name, mobileNumber, password, specializationId, medicalLicenseNumber, workPlace, city, licenseUrl }) {
+    const phone = mobileNumber;
+    const email = `${phone.replace(/\D/g, '')}@doctor.app`;
+
+    await this.registerDoctor({
+      fullName: name,
+      email,
+      phone,
+      password,
+      specialityId: specializationId,
+      licenseNumber: medicalLicenseNumber,
+      licenseUrl,
+      workplace: workPlace,
+      city,
+    });
+
+    return { message: 'Signup submitted for approval', status: 'pending' };
+  }
+
+  static async loginByMobile({ mobileNumber, password }, req) {
+    const result = await this.login({ identifier: mobileNumber, password }, req);
+    const doctorProfile = await prisma.doctorProfile.findUnique({
+      where: { userId: result.user.id },
+      include: { speciality: true, user: { select: { id: true, fullName: true, phone: true, avatarUrl: true } } },
+    });
+
+    return {
+      token: result.accessToken,
+      refreshToken: result.refreshToken,
+      doctor: doctorProfile,
+    };
+  }
+
+  static async verifyOtpByMobile({ mobileNumber, otp }) {
+    const user = await prisma.user.findFirst({
+      where: { phone: mobileNumber, role: 'DOCTOR', deletedAt: null },
+    });
+    if (!user) throw new NotFoundError('User not found');
+
+    return this.verifyOtp({ userId: user.id, code: otp, purpose: 'verification' });
   }
 
   static async getProfile(userId) {

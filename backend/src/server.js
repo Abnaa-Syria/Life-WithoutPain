@@ -15,6 +15,7 @@ const startServer = async () => {
       logger.info({ msg: `Server running on port ${config.port}` });
       logger.info({ msg: `API: http://localhost:${config.port}${config.apiPrefix}` });
       logger.info({ msg: `Swagger: http://localhost:${config.port}/api-docs` });
+      logger.info({ msg: `Swagger: http://localhost:${config.port}/api-docs/doctor` });
       logger.info({ msg: `Environment: ${config.env}` });
     });
   } catch (error) {

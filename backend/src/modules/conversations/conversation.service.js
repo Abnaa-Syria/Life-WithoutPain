@@ -2,7 +2,8 @@ const ConversationRepository = require('./conversation.repository');
 const MessageRepository = require('./message.repository');
 const DoctorRepository = require('../doctors/doctor.repository');
 const PatientRepository = require('../patients/patient.repository');
-const { NotFoundError } = require('../../shared/errors/AppError');
+const { NotFoundError, ForbiddenError } = require('../../shared/errors/AppError');
+const { resolveDoctorProfile, assertDoctorOwnsAppointment } = require('../../shared/utils/doctorAppContext');
 const { buildPagination } = require('../../utils/pagination');
 
 class ConversationService {
@@ -83,6 +84,33 @@ class ConversationService {
 
   static async markMessageRead(messageId) {
     return MessageRepository.update({ where: { id: parseInt(messageId) }, data: { readAt: new Date() } });
+  }
+
+  static async getOrCreateForAppointment(appointmentId, doctorId, patientId) {
+    let conversation = await ConversationRepository.findFirst({
+      where: { appointmentId: parseInt(appointmentId) },
+    });
+    if (!conversation) {
+      conversation = await ConversationRepository.create({
+        data: { appointmentId: parseInt(appointmentId), doctorId, patientId },
+      });
+    }
+    return conversation;
+  }
+
+  static async getAppointmentChatForDoctor(userId, appointmentId, query) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    const appointment = await assertDoctorOwnsAppointment(doctorId, appointmentId);
+    const conversation = await this.getOrCreateForAppointment(appointmentId, doctorId, appointment.patientId);
+    const messages = await this.getMessages(conversation.id, query);
+    return { conversation, ...messages };
+  }
+
+  static async sendAppointmentMessageForDoctor(userId, appointmentId, body) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    const appointment = await assertDoctorOwnsAppointment(doctorId, appointmentId);
+    const conversation = await this.getOrCreateForAppointment(appointmentId, doctorId, appointment.patientId);
+    return this.sendMessage(conversation.id, userId, { content: body.message || body.content });
   }
 }
 

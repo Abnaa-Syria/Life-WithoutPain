@@ -3,6 +3,7 @@ const { NotFoundError, BadRequestError, ForbiddenError } = require('../../shared
 const { APPOINTMENT_STATUS_TRANSITIONS } = require('../../constants');
 const { buildPagination } = require('../../utils/pagination');
 const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
+const { resolveDoctorProfile, assertDoctorOwnsAppointment } = require('../../shared/utils/doctorAppContext');
 
 class AppointmentService {
   static async create(userId, data) {
@@ -145,6 +146,42 @@ class AppointmentService {
       where: { appointmentId: parseInt(appointmentId) },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  static async getForDoctor(userId, query) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    const { page, limit, skip } = buildPagination(query);
+    const where = { doctorId };
+    if (query.status) where.status = query.status;
+    if (query.type) where.appointmentType = query.type;
+    if (query.date) where.appointmentDate = new Date(query.date);
+
+    const [data, total] = await Promise.all([
+      prisma.appointment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { appointmentDate: 'desc' },
+        include: {
+          patient: { include: { user: { select: { fullName: true, avatarUrl: true } } } },
+          service: { select: { nameAr: true, nameEn: true } },
+        },
+      }),
+      prisma.appointment.count({ where }),
+    ]);
+    return { data, total, page, limit };
+  }
+
+  static async getByIdForDoctor(userId, id) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    await assertDoctorOwnsAppointment(doctorId, id);
+    return this.getById(id);
+  }
+
+  static async updateStatusForDoctor(userId, id, newStatus, data = {}) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    await assertDoctorOwnsAppointment(doctorId, id);
+    return this.updateStatus(id, newStatus, userId, data);
   }
 }
 

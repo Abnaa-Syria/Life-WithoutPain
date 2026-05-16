@@ -1,6 +1,7 @@
 const MedicalReportRepository = require('./report.repository');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
+const { resolveDoctorProfile, assertDoctorOwnsReport } = require('../../shared/utils/doctorAppContext');
 const PdfGenerator = require('../../shared/pdf/PdfGenerator');
 
 class ReportService {
@@ -52,6 +53,41 @@ class ReportService {
     const report = await MedicalReportRepository.findUnique({ where: { id: parseInt(id) } });
     if (!report) throw new NotFoundError('Report not found');
     return report.pdfUrl;
+  }
+
+  static async listForDoctor(userId, query) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    return this.list({ ...query, doctorId });
+  }
+
+  static async getByIdForDoctor(userId, id) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    await assertDoctorOwnsReport(doctorId, id);
+    return this.getById(id);
+  }
+
+  static async createForDoctor(userId, body) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    const { doctorId: _omit, tests, clinicalExamination, ...rest } = body;
+
+    return this.create({
+      patientId: rest.patientId,
+      appointmentId: rest.appointmentId,
+      doctorId,
+      visitReason: rest.visitReason,
+      symptoms: rest.symptoms,
+      clinicalFindings: clinicalExamination || rest.clinicalFindings,
+      clinicalExam: tests || rest.clinicalExam,
+      nextAppointmentDate: rest.nextAppointmentDate ? new Date(rest.nextAppointmentDate) : undefined,
+      diagnosis: rest.diagnosis || rest.visitReason,
+      summary: rest.summary,
+    });
+  }
+
+  static async getPdfForDoctor(userId, id) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    await assertDoctorOwnsReport(doctorId, id);
+    return this.getPdf(id);
   }
 }
 

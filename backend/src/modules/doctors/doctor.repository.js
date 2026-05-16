@@ -38,6 +38,29 @@ class DoctorRepository extends BaseRepository {
             service: true,
           },
         },
+        appointments: {
+          orderBy: { appointmentDate: 'desc' },
+          take: 50,
+          include: {
+            patient: { include: { user: { select: { fullName: true } } } },
+            service: { select: { nameAr: true, nameEn: true } },
+          },
+        },
+        prescriptions: {
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+          include: {
+            items: true,
+            patient: { include: { user: { select: { fullName: true } } } },
+          },
+        },
+        reports: {
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+          include: {
+            patient: { include: { user: { select: { fullName: true } } } },
+          },
+        },
       },
     });
   }

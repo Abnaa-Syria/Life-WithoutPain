@@ -1,5 +1,7 @@
+const prisma = require('../../config/database');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
+const { resolveDoctorProfile, assertDoctorHasPatient } = require('../../shared/utils/doctorAppContext');
 const DoctorRepository = require('./doctor.repository');
 const AppointmentRepository = require('../appointments/appointment.repository');
 const ReviewRepository = require('../reviews/review.repository');
@@ -127,6 +129,53 @@ class DoctorService {
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
     return DoctorAvailabilityRepository.create({ data: { doctorId: profile.id, ...data } });
+  }
+
+  static async createAvailabilityBulk(userId, payload) {
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
+    if (!profile) throw new NotFoundError('Doctor profile not found');
+
+    const dayMap = {
+      sunday: 'SUNDAY', monday: 'MONDAY', tuesday: 'TUESDAY', wednesday: 'WEDNESDAY',
+      thursday: 'THURSDAY', friday: 'FRIDAY', saturday: 'SATURDAY',
+    };
+    const days = (payload.days || []).map((d) => dayMap[String(d).toLowerCase()] || String(d).toUpperCase());
+    const slots = [];
+
+    for (const dayOfWeek of days) {
+      if (payload.morningStart && payload.morningEnd) {
+        slots.push({
+          doctorId: profile.id,
+          dayOfWeek,
+          periodType: 'MORNING',
+          startTime: payload.morningStart,
+          endTime: payload.morningEnd,
+          slotDurationMinutes: payload.examinationDuration || 30,
+          breakDurationMinutes: payload.breakDuration || 10,
+        });
+      }
+      if (payload.nightStart && payload.nightEnd) {
+        slots.push({
+          doctorId: profile.id,
+          dayOfWeek,
+          periodType: 'EVENING',
+          startTime: payload.nightStart,
+          endTime: payload.nightEnd,
+          slotDurationMinutes: payload.examinationDuration || 30,
+          breakDurationMinutes: payload.breakDuration || 10,
+        });
+      }
+    }
+
+    if (slots.length === 0) {
+      return DoctorAvailabilityRepository.findMany({ where: { doctorId: profile.id } });
+    }
+
+    await DoctorAvailabilityRepository.model.createMany({ data: slots });
+    return DoctorAvailabilityRepository.findMany({
+      where: { doctorId: profile.id },
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+    });
   }
 
   static async updateAvailability(userId, availabilityId, data) {
@@ -272,6 +321,145 @@ class DoctorService {
         isPubliclyBookable: false,
       },
     });
+  }
+
+  static calcAge(dateOfBirth) {
+    if (!dateOfBirth) return null;
+    const dob = new Date(dateOfBirth);
+    const diff = Date.now() - dob.getTime();
+    return Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
+  }
+
+  static async getPatientsWithLastVisit(userId) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    const patients = await this.getPatients(userId);
+
+    const enriched = await Promise.all(patients.map(async (p) => {
+      const lastAppt = await AppointmentRepository.findFirst({
+        where: { doctorId, patientId: p.id },
+        orderBy: { appointmentDate: 'desc' },
+      });
+      return {
+        ...p,
+        lastVisitDate: lastAppt?.appointmentDate || null,
+        age: this.calcAge(p.dateOfBirth),
+      };
+    }));
+    return enriched;
+  }
+
+  static async getPatientDetailForDoctor(userId, patientId) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    await assertDoctorHasPatient(doctorId, patientId);
+
+    const patient = await PatientRepository.findUnique({
+      where: { id: parseInt(patientId) },
+      include: {
+        user: { select: { fullName: true } },
+        medicalProfile: true,
+      },
+    });
+    if (!patient) throw new NotFoundError('Patient not found');
+
+    const [nextAppointment, prescriptions, reports] = await Promise.all([
+      AppointmentRepository.findFirst({
+        where: {
+          doctorId,
+          patientId: patient.id,
+          appointmentDate: { gte: new Date() },
+          status: { in: ['PENDING', 'CONFIRMED'] },
+        },
+        orderBy: { appointmentDate: 'asc' },
+      }),
+      prisma.prescription.findMany({
+        where: { doctorId, patientId: patient.id },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        include: { items: true },
+      }),
+      prisma.medicalReport.findMany({
+        where: { doctorId, patientId: patient.id },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      }),
+    ]);
+
+    return {
+      name: patient.user?.fullName,
+      age: this.calcAge(patient.dateOfBirth),
+      gender: patient.gender,
+      nextAppointment,
+      summary: patient.medicalProfile,
+      prescriptions,
+      reports,
+    };
+  }
+
+  static async getClinicDetails(userId) {
+    const profile = await DoctorRepository.findUnique({
+      where: { userId },
+      include: { availability: { where: { isActive: true }, orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }] } },
+    });
+    if (!profile) throw new NotFoundError('Doctor profile not found');
+
+    return {
+      address: profile.workplace,
+      city: profile.city,
+      workingHours: profile.availability,
+    };
+  }
+
+  static async updateClinicDetails(userId, data) {
+    const profile = await DoctorRepository.findUnique({ where: { userId } });
+    if (!profile) throw new NotFoundError('Doctor profile not found');
+
+    return DoctorRepository.update({
+      where: { userId },
+      data: {
+        workplace: data.address ?? profile.workplace,
+        city: data.city ?? profile.city,
+      },
+    });
+  }
+
+  static async getSettings(userId) {
+    const { profile } = await resolveDoctorProfile(userId);
+    return {
+      language: profile.user.preferredLanguage,
+      notificationsEnabled: profile.user.status === 'ACTIVE',
+      privacy: {},
+      darkModeEnabled: profile.user.darkModeEnabled,
+    };
+  }
+
+  static async updateSettings(userId, data) {
+    const update = {};
+    if (data.language) update.preferredLanguage = data.language;
+    if (data.darkModeEnabled !== undefined) update.darkModeEnabled = data.darkModeEnabled;
+
+    await prisma.user.update({ where: { id: userId }, data: update });
+    return this.getSettings(userId);
+  }
+
+  static async updateProfileForDoctor(userId, data) {
+    const profile = await DoctorRepository.findUnique({ where: { userId }, include: { user: true } });
+    if (!profile) throw new NotFoundError('Doctor profile not found');
+
+    const userData = {};
+    if (data.name) userData.fullName = data.name;
+    if (data.phoneNumber) userData.phone = data.phoneNumber;
+
+    const profileData = {};
+    if (data.identityNumber) profileData.licenseNumber = data.identityNumber;
+
+    if (Object.keys(userData).length) {
+      await prisma.user.update({ where: { id: userId }, data: userData });
+    }
+    if (Object.keys(profileData).length) {
+      await DoctorRepository.update({ where: { userId }, data: profileData });
+    }
+
+    return this.getProfile(userId);
   }
 }
 
