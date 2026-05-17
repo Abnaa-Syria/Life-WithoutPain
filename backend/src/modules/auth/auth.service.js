@@ -4,13 +4,15 @@ const prisma = require('../../config/database');
 const config = require('../../config');
 const { generateOTP, generateRefreshToken } = require('../../utils/helpers');
 const otpProvider = require('../../shared/otp');
-const { ConflictError, UnauthorizedError, BadRequestError, NotFoundError } = require('../../shared/errors/AppError');
+const { ConflictError, UnauthorizedError, BadRequestError, NotFoundError, ValidationError } = require('../../shared/errors/AppError');
 const { createAuditLog } = require('../../middlewares/auditLog');
+const { normalizePhone } = require('../../shared/utils/phone');
 
 class AuthService {
   static async registerPatient({ fullName, email, phone, password, preferredLanguage }) {
+    const normalizedPhone = normalizePhone(phone);
     const existingUser = await prisma.user.findFirst({
-      where: { OR: [{ email }, { phone }], deletedAt: null },
+      where: { OR: [{ email }, { phone: normalizedPhone }], deletedAt: null },
     });
     if (existingUser) {
       throw new ConflictError('A user with this email or phone already exists');
@@ -22,7 +24,7 @@ class AuthService {
       data: {
         fullName,
         email,
-        phone,
+        phone: normalizedPhone,
         passwordHash,
         role: 'PATIENT',
         preferredLanguage: preferredLanguage || 'ar',
@@ -41,7 +43,7 @@ class AuthService {
       },
     });
 
-    await otpProvider.send(phone, otpCode);
+    await otpProvider.send(normalizedPhone, otpCode);
 
     return {
       id: user.id,
@@ -53,18 +55,24 @@ class AuthService {
     };
   }
 
-  static async registerDoctor({ fullName, email, phone, password, specialityId, licenseNumber, licenseUrl, title, workplace, city, preferredLanguage }) {
+  static async registerDoctor({ fullName, email, phone, password, specialityId, licenceNumber, licenseNumber, licenseUrl, title, workplace, city, preferredLanguage }) {
+    const normalizedPhone = normalizePhone(phone);
     const existingUser = await prisma.user.findFirst({
-      where: { OR: [{ email }, { phone }], deletedAt: null },
+      where: { OR: [{ email }, { phone: normalizedPhone }], deletedAt: null },
     });
     if (existingUser) {
       throw new ConflictError('A user with this email or phone already exists');
     }
 
+    const finalLicenseNumber = licenceNumber || licenseNumber;
+    if (!finalLicenseNumber) {
+      throw new ValidationError('Medical license number is required');
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
 
     const profileCreate = {
-      licenseNumber: licenseNumber || null,
+      licenseNumber: finalLicenseNumber,
       title: title || null,
       workplace: workplace || null,
       city: city || null,
@@ -80,7 +88,7 @@ class AuthService {
       data: {
         fullName,
         email,
-        phone,
+        phone: normalizedPhone,
         passwordHash,
         role: 'DOCTOR',
         preferredLanguage: preferredLanguage || 'ar',
@@ -109,7 +117,7 @@ class AuthService {
       },
     });
 
-    await otpProvider.send(phone, otpCode);
+    await otpProvider.send(normalizedPhone, otpCode);
 
     return {
       id: user.id,
@@ -122,9 +130,11 @@ class AuthService {
   }
 
   static async login({ identifier, password }, req) {
+    const trimmed = String(identifier).trim();
+    const isEmail = trimmed.includes('@');
     const user = await prisma.user.findFirst({
       where: {
-        OR: [{ email: identifier.toLowerCase() }, { phone: identifier }],
+        ...(isEmail ? { email: trimmed.toLowerCase() } : { phone: normalizePhone(trimmed) }),
         deletedAt: null,
       },
     });
@@ -190,6 +200,86 @@ class AuthService {
         isVerified: user.isVerified,
         preferredLanguage: user.preferredLanguage,
         darkModeEnabled: user.darkModeEnabled,
+      },
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  static async loginMobile({ phone, password }, req) {
+    const user = await prisma.user.findFirst({
+      where: { phone: normalizePhone(phone), deletedAt: null },
+    });
+
+    if (!user) {
+      throw new UnauthorizedError('Invalid credentials');
+    }
+
+    if (user.status !== 'ACTIVE') {
+      throw new UnauthorizedError('Account is not active');
+    }
+
+    if (user.role === 'DOCTOR') {
+      const doctorProfile = await prisma.doctorProfile.findUnique({ where: { userId: user.id } });
+      if (doctorProfile && doctorProfile.verificationStatus !== 'APPROVED') {
+        throw new UnauthorizedError('Your account is pending admin approval');
+      }
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    if (!isValidPassword) {
+      throw new UnauthorizedError('Invalid credentials');
+    }
+
+    const accessToken = jwt.sign(
+      { userId: user.id, role: user.role },
+      config.jwt.accessSecret,
+      { expiresIn: config.jwt.accessExpiresIn }
+    );
+
+    const refreshToken = generateRefreshToken();
+    const refreshExpiresAt = new Date();
+    refreshExpiresAt.setDate(refreshExpiresAt.getDate() + 7);
+
+    await prisma.refreshToken.create({
+      data: {
+        userId: user.id,
+        token: refreshToken,
+        expiresAt: refreshExpiresAt,
+      },
+    });
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    createAuditLog({
+      actorId: user.id,
+      entityType: 'User',
+      entityId: user.id,
+      action: 'LOGIN',
+      req,
+    });
+
+    const doctorProfile = user.role === 'DOCTOR' 
+      ? await prisma.doctorProfile.findUnique({ where: { userId: user.id } })
+      : null;
+
+    return {
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isVerified: user.isVerified,
+        preferredLanguage: user.preferredLanguage,
+        doctorProfile: doctorProfile ? {
+          id: doctorProfile.id,
+          specialityId: doctorProfile.specialityId,
+          verificationStatus: doctorProfile.verificationStatus,
+        } : null,
       },
       accessToken,
       refreshToken,
@@ -397,7 +487,7 @@ class AuthService {
   }
 
   static async registerDoctorMobile({ name, mobileNumber, password, specializationId, medicalLicenseNumber, workPlace, city, licenseUrl }) {
-    const phone = mobileNumber;
+    const phone = normalizePhone(mobileNumber);
     const email = `${phone.replace(/\D/g, '')}@doctor.app`;
 
     await this.registerDoctor({
@@ -431,7 +521,7 @@ class AuthService {
 
   static async verifyOtpByMobile({ mobileNumber, otp }) {
     const user = await prisma.user.findFirst({
-      where: { phone: mobileNumber, role: 'DOCTOR', deletedAt: null },
+      where: { phone: normalizePhone(mobileNumber), role: 'DOCTOR', deletedAt: null },
     });
     if (!user) throw new NotFoundError('User not found');
 

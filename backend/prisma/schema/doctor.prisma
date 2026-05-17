@@ -8,7 +8,7 @@ model DoctorProfile {
   bio                String?            @db.Text
   bioAr              String?            @db.Text
   yearsOfExperience  Int?
-  licenseNumber      String?            @db.VarChar(100)
+  licenseNumber      String            @db.VarChar(100)
   workplace          String?            @db.VarChar(255)
   city               String?            @db.VarChar(100)
   consultationFee    Decimal            @default(0) @db.Decimal(10, 2)

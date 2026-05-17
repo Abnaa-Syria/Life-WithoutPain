@@ -116,6 +116,7 @@ export default function DoctorDetailsPage() {
 
       <div className="lg:col-span-2 space-y-6">
         <DetailsSection title={t('doctors.professional_info') || 'Professional Information'} icon={Stethoscope}>
+          <DetailItem label={t('doctors.license_number') || 'Medical License No.'} value={doctor.licenseNumber} />
           <DetailItem label={t('doctors.title')} value={doctor.title} />
           <DetailItem label={t('doctors.speciality')} value={doctor.speciality?.nameAr} />
           <DetailItem label={t('doctors.city')} value={doctor.city} />

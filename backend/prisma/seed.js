@@ -14,7 +14,7 @@ function phone(n) {
 async function upsertUser({ fullName, email, phoneNumber, role, passwordHash, isVerified = true, status = 'ACTIVE' }) {
   return prisma.user.upsert({
     where: { email },
-    update: { fullName, phone: phoneNumber, role, status, isVerified },
+    update: { fullName, phone: phoneNumber, role, status, isVerified, passwordHash },
     create: { fullName, email, phone: phoneNumber, role, status, isVerified, passwordHash },
   });
 }
@@ -795,16 +795,22 @@ async function main() {
   });
 
   console.log('Seed completed successfully (full coverage).');
-  console.log('\nTest Accounts (Dashboard login):');
-  console.log('─────────────────────────────────');
+  console.log('\nTest Accounts (Dashboard login - use email):');
+  console.log('────────────────────────────────────────────────');
   console.log('Super Admin:     admin@hayabilaalam.com / Password123');
   console.log('Medical Admin:   medical@hayabilaalam.com / Password123');
   console.log('Insurance Staff: insurance@hayabilaalam.com / Password123');
   console.log('Support Staff:   support@hayabilaalam.com / Password123');
   console.log('Accountant:      accountant@hayabilaalam.com / Password123');
-  console.log('\nMobile/App accounts (for API testing):');
-  console.log('Doctor:          dr.ahmed@example.com / Password123');
-  console.log('Patient:         patient@example.com / Password123');
+  console.log('\nMobile/App accounts (phone or 966… without +, password Password123):');
+  console.log('────────────────────────────────────────────────');
+  for (const u of doctorsUsers) {
+    console.log(`Doctor - ${u.fullName}:   ${u.phone} (or ${u.phone.replace(/^\+/, '')})`);
+  }
+  for (const u of patientsUsers) {
+    console.log(`Patient - ${u.fullName}:  ${u.phone} (or ${u.phone.replace(/^\+/, '')})`);
+  }
+  console.log('\nApproved doctor emails (for /auth/login): dr.ahmed@example.com, dr.sara@example.com');
 }
 
 main()

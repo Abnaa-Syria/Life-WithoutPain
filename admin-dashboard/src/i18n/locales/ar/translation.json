@@ -115,8 +115,33 @@
     "medical_tests": "الفحوصات الطبية",
     "reviews": "التقييمات",
     "settings": "الإعدادات",
-    "reconciliations": "التسويات",
-    "notifications": "الإشعارات"
+    "reconciliations": "المطابقات المالية",
+    "notifications": "الإشعارات",
+    "lab_tests": "فحوصات المختبر",
+    "payouts": "المستحقات",
+    "prescriptions": "الوصفات الطبية"
+  },
+  "login": {
+    "subtitle": "أدخل بيانات الدخول للوصول للوحة التحكم",
+    "identifier": "البريد الإلكتروني أو رقم الهاتف",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "submit": "تسجيل الدخول",
+    "forgot_password": "نسيت كلمة المرور؟",
+    "footer": "Orbex Systems • لوحة تحكم صحية متقدمة"
+  },
+  "validation": {
+    "identifier_required": "يرجى إدخال البريد الإلكتروني أو رقم الهاتف",
+    "password_required": "كلمة المرور مطلوبة"
+  },
+  "messages": {
+    "login_success": "تم تسجيل الدخول بنجاح",
+    "login_error": "فشل تسجيل الدخول",
+    "saved": "تم الحفظ بنجاح",
+    "deleted": "تم الحذف بنجاح",
+    "error": "حدث خطأ ما",
+    "loading_data": "جاري تحميل البيانات...",
+    "status_updated": "تم تحديث الحالة بنجاح"
   },
   "medical": {
     "prescriptions": "الوصفات الطبية",
@@ -222,7 +247,8 @@
     "services": "الخدمات المقدمة",
     "edit_doctor": "تعديل ملف الطبيب",
     "publicly_bookable": "قابل للحجز العام",
-    "fee": "الرسوم"
+    "fee": "الرسوم",
+    "license_number": "رقم الترخيص الطبي"
   },
   "services": {
     "name": "اسم الخدمة",

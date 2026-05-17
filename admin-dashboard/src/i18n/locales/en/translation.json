@@ -116,7 +116,31 @@
     "reviews": "Reviews",
     "settings": "Settings",
     "reconciliations": "Reconciliations",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "lab_tests": "Lab Tests",
+    "payouts": "Payouts"
+  },
+  "login": {
+    "subtitle": "Enter your credentials to access the admin panel",
+    "identifier": "Email or Phone Number",
+    "email": "Email Address",
+    "password": "Password",
+    "submit": "Sign In",
+    "forgot_password": "Forgot password?",
+    "footer": "Orbex Systems • Advanced Healthcare Admin"
+  },
+  "validation": {
+    "identifier_required": "Email or phone number is required",
+    "password_required": "Password is required"
+  },
+  "messages": {
+    "login_success": "Welcome back!",
+    "login_error": "Invalid credentials",
+    "saved": "Saved successfully",
+    "deleted": "Deleted successfully",
+    "error": "An error occurred",
+    "loading_data": "Loading data...",
+    "status_updated": "Status updated successfully"
   },
   "medical": {
     "prescriptions": "Prescriptions",
@@ -222,7 +246,8 @@
     "services": "Offered Services",
     "edit_doctor": "Edit Doctor Profile",
     "publicly_bookable": "Publicly Bookable",
-    "fee": "Fee"
+    "fee": "Fee",
+    "license_number": "Medical License No."
   },
   "services": {
     "name": "Service Name",

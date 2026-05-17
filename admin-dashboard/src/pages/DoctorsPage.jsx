@@ -57,6 +57,7 @@ export default function DoctorsPage() {
   const openEdit = (doctor) => {
     setEditingDoctor(doctor);
     setValue('title', doctor.title);
+    setValue('licenseNumber', doctor.licenseNumber);
     setValue('bio', doctor.bio);
     setValue('city', doctor.city);
     setValue('consultationFee', doctor.consultationFee);
@@ -69,7 +70,8 @@ export default function DoctorsPage() {
   const columns = [
     { header: t('doctors.name') || 'Name', accessorKey: 'user.fullName' },
     { header: t('doctors.speciality') || 'Speciality', accessorKey: 'speciality.nameAr' },
-    { header: t('doctors.city') || 'City', accessorKey: 'city' },
+    { header: t('doctors.license_number') || 'License No.', accessorKey: 'licenseNumber' },
+    { header: t('doctors.city') || 'City', accessorKey: 'city' }, 
     { 
       header: t('doctors.fee') || 'Fee', 
       accessorKey: 'consultationFee',
@@ -156,6 +158,10 @@ export default function DoctorsPage() {
             <div>
               <label className="label">{t('doctors.title') || 'Professional Title'}</label>
               <input {...register('title')} className="input" />
+            </div>
+            <div>
+              <label className="label">{t('doctors.license_number') || 'Medical License No.'}</label>
+              <input {...register('licenseNumber')} className="input" />
             </div>
             <div>
               <label className="label">{t('doctors.city') || 'City'}</label>

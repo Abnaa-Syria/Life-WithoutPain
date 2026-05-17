@@ -31,9 +31,9 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const login = async (identifier, password) => {
+  const login = async (email, password) => {
     try {
-      const res = await api.post('/auth/login', { identifier, password });
+      const res = await api.post('/auth/login', { identifier: email, password });
       const { user: userData, accessToken, refreshToken } = res.data.data;
 
       const adminRoles = ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'];

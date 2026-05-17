@@ -7,7 +7,7 @@ const swaggerUi = require('swagger-ui-express');
 
 const config = require('./config');
 const swaggerSpec = require('./docs/swagger');
-const doctorAppSwaggerSpec = swaggerSpec.doctorAppSwaggerSpec;
+const { backendCoreSpec, doctorAppSwaggerSpec, filterSpecByModule, getAvailableModules } = swaggerSpec;
 const errorHandler = require('./middlewares/errorHandler');
 const { globalLimiter } = require('./middlewares/rateLimiter');
 const logger = require('./config/logger');
@@ -47,29 +47,130 @@ app.use((req, res, next) => {
   next();
 });
 
-// Swagger docs
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Haya Bila Alam API Docs',
-  swaggerOptions: {
-    docExpansion: 'none',
-    tagsSorter: 'alpha',
-    operationsSorter: 'alpha',
-    persistAuthorization: true,
-  },
-}));
+// Swagger docs customization and setup
+const customCss = `
+  .swagger-ui .topbar {
+    background-color: #0f172a !important;
+    padding: 12px 0;
+    border-bottom: 1px solid #1e293b;
+  }
+  .swagger-ui .topbar .topbar-wrapper {
+    max-width: 1460px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .swagger-ui .topbar .topbar-wrapper a, 
+  .swagger-ui .topbar .topbar-wrapper form {
+    display: none !important;
+  }
+  .swagger-ui .topbar .topbar-wrapper::before {
+    content: "Haya Bila Alam - API Portal";
+    color: #f8fafc;
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: -0.025em;
+    background: linear-gradient(to right, #38bdf8, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .swagger-ui .topbar .topbar-wrapper .download-url-wrapper {
+    display: flex !important;
+    align-items: center;
+  }
+  .swagger-ui .topbar .topbar-wrapper select {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    outline: none !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+  }
+  .swagger-ui .topbar .topbar-wrapper select:hover {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+  }
+`;
+
+const availableModules = getAvailableModules();
+const swaggerUrls = [
+  { url: '/api-docs/backend.json', name: 'Core Backend API (Excluding Doctor App)' },
+  { url: '/api-docs/doctor.json', name: 'Doctor Mobile App' },
+  ...availableModules.map(mod => ({
+    url: `/api-docs/modules/${mod}.json`,
+    name: `${mod.charAt(0).toUpperCase() + mod.slice(1).replace(/-([a-z])/g, (g) => ' ' + g[1].toUpperCase())} Module`
+  }))
+];
+
+// 1. JSON endpoints
+app.get('/api-docs/backend.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(backendCoreSpec);
+});
+
+app.get('/api-docs/doctor.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(doctorAppSwaggerSpec);
+});
+
+app.get('/api-docs/modules/:moduleName.json', (req, res) => {
+  const spec = filterSpecByModule(swaggerSpec, req.params.moduleName);
+  if (!spec || Object.keys(spec.paths).length === 0) {
+    return res.status(404).json({ success: false, message: `Module "${req.params.moduleName}" not found or empty` });
+  }
+  res.setHeader('Content-Type', 'application/json');
+  res.send(spec);
+});
+
 app.get('/api-docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
 });
 
-app.use('/api-docs/doctor', swaggerUi.serve, swaggerUi.setup(doctorAppSwaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Doctor App API Docs',
-}));
-app.get('/api-docs/doctor.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(doctorAppSwaggerSpec);
+// 2. Redirect endpoints for clean URLs
+app.get('/api-docs/doctor', (req, res) => {
+  res.redirect('/api-docs?module=doctor');
+});
+
+app.get('/api-docs/modules/:moduleName', (req, res) => {
+  res.redirect(`/api-docs?module=${req.params.moduleName}`);
+});
+
+// 3. Main Swagger UI endpoint with dynamic module pre-selection via query param
+app.use('/api-docs', swaggerUi.serve, (req, res, next) => {
+  const selectedModule = req.query.module;
+  let reorderedUrls = swaggerUrls;
+
+  if (selectedModule) {
+    const matchedUrlObj = swaggerUrls.find(u => 
+      u.url.endsWith(`/${selectedModule}.json`) || 
+      u.url.endsWith(`/modules/${selectedModule}.json`)
+    );
+    if (matchedUrlObj) {
+      reorderedUrls = [
+        { ...matchedUrlObj, name: matchedUrlObj.name + ' (Selected)' },
+        ...swaggerUrls.filter(u => u !== matchedUrlObj)
+      ];
+    }
+  }
+
+  swaggerUi.setup(null, {
+    customCss: customCss,
+    customSiteTitle: 'Haya Bila Alam - API Portal',
+    swaggerOptions: {
+      urls: reorderedUrls,
+      docExpansion: 'none',
+      persistAuthorization: true,
+    },
+  })(req, res, next);
 });
 
 // API routes

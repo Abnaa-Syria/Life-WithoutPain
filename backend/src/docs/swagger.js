@@ -121,7 +121,7 @@ const options = {
 };
 
 const manualSwaggerSpec = swaggerJsdoc(options);
-const { buildPathsFromRoutes, mergeSpecs } = require('./swagger/routeRegistry');
+const { buildPathsFromRoutes, mergeSpecs, TAG_BY_MODULE } = require('./swagger/routeRegistry');
 const autoRoutes = buildPathsFromRoutes();
 const swaggerSpec = mergeSpecs(manualSwaggerSpec, autoRoutes);
 
@@ -145,8 +145,67 @@ function filterSpecByTag(spec, tag) {
   };
 }
 
+function filterSpecByModule(spec, moduleName) {
+  const mainTag = TAG_BY_MODULE[moduleName] || (moduleName.charAt(0).toUpperCase() + moduleName.slice(1));
+  const adminTag = `Admin - ${mainTag}`;
+  
+  const paths = {};
+  Object.entries(spec.paths || {}).forEach(([path, methods]) => {
+    const filtered = {};
+    Object.entries(methods).forEach(([method, operation]) => {
+      if (operation?.tags?.includes(mainTag) || operation?.tags?.includes(adminTag)) {
+        filtered[method] = operation;
+      }
+    });
+    if (Object.keys(filtered).length > 0) {
+      paths[path] = filtered;
+    }
+  });
+
+  return {
+    ...spec,
+    paths,
+    tags: (spec.tags || []).filter((t) => t.name === mainTag || t.name === adminTag),
+  };
+}
+
+function getBackendCoreSpec(spec) {
+  const doctorTags = ['Doctor App', 'Admin - Doctor App'];
+  const paths = {};
+  
+  Object.entries(spec.paths || {}).forEach(([path, methods]) => {
+    const filtered = {};
+    Object.entries(methods).forEach(([method, operation]) => {
+      const hasDoctorTag = operation?.tags?.some(tag => doctorTags.includes(tag));
+      if (!hasDoctorTag) {
+        filtered[method] = operation;
+      }
+    });
+    if (Object.keys(filtered).length > 0) {
+      paths[path] = filtered;
+    }
+  });
+
+  return {
+    ...spec,
+    paths,
+    tags: (spec.tags || []).filter((t) => !doctorTags.includes(t.name)),
+  };
+}
+
+function getAvailableModules() {
+  return Object.keys(TAG_BY_MODULE).filter(moduleName => {
+    const spec = filterSpecByModule(swaggerSpec, moduleName);
+    return spec && Object.keys(spec.paths).length > 0;
+  });
+}
+
 const doctorAppSwaggerSpec = filterSpecByTag(swaggerSpec, 'Doctor App');
+const backendCoreSpec = getBackendCoreSpec(swaggerSpec);
 
 module.exports = swaggerSpec;
+module.exports.backendCoreSpec = backendCoreSpec;
 module.exports.doctorAppSwaggerSpec = doctorAppSwaggerSpec;
 module.exports.filterSpecByTag = filterSpecByTag;
+module.exports.filterSpecByModule = filterSpecByModule;
+module.exports.getAvailableModules = getAvailableModules;

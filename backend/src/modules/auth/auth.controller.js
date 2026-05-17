@@ -18,6 +18,11 @@ const login = asyncHandler(async (req, res) => {
   return successResponse(res, { data: result, message: 'Login successful' });
 });
 
+const loginMobile = asyncHandler(async (req, res) => {
+  const result = await AuthService.loginMobile(req.body, req);
+  return successResponse(res, { data: result, message: 'Login successful' });
+});
+
 const verifyOtp = asyncHandler(async (req, res) => {
   const result = await AuthService.verifyOtp(req.body);
   return successResponse(res, { data: result, message: 'OTP verified successfully' });
@@ -62,6 +67,7 @@ module.exports = {
   registerPatient,
   registerDoctor,
   login,
+  loginMobile,
   verifyOtp,
   resendOtp,
   refreshToken,

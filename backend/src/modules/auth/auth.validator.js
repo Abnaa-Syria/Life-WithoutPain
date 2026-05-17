@@ -14,8 +14,9 @@ const registerDoctorSchema = z.object({
   email: emailSchema,
   phone: phoneSchema,
   password: passwordSchema,
+  licenceNumber: z.string().min(3).max(100), // رقم الترخيص الطبي
   specialityId: z.number().int().positive().optional(),
-  licenseNumber: z.string().min(3).max(100).optional(),
+  licenseNumber: z.string().min(3).max(100), // رقم الترخيص الطبي (backup alias)
   title: z.string().min(2).max(100).optional(),
   workplace: z.string().min(2).max(255).optional(),
   city: z.string().min(2).max(100).optional(),
@@ -25,6 +26,11 @@ const registerDoctorSchema = z.object({
 const loginSchema = z.object({
   identifier: z.string().min(1),
   password: z.string().min(1),
+});
+
+const mobileLoginSchema = z.object({
+  phone: z.string().min(10).max(20),
+  password: z.string().min(6),
 });
 
 const verifyOtpSchema = z.object({
@@ -61,6 +67,7 @@ module.exports = {
   registerPatientSchema,
   registerDoctorSchema,
   loginSchema,
+  mobileLoginSchema,
   verifyOtpSchema,
   resendOtpSchema,
   forgotPasswordSchema,

@@ -7,6 +7,7 @@ const {
   registerPatientSchema,
   registerDoctorSchema,
   loginSchema,
+  mobileLoginSchema,
   verifyOtpSchema,
   resendOtpSchema,
   forgotPasswordSchema,
@@ -20,6 +21,7 @@ const { uploadSingle } = require('../../middlewares/upload');
 router.post('/register/patient', authLimiter, validate(registerPatientSchema), controller.registerPatient);
 router.post('/register/doctor', authLimiter, uploadSingle('licenseFile'), validate(registerDoctorSchema), controller.registerDoctor);
 router.post('/login', authLimiter, validate(loginSchema), controller.login);
+router.post('/login/mobile', authLimiter, validate(mobileLoginSchema), controller.loginMobile);
 router.post('/verify-otp', otpLimiter, validate(verifyOtpSchema), controller.verifyOtp);
 router.post('/resend-otp', otpLimiter, validate(resendOtpSchema), controller.resendOtp);
 router.post('/refresh-token', validate(refreshTokenSchema), controller.refreshToken);
