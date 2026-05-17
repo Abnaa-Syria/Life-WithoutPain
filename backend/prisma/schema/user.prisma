@@ -1,3 +1,5 @@
+// User and Authentication Models
+
 model User {
   id                Int        @id @default(autoincrement())
   fullName          String     @db.VarChar(255)
@@ -71,134 +73,15 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-model PatientProfile {
-  id                    Int       @id @default(autoincrement())
-  userId                Int       @unique
-  gender                Gender?
-  dateOfBirth           DateTime? @db.Date
-  bloodType             BloodType?
-  height                Float?
-  weight                Float?
-  city                  String?   @db.VarChar(100)
-  address               String?   @db.Text
-  emergencyContactName  String?   @db.VarChar(255)
-  emergencyContactPhone String?   @db.VarChar(20)
-  insuranceLinked       Boolean   @default(false)
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+model UserPermission {
+  id           Int     @id @default(autoincrement())
+  userId       Int
+  permissionId Int
+  granted      Boolean @default(true)
 
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  medicalProfile MedicalProfile?
-  familyMembers  FamilyMember[]
-  insurances     PatientInsurance[]
-  medicalFiles   MedicalFile[]
-  appointments   Appointment[]    @relation("PatientAppointments")
-  conversations  Conversation[]   @relation("PatientConversations")
-  labTests       LabTestRequest[] @relation("PatientLabTests")
-  prescriptions  Prescription[]   @relation("PatientPrescriptions")
-  reports        MedicalReport[]  @relation("PatientReports")
-  payments       Payment[]        @relation("PatientPayments")
-  insuranceCases InsuranceCase[]  @relation("PatientInsuranceCases")
-  supportCases   SupportCase[]   @relation("PatientSupportCases")
-  reviews        Review[]         @relation("ReviewPatientProfile")
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
-  @@map("patient_profiles")
-}
-
-model MedicalProfile {
-  id                 Int      @id @default(autoincrement())
-  patientId          Int      @unique
-  chronicDiseases    String?  @db.Text
-  allergies          String?  @db.Text
-  currentMedications String?  @db.Text
-  surgeries          String?  @db.Text
-  familyHistory      String?  @db.Text
-  notes              String?  @db.Text
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  patient PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
-
-  @@map("medical_profiles")
-}
-
-model FamilyMember {
-  id           Int       @id @default(autoincrement())
-  patientId    Int
-  fullName     String    @db.VarChar(255)
-  relationType String    @db.VarChar(50)
-  gender       Gender?
-  dateOfBirth  DateTime? @db.Date
-  phone        String?   @db.VarChar(20)
-  notes        String?   @db.Text
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  patient      PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  appointments Appointment[]  @relation("FamilyMemberAppointments")
-
-  @@index([patientId])
-  @@map("family_members")
-}
-
-model DoctorProfile {
-  id                 Int                @id @default(autoincrement())
-  userId             Int                @unique
-  specialityId       Int?
-  title              String?            @db.VarChar(100)
-  bio                String?            @db.Text
-  bioAr              String?            @db.Text
-  yearsOfExperience  Int?
-  licenseNumber      String?            @db.VarChar(100)
-  workplace          String?            @db.VarChar(255)
-  city               String?            @db.VarChar(100)
-  consultationFee    Decimal            @default(0) @db.Decimal(10, 2)
-  followUpFee        Decimal            @default(0) @db.Decimal(10, 2)
-  ratingAverage      Float              @default(0)
-  ratingCount        Int                @default(0)
-  verificationStatus VerificationStatus @default(PENDING)
-  isPubliclyBookable Boolean            @default(false)
-  isAvailable        Boolean            @default(true)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-
-  user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  speciality            Speciality?                  @relation(fields: [specialityId], references: [id])
-  verificationDocuments DoctorVerificationDocument[]
-  doctorServices        DoctorService[]
-  availability          DoctorAvailability[]
-  appointments          Appointment[]                @relation("DoctorAppointments")
-  conversations         Conversation[]               @relation("DoctorConversations")
-  labTestRequests       LabTestRequest[]              @relation("DoctorLabTests")
-  prescriptions         Prescription[]               @relation("DoctorPrescriptions")
-  reports               MedicalReport[]              @relation("DoctorReports")
-  callSessions          CallSession[]                @relation("DoctorCallSessions")
-  reviews               Review[]                     @relation("ReviewDoctor")
-  payouts               DoctorPayout[]
-
-  @@index([specialityId])
-  @@index([verificationStatus])
-  @@index([isPubliclyBookable])
-  @@index([city])
-  @@map("doctor_profiles")
-}
-
-model DoctorVerificationDocument {
-  id           Int                  @id @default(autoincrement())
-  doctorId     Int
-  fileUrl      String               @db.VarChar(500)
-  fileType     String               @db.VarChar(50)
-  reviewStatus DocumentReviewStatus @default(PENDING)
-  reviewNotes  String?              @db.Text
-  reviewedBy   Int?
-  reviewedAt   DateTime?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-
-  doctor   DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  reviewer User?         @relation("DocumentReviewer", fields: [reviewedBy], references: [id])
-
-  @@index([doctorId])
-  @@index([reviewStatus])
-  @@map("doctor_verification_documents")
+  @@unique([userId, permissionId])
+  @@map("user_permissions")
 }

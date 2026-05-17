@@ -1,70 +1,76 @@
-model Speciality {
-  id            Int      @id @default(autoincrement())
-  nameAr        String   @db.VarChar(255)
-  nameEn        String   @db.VarChar(255)
-  descriptionAr String?  @db.Text
-  descriptionEn String?  @db.Text
-  iconUrl       String?  @db.VarChar(500)
-  isActive      Boolean  @default(true)
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+// Appointment, Medical Records, and Treatment Models
 
-  doctors      DoctorProfile[]
-  appointments Appointment[]   @relation("SpecialityAppointments")
-
-  @@map("specialities")
+enum ServiceType {
+  REMOTE
+  HOME
+  CLINIC
 }
 
-model Service {
-  id            Int         @id @default(autoincrement())
-  nameAr        String      @db.VarChar(255)
-  nameEn        String      @db.VarChar(255)
-  descriptionAr String?     @db.Text
-  descriptionEn String?     @db.Text
-  type          ServiceType
-  isActive      Boolean     @default(true)
-  sortOrder     Int         @default(0)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  doctorServices DoctorService[]
-  appointments   Appointment[]   @relation("ServiceAppointments")
-
-  @@map("services")
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
 }
 
-model DoctorService {
-  id        Int      @id @default(autoincrement())
-  doctorId  Int
-  serviceId Int
-  createdAt DateTime @default(now())
-
-  doctor  DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  service Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
-  @@unique([doctorId, serviceId])
-  @@map("doctor_services")
+enum PeriodType {
+  MORNING
+  AFTERNOON
+  EVENING
 }
 
-model DoctorAvailability {
-  id                  Int        @id @default(autoincrement())
-  doctorId            Int
-  dayOfWeek           DayOfWeek
-  periodType          PeriodType
-  startTime           String     @db.VarChar(5)
-  endTime             String     @db.VarChar(5)
-  slotDurationMinutes Int        @default(30)
-  breakDurationMinutes Int       @default(5)
-  isActive            Boolean    @default(true)
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+enum AppointmentType {
+  CONSULTATION
+  FOLLOW_UP
+  EMERGENCY
+}
 
-  doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  NO_SHOW
+}
 
-  @@index([doctorId])
-  @@index([dayOfWeek])
-  @@map("doctor_availability")
+enum InsurancePaymentStatus {
+  NOT_REQUIRED
+  PENDING_VERIFICATION
+  APPROVED
+  REJECTED
+  PARTIALLY_APPROVED
+}
+
+enum AttachmentType {
+  IMAGE
+  DOCUMENT
+  LAB_RESULT
+  PRESCRIPTION
+  REPORT
+  OTHER
+}
+
+enum FileCategory {
+  LAB_RESULT
+  RADIOLOGY
+  PRESCRIPTION
+  MEDICAL_REPORT
+  INSURANCE_DOCUMENT
+  ID_DOCUMENT
+  OTHER
+}
+
+enum LabTestStatus {
+  REQUESTED
+  SAMPLE_COLLECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }
 
 model Appointment {

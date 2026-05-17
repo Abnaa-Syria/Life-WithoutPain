@@ -1,0 +1,63 @@
+// Doctor and Professional Models
+
+model DoctorProfile {
+  id                 Int                @id @default(autoincrement())
+  userId             Int                @unique
+  specialityId       Int?
+  title              String?            @db.VarChar(100)
+  bio                String?            @db.Text
+  bioAr              String?            @db.Text
+  yearsOfExperience  Int?
+  licenseNumber      String?            @db.VarChar(100)
+  workplace          String?            @db.VarChar(255)
+  city               String?            @db.VarChar(100)
+  consultationFee    Decimal            @default(0) @db.Decimal(10, 2)
+  followUpFee        Decimal            @default(0) @db.Decimal(10, 2)
+  ratingAverage      Float              @default(0)
+  ratingCount        Int                @default(0)
+  verificationStatus VerificationStatus @default(PENDING)
+  isPubliclyBookable Boolean            @default(false)
+  isAvailable        Boolean            @default(true)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  speciality            Speciality?                  @relation(fields: [specialityId], references: [id])
+  verificationDocuments DoctorVerificationDocument[]
+  doctorServices        DoctorService[]
+  availability          DoctorAvailability[]
+  appointments          Appointment[]                @relation("DoctorAppointments")
+  conversations         Conversation[]               @relation("DoctorConversations")
+  labTestRequests       LabTestRequest[]              @relation("DoctorLabTests")
+  prescriptions         Prescription[]               @relation("DoctorPrescriptions")
+  reports               MedicalReport[]              @relation("DoctorReports")
+  callSessions          CallSession[]                @relation("DoctorCallSessions")
+  reviews               Review[]                     @relation("ReviewDoctor")
+  payouts               DoctorPayout[]
+
+  @@index([specialityId])
+  @@index([verificationStatus])
+  @@index([isPubliclyBookable])
+  @@index([city])
+  @@map("doctor_profiles")
+}
+
+model DoctorVerificationDocument {
+  id           Int                  @id @default(autoincrement())
+  doctorId     Int
+  fileUrl      String               @db.VarChar(500)
+  fileType     String               @db.VarChar(50)
+  reviewStatus DocumentReviewStatus @default(PENDING)
+  reviewNotes  String?              @db.Text
+  reviewedBy   Int?
+  reviewedAt   DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  doctor   DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  reviewer User?         @relation("DocumentReviewer", fields: [reviewedBy], references: [id])
+
+  @@index([doctorId])
+  @@index([reviewStatus])
+  @@map("doctor_verification_documents")
+}

@@ -1,3 +1,77 @@
+// Insurance Models
+
+enum InsuranceVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum InsuranceCaseType {
+  PRE_AUTHORIZATION
+  CLAIM
+  INQUIRY
+}
+
+enum InsuranceCaseRequestType {
+  CONSULTATION
+  PROCEDURE
+  LAB_TEST
+  MEDICATION
+}
+
+enum InsuranceCaseStatus {
+  OPEN
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  MORE_INFO_REQUESTED
+  ESCALATED
+  CLOSED
+}
+
+enum InsuranceApprovalStatus {
+  PENDING
+  APPROVED
+  PARTIALLY_APPROVED
+  REJECTED
+}
+
+enum InsuranceApiMode {
+  MANUAL
+  API
+  HYBRID
+}
+
+enum ClaimSubmissionType {
+  DAILY
+  MONTHLY
+}
+
+enum ClaimBatchStatus {
+  DRAFT
+  SUBMITTED
+  PROCESSING
+  PARTIALLY_PAID
+  PAID
+  REJECTED
+  DISPUTED
+}
+
+enum ClaimItemStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum ReconciliationStatus {
+  PENDING
+  MATCHED
+  DISCREPANCY
+  RESOLVED
+}
+
 model InsuranceProvider {
   id        Int             @id @default(autoincrement())
   nameAr    String          @db.VarChar(255)

@@ -1,3 +1,115 @@
+// System, Support, Communication and Payment Models
+
+enum SupportCaseType {
+  INSURANCE
+  TECHNICAL
+  BILLING
+  GENERAL
+  COMPLAINT
+}
+
+enum SupportCasePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SupportCaseStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_PATIENT
+  WAITING_ON_INSURANCE
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+}
+
+enum CallSessionType {
+  VIDEO
+  VOICE
+}
+
+enum CallSessionStatus {
+  CREATED
+  RINGING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  MISSED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  WALLET
+  INSURANCE
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PayoutStatus {
+  PENDING
+  SCHEDULED
+  PROCESSING
+  PAID
+  FAILED
+}
+
+enum NotificationType {
+  APPOINTMENT
+  INSURANCE
+  PAYMENT
+  SUPPORT
+  SYSTEM
+  CHAT
+  LAB_RESULT
+  PRESCRIPTION
+  REPORT
+  REVIEW
+  VERIFICATION
+}
+
+enum SettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  STATUS_CHANGE
+  LOGIN
+  LOGOUT
+  APPROVE
+  REJECT
+  ESCALATE
+  ASSIGN
+  PAYMENT
+  UPLOAD
+  DOWNLOAD
+}
+
+// Support Models
+
 model SupportCase {
   id              Int                @id @default(autoincrement())
   patientId       Int?
@@ -43,6 +155,8 @@ model SupportMessage {
   @@map("support_messages")
 }
 
+// Communication Models
+
 model Conversation {
   id            Int      @id @default(autoincrement())
   appointmentId Int?     @unique
@@ -80,6 +194,8 @@ model Message {
   @@map("messages")
 }
 
+// Call Session Model
+
 model CallSession {
   id              Int               @id @default(autoincrement())
   appointmentId   Int
@@ -104,6 +220,8 @@ model CallSession {
   @@index([appointmentId])
   @@map("call_sessions")
 }
+
+// Payment Models
 
 model Payment {
   id                   Int           @id @default(autoincrement())
@@ -150,6 +268,8 @@ model DoctorPayout {
   @@map("doctor_payouts")
 }
 
+// Notification Model
+
 model Notification {
   id                Int              @id @default(autoincrement())
   userId            Int
@@ -171,6 +291,8 @@ model Notification {
   @@map("notifications")
 }
 
+// System Settings Model
+
 model SystemSetting {
   id        Int         @id @default(autoincrement())
   key       String      @unique @db.VarChar(255)
@@ -182,6 +304,8 @@ model SystemSetting {
 
   @@map("system_settings")
 }
+
+// Audit Log Model
 
 model AuditLog {
   id         Int         @id @default(autoincrement())
@@ -203,6 +327,8 @@ model AuditLog {
   @@index([createdAt])
   @@map("audit_logs")
 }
+
+// Role and Permission Models
 
 model Role {
   id          Int      @id @default(autoincrement())
@@ -242,17 +368,4 @@ model RolePermission {
 
   @@unique([roleId, permissionId])
   @@map("role_permissions")
-}
-
-model UserPermission {
-  id           Int     @id @default(autoincrement())
-  userId       Int
-  permissionId Int
-  granted      Boolean @default(true)
-
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, permissionId])
-  @@map("user_permissions")
 }
