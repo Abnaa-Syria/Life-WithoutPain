@@ -3,6 +3,7 @@
 model PatientProfile {
   id                    Int       @id @default(autoincrement())
   userId                Int       @unique
+  identityNumber        String?   @db.VarChar(50)
   gender                Gender?
   dateOfBirth           DateTime? @db.Date
   bloodType             BloodType?
@@ -13,6 +14,8 @@ model PatientProfile {
   emergencyContactName  String?   @db.VarChar(255)
   emergencyContactPhone String?   @db.VarChar(20)
   insuranceLinked       Boolean   @default(false)
+  notificationsEnabled  Boolean   @default(true)
+  privacySettings       Json?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -52,10 +55,11 @@ model MedicalProfile {
 }
 
 model FamilyMember {
-  id           Int       @id @default(autoincrement())
-  patientId    Int
-  fullName     String    @db.VarChar(255)
-  relationType String    @db.VarChar(50)
+  id                  Int       @id @default(autoincrement())
+  patientId           Int
+  fullName            String    @db.VarChar(255)
+  residenceCardNumber String?   @db.VarChar(50)
+  relationType        String    @db.VarChar(50)
   gender       Gender?
   dateOfBirth  DateTime? @db.Date
   phone        String?   @db.VarChar(20)

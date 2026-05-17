@@ -3,6 +3,8 @@ const { emailSchema, passwordSchema, phoneSchema } = require('../../shared/valid
 
 const registerPatientSchema = z.object({
   fullName: z.string().min(2).max(255),
+  identityNumber: z.string().min(3).max(50),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'dateOfBirth must be YYYY-MM-DD'),
   email: emailSchema,
   phone: phoneSchema,
   password: passwordSchema,

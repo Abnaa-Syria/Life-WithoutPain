@@ -71,6 +71,10 @@ const config = {
   logging: {
     level: process.env.LOG_LEVEL || 'info',
   },
+
+  patient: {
+    comingWindowHours: parseInt(process.env.PATIENT_COMING_WINDOW_HOURS, 10) || 24,
+  },
 };
 
 module.exports = config;

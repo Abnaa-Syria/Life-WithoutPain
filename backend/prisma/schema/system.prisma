@@ -53,6 +53,9 @@ enum PaymentMethod {
   WALLET
   INSURANCE
   CASH
+  VISA
+  MASTERCARD
+  APPLE_PAY
 }
 
 enum PaymentStatus {

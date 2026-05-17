@@ -1,3 +1,4 @@
+/** @deprecated Use /api/v1/patient/* Patient App routes instead */
 const router = require('express').Router();
 const controller = require('./patient.controller');
 const { authenticate, authorize } = require('../../middlewares/auth');

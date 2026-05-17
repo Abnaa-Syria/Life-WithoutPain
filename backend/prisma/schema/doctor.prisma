@@ -11,6 +11,7 @@ model DoctorProfile {
   licenseNumber      String            @db.VarChar(100)
   workplace          String?            @db.VarChar(255)
   city               String?            @db.VarChar(100)
+  clinicAddress      String?            @db.Text
   consultationFee    Decimal            @default(0) @db.Decimal(10, 2)
   followUpFee        Decimal            @default(0) @db.Decimal(10, 2)
   ratingAverage      Float              @default(0)

@@ -2,6 +2,7 @@ const CallSessionRepository = require('./callSession.repository');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const videoProvider = require('../../shared/video');
 const { resolveDoctorProfile, assertDoctorOwnsAppointment } = require('../../shared/utils/doctorAppContext');
+const { resolvePatientProfile, assertPatientOwnsAppointment } = require('../../shared/utils/patientAppContext');
 
 class CallSessionService {
   static async create(body) {
@@ -46,6 +47,36 @@ class CallSessionService {
       where: { id: parseInt(id) },
       data: { status: 'COMPLETED', endedAt: new Date(), durationSeconds: duration },
     });
+  }
+
+  static async getOrJoinForPatient(userId, appointmentId) {
+    const { patientId } = await resolvePatientProfile(userId);
+    const appointment = await assertPatientOwnsAppointment(patientId, appointmentId);
+
+    const existing = await CallSessionRepository.findFirst({
+      where: { appointmentId: parseInt(appointmentId, 10), patientId },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (existing?.joinUrlPatient) {
+      return {
+        sessionId: existing.sessionId || String(existing.id),
+        callUrl: existing.joinUrlPatient,
+        status: existing.status,
+      };
+    }
+
+    const session = await this.create({
+      appointmentId: parseInt(appointmentId, 10),
+      patientId: appointment.patientId,
+      doctorId: appointment.doctorId,
+      sessionType: 'VIDEO',
+    });
+
+    return {
+      sessionId: session.sessionId || String(session.id),
+      callUrl: session.joinUrlPatient,
+      status: session.status,
+    };
   }
 
   static async startSessionForDoctor(userId, appointmentId) {

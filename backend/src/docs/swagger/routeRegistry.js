@@ -7,6 +7,7 @@ const MODULES_DIR = path.join(__dirname, '..', '..', 'modules');
 const TAG_BY_MODULE = {
   auth: 'Auth',
   patients: 'Patients',
+  patient: 'Patient App',
   doctors: 'Doctors',
   doctor: 'Doctor App',
   appointments: 'Appointments',
@@ -82,6 +83,7 @@ function joinPaths(prefix, routePath) {
 const PUBLIC_PATH_PATTERNS = [
   /^\/auth\/(register|login|verify-otp|resend-otp|forgot-password|reset-password|refresh-token)/,
   /^\/doctor\/auth\//,
+  /^\/patient\/auth\/(register|login|verify-otp|resend-otp|forgot-password|reset-password|refresh-token)/,
   /^\/doctor\/specializations$/,
   /^\/specialities/,
   /^\/insurance-providers/,
@@ -185,7 +187,7 @@ function mergeSpecs(manualSpec, autoSpec) {
   });
 
   const tagOrder = [
-    'Dashboard', 'Admin', 'Auth', 'Patients', 'Doctors', 'Doctor App',
+    'Dashboard', 'Admin', 'Auth', 'Patients', 'Patient App', 'Doctors', 'Doctor App',
     'Appointments', 'Prescriptions', 'Reports', 'Lab Tests',
     'Conversations', 'Call Sessions', 'Notifications', 'Reviews',
     'Specialities', 'Services', 'Insurance Providers', 'Insurance Cases',

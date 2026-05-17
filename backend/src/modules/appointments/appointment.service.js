@@ -4,8 +4,107 @@ const { APPOINTMENT_STATUS_TRANSITIONS } = require('../../constants');
 const { buildPagination } = require('../../utils/pagination');
 const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 const { resolveDoctorProfile, assertDoctorOwnsAppointment } = require('../../shared/utils/doctorAppContext');
+const { resolvePatientProfile, assertPatientOwnsAppointment } = require('../../shared/utils/patientAppContext');
+const { isComingAppointment } = require('../../shared/utils/patientAppMappers');
 
 class AppointmentService {
+  static async createForPatient(userId, data) {
+    const requiresInsuranceApproval = data.paymentMode === 'INSURANCE';
+    if (data.bookingFor === 'family' && !data.familyMemberId) {
+      throw new BadRequestError('familyMemberId is required when booking for a family member');
+    }
+    return this.create(userId, {
+      ...data,
+      familyMemberId: data.bookingFor === 'family' ? data.familyMemberId : null,
+      requiresInsuranceApproval,
+    });
+  }
+
+  static async listForPatient(userId, query) {
+    const { patientId } = await resolvePatientProfile(userId);
+    const { page, limit, skip } = buildPagination(query);
+    const filter = (query.filter || 'all').toLowerCase();
+
+    const where = { patientId };
+    const orderBy = { appointmentDate: 'asc', startTime: 'asc' };
+
+    if (filter === 'confirmed') where.status = 'CONFIRMED';
+    else if (filter === 'cancelled') where.status = 'CANCELLED';
+    else if (filter === 'completed') where.status = 'COMPLETED';
+    else if (filter === 'coming') {
+      where.status = { notIn: ['CANCELLED', 'COMPLETED'] };
+    } else if (filter === 'all') {
+      orderBy.appointmentDate = 'desc';
+    }
+
+    const include = {
+      doctor: { include: { user: { select: { fullName: true, avatarUrl: true } }, speciality: true } },
+      service: true,
+    };
+
+    if (filter === 'coming') {
+      const rows = await prisma.appointment.findMany({
+        where,
+        include,
+        orderBy,
+      });
+      const filtered = rows.filter((row) => isComingAppointment(row));
+      const total = filtered.length;
+      const data = filtered.slice(skip, skip + limit);
+      return { data, total, page, limit };
+    }
+
+    const [data, total] = await Promise.all([
+      prisma.appointment.findMany({ where, skip, take: limit, orderBy, include }),
+      prisma.appointment.count({ where }),
+    ]);
+    return { data, total, page, limit };
+  }
+
+  static async getByIdForPatient(userId, id) {
+    const { patientId } = await resolvePatientProfile(userId);
+    await assertPatientOwnsAppointment(patientId, id);
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: parseInt(id, 10) },
+      include: {
+        doctor: {
+          include: {
+            user: { select: { id: true, fullName: true, avatarUrl: true } },
+            speciality: true,
+            verificationDocuments: { where: { reviewStatus: 'APPROVED' } },
+          },
+        },
+        service: true,
+        attachments: true,
+        prescriptions: true,
+        reports: true,
+        labTests: { include: { results: true } },
+        familyMember: true,
+      },
+    });
+    if (!appointment) throw new NotFoundError('Appointment not found');
+    return appointment;
+  }
+
+  static async cancelForPatient(userId, id, data) {
+    const { patientId } = await resolvePatientProfile(userId);
+    await assertPatientOwnsAppointment(patientId, id);
+    await this.updateStatus(id, 'CANCELLED', userId, data);
+    return this.getByIdForPatient(userId, id);
+  }
+
+  static async rescheduleForPatient(userId, id, data) {
+    const { patientId } = await resolvePatientProfile(userId);
+    await assertPatientOwnsAppointment(patientId, id);
+    await this.updateStatus(id, 'RESCHEDULED', userId, {
+      newDate: data.appointmentDate,
+      newStartTime: data.startTime,
+      newEndTime: data.endTime,
+      reason: data.reason,
+    });
+    return this.getByIdForPatient(userId, id);
+  }
+
   static async create(userId, data) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
     if (!patient) throw new NotFoundError('Patient profile not found');
@@ -61,8 +160,9 @@ class AppointmentService {
         createdBy: userId,
       },
       include: {
-        doctor: { include: { user: { select: { fullName: true } } } },
+        doctor: { include: { user: { select: { fullName: true, avatarUrl: true } }, speciality: true } },
         patient: { include: { user: { select: { fullName: true } } } },
+        service: true,
       },
     });
 
@@ -72,9 +172,18 @@ class AppointmentService {
     return appointment;
   }
 
-  static async getAll(query) {
+  static async getAll(userRole, userId, query) {
     const { page, limit, skip } = buildPagination(query);
     const where = {};
+
+    if (userRole === 'PATIENT') {
+      const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+      if (!patient) throw new NotFoundError('Patient profile not found');
+      where.patientId = patient.id;
+    } else if (userRole === 'DOCTOR') {
+      const doctor = await prisma.doctorProfile.findUnique({ where: { userId } });
+      if (doctor) where.doctorId = doctor.id;
+    }
     if (query.status) where.status = query.status;
     if (query.doctorId) where.doctorId = parseInt(query.doctorId);
     if (query.patientId) where.patientId = parseInt(query.patientId);
@@ -94,7 +203,7 @@ class AppointmentService {
     return { data, total, page, limit };
   }
 
-  static async getById(id) {
+  static async getById(id, userRole, userId) {
     const appointment = await prisma.appointment.findUnique({
       where: { id: parseInt(id) },
       include: {
@@ -109,6 +218,19 @@ class AppointmentService {
       },
     });
     if (!appointment) throw new NotFoundError('Appointment not found');
+
+    if (userRole === 'PATIENT') {
+      const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+      if (!patient || appointment.patientId !== patient.id) {
+        throw new ForbiddenError('You do not have access to this appointment');
+      }
+    } else if (userRole === 'DOCTOR') {
+      const doctor = await prisma.doctorProfile.findUnique({ where: { userId } });
+      if (!doctor || appointment.doctorId !== doctor.id) {
+        throw new ForbiddenError('You do not have access to this appointment');
+      }
+    }
+
     return appointment;
   }
 

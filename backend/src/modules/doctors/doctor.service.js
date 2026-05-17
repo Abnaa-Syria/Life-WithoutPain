@@ -52,18 +52,46 @@ class DoctorService {
   }
 
   static async getById(doctorId) {
+    return this.getPublicDetail(doctorId);
+  }
+
+  static async getPublicDetail(doctorId) {
     const doctor = await DoctorRepository.findUnique({
-      where: { id: parseInt(doctorId) },
+      where: { id: parseInt(doctorId, 10) },
       include: {
         user: { select: { id: true, fullName: true, avatarUrl: true } },
         speciality: true,
         doctorServices: { include: { service: true } },
         availability: { where: { isActive: true } },
+        verificationDocuments: { where: { reviewStatus: 'APPROVED' } },
         reviews: { where: { isVisible: true }, take: 10, orderBy: { createdAt: 'desc' }, include: { patient: { include: { user: { select: { fullName: true } } } } } },
       },
     });
     if (!doctor) throw new NotFoundError('Doctor not found');
     return doctor;
+  }
+
+  static async listBySpeciality(specialityId, query = {}) {
+    const result = await this.search({ ...query, specialityId });
+    const data = await Promise.all(
+      result.data.map(async (doctor) => {
+        const [availabilityCount, upcomingBooked] = await Promise.all([
+          prisma.doctorAvailability.count({ where: { doctorId: doctor.id, isActive: true } }),
+          prisma.appointment.count({
+            where: {
+              doctorId: doctor.id,
+              status: { in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'] },
+              appointmentDate: { gte: new Date() },
+            },
+          }),
+        ]);
+        return {
+          ...doctor,
+          availableAppointmentsCount: Math.max(0, availabilityCount * 4 - upcomingBooked),
+        };
+      }),
+    );
+    return { ...result, data };
   }
 
   static async getProfile(userId) {

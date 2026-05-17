@@ -231,16 +231,86 @@ class PatientService {
     return { data, total, page, limit };
   }
 
-  static async updateSettings(userId, data) {
-    return prisma.user.update({
-      where: { id: userId },
-      data: {
-        preferredLanguage: data.preferredLanguage,
-        darkModeEnabled: data.darkModeEnabled,
-        fullName: data.fullName,
+  static async getSettings(userId) {
+    const profile = await prisma.patientProfile.findUnique({
+      where: { userId },
+      include: {
+        user: { select: { preferredLanguage: true, darkModeEnabled: true, fullName: true } },
       },
-      select: { id: true, fullName: true, preferredLanguage: true, darkModeEnabled: true },
     });
+    if (!profile) throw new NotFoundError('Patient profile not found');
+    return {
+      language: profile.user.preferredLanguage,
+      darkModeEnabled: profile.user.darkModeEnabled,
+      fullName: profile.user.fullName,
+      notificationsEnabled: profile.notificationsEnabled,
+      privacy: profile.privacySettings || {},
+    };
+  }
+
+  static async updateSettings(userId, data) {
+    const profile = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!profile) throw new NotFoundError('Patient profile not found');
+
+    if (data.preferredLanguage !== undefined || data.fullName !== undefined || data.darkModeEnabled !== undefined) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          preferredLanguage: data.preferredLanguage,
+          darkModeEnabled: data.darkModeEnabled,
+          fullName: data.fullName,
+        },
+      });
+    }
+
+    if (data.notificationsEnabled !== undefined || data.privacy !== undefined) {
+      await prisma.patientProfile.update({
+        where: { userId },
+        data: {
+          notificationsEnabled: data.notificationsEnabled,
+          privacySettings: data.privacy,
+        },
+      });
+    }
+
+    return this.getSettings(userId);
+  }
+
+  static async listMyPrescriptions(userId, query) {
+    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!patient) throw new NotFoundError('Patient profile not found');
+    const PrescriptionService = require('../prescriptions/prescription.service');
+    return PrescriptionService.list({ ...query, patientId: patient.id });
+  }
+
+  static async listMyReports(userId, query) {
+    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!patient) throw new NotFoundError('Patient profile not found');
+    const ReportService = require('../reports/report.service');
+    return ReportService.list({ ...query, patientId: patient.id });
+  }
+
+  static async listMyRadiology(userId, query) {
+    return this.getMedicalFiles(userId, { ...query, category: 'RADIOLOGY' });
+  }
+
+  static async listDirectories(userId, query) {
+    const type = (query.type || 'all').toLowerCase();
+    const result = { prescriptions: [], reports: [], xrays: [] };
+
+    if (type === 'all' || type === 'prescriptions') {
+      const rx = await this.listMyPrescriptions(userId, query);
+      result.prescriptions = rx.data;
+    }
+    if (type === 'all' || type === 'reports') {
+      const reports = await this.listMyReports(userId, query);
+      result.reports = reports.data;
+    }
+    if (type === 'all' || type === 'xrays') {
+      const xrays = await this.listMyRadiology(userId, query);
+      result.xrays = xrays.data;
+    }
+    return result;
   }
 }
 

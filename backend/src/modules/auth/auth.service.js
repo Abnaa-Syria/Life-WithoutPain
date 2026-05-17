@@ -9,7 +9,7 @@ const { createAuditLog } = require('../../middlewares/auditLog');
 const { normalizePhone } = require('../../shared/utils/phone');
 
 class AuthService {
-  static async registerPatient({ fullName, email, phone, password, preferredLanguage }) {
+  static async registerPatient({ fullName, identityNumber, dateOfBirth, email, phone, password, preferredLanguage }) {
     const normalizedPhone = normalizePhone(phone);
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { phone: normalizedPhone }], deletedAt: null },
@@ -28,7 +28,12 @@ class AuthService {
         passwordHash,
         role: 'PATIENT',
         preferredLanguage: preferredLanguage || 'ar',
-        patientProfile: { create: {} },
+        patientProfile: {
+          create: {
+            identityNumber,
+            dateOfBirth: new Date(dateOfBirth),
+          },
+        },
       },
       include: { patientProfile: true },
     });

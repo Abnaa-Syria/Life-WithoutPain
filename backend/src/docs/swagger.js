@@ -89,7 +89,8 @@ const options = {
       { name: 'Dashboard', description: 'Admin dashboard statistics' },
       { name: 'Admin', description: 'Admin panel CRUD and operations' },
       { name: 'Auth', description: 'Authentication & Authorization' },
-      { name: 'Patients', description: 'Patient app endpoints' },
+      { name: 'Patients', description: 'Legacy patient profile endpoints' },
+      { name: 'Patient App', description: 'Patient mobile application API' },
       { name: 'Doctors', description: 'Doctor discovery & profile' },
       { name: 'Doctor App', description: 'Mobile doctor application API' },
       { name: 'Appointments', description: 'Appointment management' },
@@ -170,14 +171,14 @@ function filterSpecByModule(spec, moduleName) {
 }
 
 function getBackendCoreSpec(spec) {
-  const doctorTags = ['Doctor App', 'Admin - Doctor App'];
+  const excludedTags = ['Doctor App', 'Admin - Doctor App', 'Patient App'];
   const paths = {};
   
   Object.entries(spec.paths || {}).forEach(([path, methods]) => {
     const filtered = {};
     Object.entries(methods).forEach(([method, operation]) => {
-      const hasDoctorTag = operation?.tags?.some(tag => doctorTags.includes(tag));
-      if (!hasDoctorTag) {
+      const isExcluded = operation?.tags?.some((tag) => excludedTags.includes(tag));
+      if (!isExcluded) {
         filtered[method] = operation;
       }
     });
@@ -189,7 +190,7 @@ function getBackendCoreSpec(spec) {
   return {
     ...spec,
     paths,
-    tags: (spec.tags || []).filter((t) => !doctorTags.includes(t.name)),
+    tags: (spec.tags || []).filter((t) => !excludedTags.includes(t.name)),
   };
 }
 
@@ -201,11 +202,13 @@ function getAvailableModules() {
 }
 
 const doctorAppSwaggerSpec = filterSpecByTag(swaggerSpec, 'Doctor App');
+const patientAppSwaggerSpec = filterSpecByTag(swaggerSpec, 'Patient App');
 const backendCoreSpec = getBackendCoreSpec(swaggerSpec);
 
 module.exports = swaggerSpec;
 module.exports.backendCoreSpec = backendCoreSpec;
 module.exports.doctorAppSwaggerSpec = doctorAppSwaggerSpec;
+module.exports.patientAppSwaggerSpec = patientAppSwaggerSpec;
 module.exports.filterSpecByTag = filterSpecByTag;
 module.exports.filterSpecByModule = filterSpecByModule;
 module.exports.getAvailableModules = getAvailableModules;

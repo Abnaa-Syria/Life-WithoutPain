@@ -7,7 +7,7 @@ const swaggerUi = require('swagger-ui-express');
 
 const config = require('./config');
 const swaggerSpec = require('./docs/swagger');
-const { backendCoreSpec, doctorAppSwaggerSpec, filterSpecByModule, getAvailableModules } = swaggerSpec;
+const { backendCoreSpec, doctorAppSwaggerSpec, patientAppSwaggerSpec, filterSpecByModule, getAvailableModules } = swaggerSpec;
 const errorHandler = require('./middlewares/errorHandler');
 const { globalLimiter } = require('./middlewares/rateLimiter');
 const logger = require('./config/logger');
@@ -102,7 +102,8 @@ const customCss = `
 
 const availableModules = getAvailableModules();
 const swaggerUrls = [
-  { url: '/api-docs/backend.json', name: 'Core Backend API (Excluding Doctor App)' },
+  { url: '/api-docs/backend.json', name: 'Core Backend API' },
+  { url: '/api-docs/patient.json', name: 'Patient App' },
   { url: '/api-docs/doctor.json', name: 'Doctor Mobile App' },
   ...availableModules.map(mod => ({
     url: `/api-docs/modules/${mod}.json`,
@@ -119,6 +120,11 @@ app.get('/api-docs/backend.json', (req, res) => {
 app.get('/api-docs/doctor.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(doctorAppSwaggerSpec);
+});
+
+app.get('/api-docs/patient.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(patientAppSwaggerSpec);
 });
 
 app.get('/api-docs/modules/:moduleName.json', (req, res) => {
@@ -138,6 +144,10 @@ app.get('/api-docs.json', (req, res) => {
 // 2. Redirect endpoints for clean URLs
 app.get('/api-docs/doctor', (req, res) => {
   res.redirect('/api-docs?module=doctor');
+});
+
+app.get('/api-docs/patient', (req, res) => {
+  res.redirect('/api-docs?module=patient');
 });
 
 app.get('/api-docs/modules/:moduleName', (req, res) => {

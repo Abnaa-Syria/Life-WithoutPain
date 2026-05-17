@@ -8,12 +8,12 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const getAll = asyncHandler(async (req, res) => {
-  const { data, total, page, limit } = await AppointmentService.getAll(req.query);
+  const { data, total, page, limit } = await AppointmentService.getAll(req.user.role, req.user.id, req.query);
   return paginatedResponse(res, { data, total, page, limit });
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const data = await AppointmentService.getById(req.params.id);
+  const data = await AppointmentService.getById(req.params.id, req.user.role, req.user.id);
   return successResponse(res, { data });
 });
 

@@ -5,6 +5,10 @@ const { buildPagination } = require('../../utils/pagination');
 const paymentProvider = require('../../shared/payments');
 
 class PaymentService {
+  static async initiateForPatient(userId, body) {
+    return this.initiate(userId, body);
+  }
+
   static async initiate(userId, body) {
     const result = await paymentProvider.initiate({
       amount: body.amount,

@@ -1,11 +1,52 @@
 const SupportCaseRepository = require('./supportCase.repository');
 const SupportMessageRepository = require('./supportMessage.repository');
-const { NotFoundError } = require('../../shared/errors/AppError');
+const prisma = require('../../config/database');
+const { NotFoundError, ForbiddenError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
+const { resolvePatientProfile } = require('../../shared/utils/patientAppContext');
 
 class SupportCaseService {
   static async create(data) {
     return SupportCaseRepository.create({ data });
+  }
+
+  static async createForPatient(userId, data) {
+    const { patientId } = await resolvePatientProfile(userId);
+    return SupportCaseRepository.create({
+      data: {
+        patientId,
+        subject: data.subject,
+        description: data.description,
+        type: data.type || 'GENERAL',
+        priority: data.priority || 'MEDIUM',
+        status: 'OPEN',
+      },
+    });
+  }
+
+  static async listForPatient(userId, query) {
+    const { patientId } = await resolvePatientProfile(userId);
+    const { page, limit, skip } = buildPagination(query);
+    const where = { patientId };
+    if (query.status) where.status = query.status;
+
+    const [data, total] = await Promise.all([
+      SupportCaseRepository.findMany({
+        where, skip, take: limit, orderBy: { createdAt: 'desc' },
+        include: { assignee: { select: { fullName: true } } },
+      }),
+      SupportCaseRepository.count({ where }),
+    ]);
+    return { data, total, page, limit };
+  }
+
+  static async getByIdForPatient(userId, id) {
+    const { patientId } = await resolvePatientProfile(userId);
+    const data = await this.getById(id);
+    if (data.patientId !== patientId) {
+      throw new ForbiddenError('You do not have access to this support case');
+    }
+    return data;
   }
 
   static async list(query) {
