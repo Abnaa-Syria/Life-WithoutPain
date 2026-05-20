@@ -303,31 +303,18 @@ router.delete('/insurance-cases/:id', asyncHandler(async (req, res) => {
 }));
 
 // ═══════════════════════════════════════════
-//  SUPPORT CASES – full CRUD
+//  SUPPORT CASES – legacy aliases (see /admin/support)
 // ═══════════════════════════════════════════
-router.get('/support-cases', asyncHandler(async (req, res) => {
-  const { page, limit, skip } = buildPagination(req.query);
-  const where = {};
-  if (req.query.status) where.status = req.query.status;
-  if (req.query.search) where.subject = { contains: req.query.search };
-  const [data, total] = await Promise.all([
-    prisma.supportCase.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { assignee: { select: { fullName: true } }, patient: { include: { user: { select: { fullName: true } } } } } }),
-    prisma.supportCase.count({ where }),
-  ]);
-  return paginatedResponse(res, { data, total, page, limit });
-}));
-router.get('/support-cases/:id', asyncHandler(async (req, res) => {
-  const data = await prisma.supportCase.findUnique({ where: { id: parseInt(req.params.id) }, include: { assignee: { select: { fullName: true } }, patient: { include: { user: true } }, messages: { include: { sender: { select: { fullName: true, role: true } } } } } });
-  if (!data) throw new NotFoundError('Support case not found');
-  return successResponse(res, { data });
-}));
-router.put('/support-cases/:id', asyncHandler(async (req, res) => {
-  const data = await prisma.supportCase.update({ where: { id: parseInt(req.params.id) }, data: req.body });
-  createAuditLog({ actorId: req.user.id, entityType: 'SupportCase', entityId: data.id, action: 'UPDATE', newValues: req.body, req });
-  return successResponse(res, { data });
-}));
+const supportAdmin = require('../support/support.admin.controller');
+router.get('/support-cases', supportAdmin.listTickets);
+router.get('/support-cases/:id', supportAdmin.getTicket);
+router.patch('/support-cases/:id', supportAdmin.updateStatus);
 router.delete('/support-cases/:id', asyncHandler(async (req, res) => {
-  await prisma.supportCase.update({ where: { id: parseInt(req.params.id) }, data: { status: 'CLOSED', resolutionNotes: 'Closed by admin' } });
+  await require('../support/supportTicket.service').updateStatus(
+    req.params.id,
+    { status: 'CLOSED', resolutionNotes: 'Closed by admin' },
+    req.user.id,
+  );
   createAuditLog({ actorId: req.user.id, entityType: 'SupportCase', entityId: parseInt(req.params.id), action: 'DELETE', req });
   return successResponse(res, { data: null, message: 'Support case closed' });
 }));

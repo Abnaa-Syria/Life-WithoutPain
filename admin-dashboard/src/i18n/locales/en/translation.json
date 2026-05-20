@@ -48,7 +48,9 @@
       "MEDICAL_ADMIN": "Medical Admin",
       "INSURANCE_STAFF": "Insurance Staff",
       "SUPPORT_STAFF": "Support Staff",
-      "ACCOUNTANT": "Accountant"
+      "ACCOUNTANT": "Accountant",
+      "PATIENT": "Patient",
+      "DOCTOR": "Doctor"
     },
     "male": "Male",
     "female": "Female",
@@ -105,6 +107,7 @@
     "claims": "Claims",
     "payments": "Payments",
     "support_cases": "Support Cases",
+    "support": "Support",
     "audit_logs": "Audit Logs",
     "users": "Users",
     "logout": "Logout",
@@ -296,7 +299,44 @@
     "edit_provider": "Edit Provider",
     "provider_details": "Provider Details"
   },
+  "support": {
+    "tabs": {
+      "info": "Contact Information",
+      "tickets": "Support Tickets"
+    },
+    "info": {
+      "email": "Support Email",
+      "whatsapp": "WhatsApp Number",
+      "whatsapp_link": "WhatsApp Link",
+      "phones": "Phone Numbers (one per line)",
+      "hours_ar": "Working Hours (Arabic)",
+      "hours_en": "Working Hours (English)",
+      "description_ar": "Support Message (Arabic)",
+      "description_en": "Support Message (English)"
+    },
+    "subject": "Subject",
+    "user": "User",
+    "priority": "Priority",
+    "date": "Date",
+    "category": "Category",
+    "unread": "Unread",
+    "all_roles": "All roles",
+    "all_categories": "All categories",
+    "case": "Ticket",
+    "conversation": "Conversation",
+    "assignment": "Assignment",
+    "assignee": "Assigned Agent",
+    "unassigned": "Unassigned",
+    "no_messages": "No messages yet",
+    "reply_placeholder": "Type your reply to the user...",
+    "send_reply": "Send Reply",
+    "attachments": "Attachments"
+  },
   "status": {
+    "open": "Open",
+    "in_progress": "In Progress",
+    "resolved": "Resolved",
+    "closed": "Closed",
     "pending": "Pending",
     "confirmed": "Confirmed",
     "completed": "Completed",

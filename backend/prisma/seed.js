@@ -519,20 +519,62 @@ async function main() {
   // ─────────────────────────────────────────────────────────────
   const anyInsuranceCase = await prisma.insuranceCase.findFirst({ orderBy: { createdAt: 'desc' } });
   const anyAppointment = appointmentRecords[0];
+  const patientForSupport = await prisma.patientProfile.findUnique({
+    where: { id: anyAppointment.patientId },
+    select: { userId: true },
+  });
+
+  await prisma.supportContactInfo.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      id: 1,
+      supportPhones: ['+966500000000', '+966112345678'],
+      supportEmail: 'support@hayabilaalam.com',
+      whatsappNumber: '+966500000000',
+      whatsappLink: 'https://wa.me/966500000000',
+      socialLinks: { facebook: 'https://facebook.com/hayabilaalam', instagram: '', twitter: '' },
+      workingHours: { ar: 'الأحد - الخميس: 9:00 - 17:00', en: 'Sun - Thu: 9:00 AM - 5:00 PM' },
+      descriptionAr: 'فريق الدعم متاح لمساعدتك في أي استفسار.',
+      descriptionEn: 'Our support team is here to help with any inquiry.',
+    },
+  });
+
   const supportCase1 = await prisma.supportCase.create({
     data: {
+      createdByUserId: patientForSupport.userId,
+      creatorRole: 'PATIENT',
       patientId: anyAppointment.patientId,
       insuranceCaseId: anyInsuranceCase ? anyInsuranceCase.id : null,
       appointmentId: anyAppointment.id,
       assignedTo: supportStaff.id,
-      type: 'INSURANCE',
+      category: 'INSURANCE',
       priority: 'HIGH',
       status: 'IN_PROGRESS',
       subject: 'مشكلة في موافقة التأمين',
       description: 'المريض يطلب تسريع الموافقة',
       resolutionNotes: null,
+      lastActivityAt: now(),
     },
   });
+
+  const firstDoctor = doctorsUsers[0];
+  const doctorProfile = await prisma.doctorProfile.findUnique({ where: { userId: firstDoctor.id } });
+  if (doctorProfile) {
+    await prisma.supportCase.create({
+      data: {
+        createdByUserId: firstDoctor.id,
+        creatorRole: 'DOCTOR',
+        doctorId: doctorProfile.id,
+        category: 'TECHNICAL',
+        priority: 'MEDIUM',
+        status: 'OPEN',
+        subject: 'مشكلة في تسجيل الدخول للتطبيق',
+        description: 'لا أستطيع الوصول لجدول المواعيد',
+        lastActivityAt: now(),
+      },
+    });
+  }
 
   await prisma.supportMessage.createMany({
     data: [

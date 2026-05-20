@@ -26,8 +26,10 @@ model User {
   reviewsGiven    Review[]         @relation("ReviewPatient")
   sentMessages    Message[]        @relation("MessageSender")
   supportMessages SupportMessage[] @relation("SupportMessageSender")
-
+  supportCasesCreated  SupportCase[] @relation("SupportCaseCreator")
   supportCasesAssigned SupportCase[] @relation("SupportAssignee")
+  supportAttachmentsUploaded SupportAttachment[] @relation("SupportAttachmentUploader")
+  supportContactInfoUpdates SupportContactInfo[] @relation("SupportContactInfoUpdater")
 
   verificationReviews DoctorVerificationDocument[] @relation("DocumentReviewer")
   insuranceDecisions  InsuranceApproval[]          @relation("InsuranceDecider")

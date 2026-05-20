@@ -29,6 +29,11 @@ const EVENTS = {
   NOTIFICATION: {
     SEND: 'notification.send',
   },
+  SUPPORT: {
+    TICKET_CREATED: 'support.ticket.created',
+    MESSAGE_RECEIVED: 'support.message.received',
+    STATUS_CHANGED: 'support.status.changed',
+  },
 };
 
 module.exports = {

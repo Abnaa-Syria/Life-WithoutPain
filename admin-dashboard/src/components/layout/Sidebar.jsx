@@ -30,7 +30,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
     { icon: FileText, label: t('sidebar.claims'), path: '/claims', roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
     { icon: CreditCard, label: t('sidebar.payments'), path: '/payments', roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
     { icon: History, label: t('sidebar.reconciliations'), path: '/reconciliations', roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
-    { icon: Headphones, label: t('sidebar.support_cases'), path: '/support-cases', roles: ['SUPER_ADMIN', 'SUPPORT_STAFF'] },
+    { icon: Headphones, label: t('sidebar.support'), path: '/support/tickets', roles: ['SUPER_ADMIN', 'SUPPORT_STAFF'] },
     { icon: Bell, label: t('sidebar.notifications'), path: '/notifications', roles: ['SUPER_ADMIN'] },
     { icon: Star, label: t('sidebar.reviews'), path: '/reviews', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: History, label: t('sidebar.audit_logs'), path: '/audit-logs', roles: ['SUPER_ADMIN'] },

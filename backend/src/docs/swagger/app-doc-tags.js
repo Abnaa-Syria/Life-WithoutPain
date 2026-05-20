@@ -15,6 +15,7 @@ const DOCTOR_APP_SUBMODULES = [
   { key: 'profile', name: 'Profile', description: 'Doctor personal profile' },
   { key: 'clinic-details', name: 'Clinic', description: 'Clinic details and working hours' },
   { key: 'settings', name: 'Settings', description: 'Doctor app settings' },
+  { key: 'support', name: 'Support', description: 'Help and support tickets' },
 ];
 
 const PATIENT_APP_SUBMODULES = [

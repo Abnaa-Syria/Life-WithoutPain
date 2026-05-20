@@ -14,7 +14,7 @@ import DoctorsPage from '../pages/DoctorsPage';
 import SpecialitiesPage from '../pages/SpecialitiesPage';
 import AppointmentsPage from '../pages/AppointmentsPage';
 import InsuranceCasesPage from '../pages/InsuranceCasesPage';
-import SupportCasesPage from '../pages/SupportCasesPage';
+import SupportPage from '../pages/SupportPage';
 import PaymentsPage from '../pages/PaymentsPage';
 import ClaimsPage from '../pages/ClaimsPage';
 import AuditLogsPage from '../pages/AuditLogsPage';
@@ -26,7 +26,7 @@ import PatientDetailsPage from '../pages/PatientDetailsPage';
 import DoctorDetailsPage from '../pages/DoctorDetailsPage';
 import AppointmentDetailsPage from '../pages/AppointmentDetailsPage';
 import InsuranceCaseDetailsPage from '../pages/InsuranceCaseDetailsPage';
-import SupportCaseDetailsPage from '../pages/SupportCaseDetailsPage';
+import SupportTicketDetailsPage from '../pages/SupportTicketDetailsPage';
 import AuditLogDetailsPage from '../pages/AuditLogDetailsPage';
 import MedicalMasterDataPage from '../pages/MedicalMasterDataPage';
 import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Bell, Star, Settings, Pill, ClipboardList, Calendar, Paperclip } from 'lucide-react';
@@ -160,8 +160,11 @@ function AppRoutes() {
         <Route path="insurance-cases" element={<ProtectedRoute roles={ADMIN_INS}><InsuranceCasesPage /></ProtectedRoute>} />
         <Route path="insurance-cases/:id" element={<ProtectedRoute roles={ADMIN_INS}><InsuranceCaseDetailsPage /></ProtectedRoute>} />
         
-        <Route path="support-cases" element={<ProtectedRoute roles={ADMIN_SUP}><SupportCasesPage /></ProtectedRoute>} />
-        <Route path="support-cases/:id" element={<ProtectedRoute roles={ADMIN_SUP}><SupportCaseDetailsPage /></ProtectedRoute>} />
+        <Route path="support/tickets/:id" element={<ProtectedRoute roles={ADMIN_SUP}><SupportTicketDetailsPage /></ProtectedRoute>} />
+        <Route path="support/:section" element={<ProtectedRoute roles={ADMIN_SUP}><SupportPage /></ProtectedRoute>} />
+        <Route path="support" element={<Navigate to="/support/tickets" replace />} />
+        <Route path="support-cases" element={<Navigate to="/support/tickets" replace />} />
+        <Route path="support-cases/:id" element={<ProtectedRoute roles={ADMIN_SUP}><SupportTicketDetailsPage /></ProtectedRoute>} />
 
         {/* Lab Tests – view/edit/delete */}
         <Route path="lab-tests" element={

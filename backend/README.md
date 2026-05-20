@@ -40,6 +40,8 @@ After starting the server, visit:
 - **Swagger UI:** http://localhost:4000/api-docs
 - **API JSON:** http://localhost:4000/api-docs.json
 - **Health Check:** http://localhost:4000/health
+- **Patient App Support:** [docs/PATIENT_APP_SUPPORT.md](docs/PATIENT_APP_SUPPORT.md)
+- **Doctor App Support:** [docs/DOCTOR_APP_SUPPORT.md](docs/DOCTOR_APP_SUPPORT.md)
 
 ### Test Accounts
 

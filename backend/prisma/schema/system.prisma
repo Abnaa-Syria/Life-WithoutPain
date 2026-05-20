@@ -1,30 +1,5 @@
 // System, Support, Communication and Payment Models
 
-enum SupportCaseType {
-  INSURANCE
-  TECHNICAL
-  BILLING
-  GENERAL
-  COMPLAINT
-}
-
-enum SupportCasePriority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}
-
-enum SupportCaseStatus {
-  OPEN
-  IN_PROGRESS
-  WAITING_ON_PATIENT
-  WAITING_ON_INSURANCE
-  ESCALATED
-  RESOLVED
-  CLOSED
-}
-
 enum MessageType {
   TEXT
   IMAGE
@@ -109,53 +84,6 @@ enum AuditAction {
   PAYMENT
   UPLOAD
   DOWNLOAD
-}
-
-// Support Models
-
-model SupportCase {
-  id              Int                @id @default(autoincrement())
-  patientId       Int?
-  insuranceCaseId Int?
-  appointmentId   Int?
-  assignedTo      Int?
-  type            SupportCaseType
-  priority        SupportCasePriority @default(MEDIUM)
-  status          SupportCaseStatus   @default(OPEN)
-  subject         String              @db.VarChar(500)
-  description     String?             @db.Text
-  resolutionNotes String?             @db.Text
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-
-  patient       PatientProfile? @relation("PatientSupportCases", fields: [patientId], references: [id])
-  insuranceCase InsuranceCase?  @relation("InsuranceSupportCases", fields: [insuranceCaseId], references: [id])
-  appointment   Appointment?    @relation("AppointmentSupportCases", fields: [appointmentId], references: [id])
-  assignee      User?           @relation("SupportAssignee", fields: [assignedTo], references: [id])
-  messages      SupportMessage[]
-
-  @@index([patientId])
-  @@index([assignedTo])
-  @@index([status])
-  @@index([type])
-  @@map("support_cases")
-}
-
-model SupportMessage {
-  id            Int         @id @default(autoincrement())
-  supportCaseId Int
-  senderId      Int
-  messageType   MessageType @default(TEXT)
-  content       String      @db.Text
-  attachmentUrl String?     @db.VarChar(500)
-  sentAt        DateTime    @default(now())
-  readAt        DateTime?
-
-  supportCase SupportCase @relation(fields: [supportCaseId], references: [id], onDelete: Cascade)
-  sender      User        @relation("SupportMessageSender", fields: [senderId], references: [id])
-
-  @@index([supportCaseId])
-  @@map("support_messages")
 }
 
 // Communication Models

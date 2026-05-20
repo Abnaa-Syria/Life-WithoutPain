@@ -1,7 +1,6 @@
 const SupportTicketService = require('../support/supportTicket.service');
 const SupportInfoService = require('../support/supportInfo.service');
 const {
-  mapSupportInfo,
   mapTicketListItem,
   mapTicketDetail,
   mapMessage,
@@ -19,7 +18,7 @@ const getInfo = asyncHandler(async (req, res) => {
 const listTickets = asyncHandler(async (req, res) => {
   const { data, total, page, limit } = await SupportTicketService.listTicketsForUser(
     req.user.id,
-    ROLES.PATIENT,
+    ROLES.DOCTOR,
     req.query,
   );
   const mapped = data.map(({ ticket, unreadCount }) => mapTicketListItem(ticket, unreadCount));
@@ -29,7 +28,7 @@ const listTickets = asyncHandler(async (req, res) => {
 const createTicket = asyncHandler(async (req, res) => {
   const ticket = await SupportTicketService.createTicket({
     userId: req.user.id,
-    role: ROLES.PATIENT,
+    role: ROLES.DOCTOR,
     body: req.body,
     files: req.files,
   });
@@ -42,7 +41,7 @@ const createTicket = asyncHandler(async (req, res) => {
 const getTicket = asyncHandler(async (req, res) => {
   const { ticket, unreadCount } = await SupportTicketService.getTicketForUser(
     req.user.id,
-    ROLES.PATIENT,
+    ROLES.DOCTOR,
     req.params.id,
   );
   return successResponse(res, { data: mapTicketDetail(ticket, unreadCount) });
@@ -52,7 +51,7 @@ const addMessage = asyncHandler(async (req, res) => {
   const data = await SupportTicketService.addMessage({
     ticketId: req.params.id,
     senderId: req.user.id,
-    senderRole: ROLES.PATIENT,
+    senderRole: ROLES.DOCTOR,
     body: req.body,
     files: req.files,
   });

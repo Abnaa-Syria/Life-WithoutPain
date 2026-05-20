@@ -1,0 +1,124 @@
+// Help & Support module
+
+enum SupportTicketCategory {
+  TECHNICAL
+  APPOINTMENT
+  PAYMENT
+  INSURANCE
+  ACCOUNT
+  OTHER
+}
+
+enum SupportCasePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SupportCaseStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum SupportCreatorRole {
+  PATIENT
+  DOCTOR
+}
+
+model SupportContactInfo {
+  id              Int      @id @default(1)
+  supportPhones   Json     @default("[]")
+  supportEmail    String   @db.VarChar(255)
+  whatsappNumber  String?  @db.VarChar(50)
+  whatsappLink    String?  @db.VarChar(500)
+  socialLinks     Json     @default("{}")
+  workingHours    Json     @default("{}")
+  descriptionAr   String?  @db.Text
+  descriptionEn   String?  @db.Text
+  updatedAt       DateTime @updatedAt
+  updatedBy       Int?
+
+  updater User? @relation("SupportContactInfoUpdater", fields: [updatedBy], references: [id])
+
+  @@map("support_contact_info")
+}
+
+model SupportCase {
+  id              Int                   @id @default(autoincrement())
+  createdByUserId Int
+  creatorRole     SupportCreatorRole
+  patientId       Int?
+  doctorId        Int?
+  insuranceCaseId Int?
+  appointmentId   Int?
+  assignedTo      Int?
+  category        SupportTicketCategory
+  priority        SupportCasePriority   @default(MEDIUM)
+  status          SupportCaseStatus     @default(OPEN)
+  subject         String                @db.VarChar(500)
+  description     String?               @db.Text
+  resolutionNotes String?               @db.Text
+  lastActivityAt  DateTime              @default(now())
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  creator       User            @relation("SupportCaseCreator", fields: [createdByUserId], references: [id])
+  patient       PatientProfile? @relation("PatientSupportCases", fields: [patientId], references: [id])
+  doctor        DoctorProfile?  @relation("DoctorSupportCases", fields: [doctorId], references: [id])
+  insuranceCase InsuranceCase?  @relation("InsuranceSupportCases", fields: [insuranceCaseId], references: [id])
+  appointment   Appointment?    @relation("AppointmentSupportCases", fields: [appointmentId], references: [id])
+  assignee      User?           @relation("SupportAssignee", fields: [assignedTo], references: [id])
+  messages      SupportMessage[]
+  attachments   SupportAttachment[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([createdByUserId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([category])
+  @@index([creatorRole])
+  @@index([lastActivityAt])
+  @@map("support_cases")
+}
+
+model SupportMessage {
+  id            Int         @id @default(autoincrement())
+  supportCaseId Int
+  senderId      Int
+  messageType   MessageType @default(TEXT)
+  content       String      @db.Text
+  attachmentUrl String?     @db.VarChar(500)
+  sentAt        DateTime    @default(now())
+  readAt        DateTime?
+
+  supportCase SupportCase         @relation(fields: [supportCaseId], references: [id], onDelete: Cascade)
+  sender      User                @relation("SupportMessageSender", fields: [senderId], references: [id])
+  attachments SupportAttachment[]
+
+  @@index([supportCaseId])
+  @@index([senderId])
+  @@map("support_messages")
+}
+
+model SupportAttachment {
+  id         Int      @id @default(autoincrement())
+  ticketId   Int
+  messageId  Int?
+  fileUrl    String   @db.VarChar(500)
+  fileName   String?  @db.VarChar(255)
+  mimeType   String?  @db.VarChar(100)
+  uploadedBy Int
+  createdAt  DateTime @default(now())
+
+  ticket   SupportCase     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  message  SupportMessage? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  uploader User            @relation("SupportAttachmentUploader", fields: [uploadedBy], references: [id])
+
+  @@index([ticketId])
+  @@index([messageId])
+  @@map("support_attachments")
+}

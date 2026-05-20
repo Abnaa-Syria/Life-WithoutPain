@@ -1,41 +1,8 @@
 /**
  * @swagger
- * components:
- *   schemas:
- *     SupportInfo:
- *       type: object
- *       properties:
- *         supportPhones: { type: array, items: { type: string } }
- *         supportEmail: { type: string }
- *         whatsappNumber: { type: string }
- *         whatsappLink: { type: string }
- *         socialLinks: { type: object }
- *         workingHours: { type: object }
- *         description: { type: string }
- *     SupportTicket:
- *       type: object
- *       properties:
- *         id: { type: integer }
- *         category: { type: string, enum: [TECHNICAL, APPOINTMENT, PAYMENT, INSURANCE, ACCOUNT, OTHER] }
- *         subject: { type: string }
- *         status: { type: string, enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED] }
- *         priority: { type: string, enum: [LOW, MEDIUM, HIGH, URGENT] }
- *         unreadCount: { type: integer }
- *         lastMessagePreview: { type: string }
- *         createdAt: { type: string, format: date-time }
- *     SupportMessage:
- *       type: object
- *       properties:
- *         id: { type: integer }
- *         senderId: { type: integer }
- *         senderRole: { type: string }
- *         message: { type: string }
- *         attachments: { type: array, items: { type: object } }
- *         createdAt: { type: string, format: date-time }
- *
- * /patient/support/info:
+ * /doctor/support/info:
  *   get:
- *     tags: [Patient App - Support]
+ *     tags: [Doctor App - Support]
  *     summary: Get support contact information
  *     security: [{ bearerAuth: [] }]
  *     parameters:
@@ -45,17 +12,10 @@
  *     responses:
  *       200:
  *         description: Support contact info
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success: { type: boolean }
- *                 data: { $ref: '#/components/schemas/SupportInfo' }
  *
- * /patient/support/tickets:
+ * /doctor/support/tickets:
  *   get:
- *     tags: [Patient App - Support]
+ *     tags: [Doctor App - Support]
  *     summary: List my support tickets
  *     security: [{ bearerAuth: [] }]
  *     parameters:
@@ -72,7 +32,7 @@
  *       200:
  *         description: Paginated tickets
  *   post:
- *     tags: [Patient App - Support]
+ *     tags: [Doctor App - Support]
  *     summary: Create support ticket
  *     security: [{ bearerAuth: [] }]
  *     requestBody:
@@ -92,9 +52,9 @@
  *       201:
  *         description: Ticket created
  *
- * /patient/support/tickets/{id}:
+ * /doctor/support/tickets/{id}:
  *   get:
- *     tags: [Patient App - Support]
+ *     tags: [Doctor App - Support]
  *     summary: Get support ticket detail with messages
  *     security: [{ bearerAuth: [] }]
  *     parameters:
@@ -106,9 +66,9 @@
  *       200:
  *         description: Ticket detail
  *
- * /patient/support/tickets/{id}/messages:
+ * /doctor/support/tickets/{id}/messages:
  *   post:
- *     tags: [Patient App - Support]
+ *     tags: [Doctor App - Support]
  *     summary: Reply on support ticket
  *     security: [{ bearerAuth: [] }]
  *     parameters:

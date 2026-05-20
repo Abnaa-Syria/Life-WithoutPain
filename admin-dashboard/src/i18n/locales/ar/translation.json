@@ -48,7 +48,9 @@
       "MEDICAL_ADMIN": "مدير طبي",
       "INSURANCE_STAFF": "موظف تأمين",
       "SUPPORT_STAFF": "دعم فني",
-      "ACCOUNTANT": "محاسب"
+      "ACCOUNTANT": "محاسب",
+      "PATIENT": "مريض",
+      "DOCTOR": "طبيب"
     },
     "male": "ذكر",
     "female": "أنثى",
@@ -105,6 +107,7 @@
     "claims": "المطالبات",
     "payments": "المدفوعات",
     "support_cases": "حالات الدعم",
+    "support": "الدعم والمساعدة",
     "audit_logs": "سجل العمليات",
     "users": "المستخدمين",
     "logout": "تسجيل الخروج",
@@ -297,7 +300,44 @@
     "edit_provider": "تعديل الشركة",
     "provider_details": "معلومات الشركة"
   },
+  "support": {
+    "tabs": {
+      "info": "معلومات التواصل",
+      "tickets": "تذاكر الدعم"
+    },
+    "info": {
+      "email": "البريد الإلكتروني",
+      "whatsapp": "رقم واتساب",
+      "whatsapp_link": "رابط واتساب",
+      "phones": "أرقام الهاتف (سطر لكل رقم)",
+      "hours_ar": "ساعات العمل (عربي)",
+      "hours_en": "ساعات العمل (إنجليزي)",
+      "description_ar": "رسالة الدعم (عربي)",
+      "description_en": "رسالة الدعم (إنجليزي)"
+    },
+    "subject": "الموضوع",
+    "user": "المستخدم",
+    "priority": "الأولوية",
+    "date": "التاريخ",
+    "category": "التصنيف",
+    "unread": "غير مقروء",
+    "all_roles": "كل الأدوار",
+    "all_categories": "كل التصنيفات",
+    "case": "تذكرة",
+    "conversation": "المحادثة",
+    "assignment": "التعيين",
+    "assignee": "موظف الدعم",
+    "unassigned": "غير معيّن",
+    "no_messages": "لا توجد رسائل بعد",
+    "reply_placeholder": "اكتب ردك للمستخدم...",
+    "send_reply": "إرسال الرد",
+    "attachments": "المرفقات"
+  },
   "status": {
+    "open": "مفتوح",
+    "in_progress": "قيد المعالجة",
+    "resolved": "تم الحل",
+    "closed": "مغلق",
     "pending": "قيد الانتظار",
     "confirmed": "مؤكد",
     "completed": "مكتمل",
