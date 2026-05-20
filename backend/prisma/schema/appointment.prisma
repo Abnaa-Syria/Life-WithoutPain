@@ -310,7 +310,37 @@ model Medication {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  medicalProfiles MedicalProfile[]
+
   @@map("medications")
+}
+
+model ChronicDisease {
+  id          Int      @id @default(autoincrement())
+  nameAr      String   @db.VarChar(255)
+  nameEn      String   @db.VarChar(255)
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  medicalProfiles MedicalProfile[]
+
+  @@map("chronic_diseases")
+}
+
+model Allergy {
+  id          Int      @id @default(autoincrement())
+  nameAr      String   @db.VarChar(255)
+  nameEn      String   @db.VarChar(255)
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  medicalProfiles MedicalProfile[]
+
+  @@map("allergies")
 }
 
 model MedicalTest {

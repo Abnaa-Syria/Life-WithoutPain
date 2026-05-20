@@ -291,26 +291,9 @@ class AuthService {
     };
   }
 
-  static async verifyOtp({ userId, code, purpose }) {
-    const otpRecord = await prisma.otpCode.findFirst({
-      where: {
-        userId,
-        code,
-        purpose,
-        usedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!otpRecord) {
-      throw new BadRequestError('Invalid or expired OTP');
-    }
-
-    await prisma.otpCode.update({
-      where: { id: otpRecord.id },
-      data: { usedAt: new Date() },
-    });
+  static async completeVerification({ userId, purpose }) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError('User not found');
 
     if (purpose === 'verification') {
       await prisma.user.update({
@@ -318,8 +301,6 @@ class AuthService {
         data: { isVerified: true },
       });
     }
-
-    const user = await prisma.user.findUnique({ where: { id: userId } });
 
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role },
@@ -347,6 +328,38 @@ class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  // Temporary stub until real OTP verification is implemented. Remove when SMS provider is wired.
+  static async verifyOtpPatient({ userId, code, purpose }) {
+    if (config.otp.allowStub && code === config.otp.stubCode) {
+      return this.completeVerification({ userId, purpose });
+    }
+    return this.verifyOtp({ userId, code, purpose });
+  }
+
+  static async verifyOtp({ userId, code, purpose }) {
+    const otpRecord = await prisma.otpCode.findFirst({
+      where: {
+        userId,
+        code,
+        purpose,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!otpRecord) {
+      throw new BadRequestError('Invalid or expired OTP');
+    }
+
+    await prisma.otpCode.update({
+      where: { id: otpRecord.id },
+      data: { usedAt: new Date() },
+    });
+
+    return this.completeVerification({ userId, purpose });
   }
 
   static async resendOtp({ userId, purpose }) {

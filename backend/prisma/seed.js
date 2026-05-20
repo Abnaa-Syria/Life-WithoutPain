@@ -245,24 +245,43 @@ async function main() {
       insuranceLinked: true,
     });
 
+    let hypertension = await prisma.chronicDisease.findFirst({ where: { nameEn: 'Hypertension' } });
+    if (!hypertension) {
+      hypertension = await prisma.chronicDisease.create({
+        data: { nameAr: 'ارتفاع ضغط الدم', nameEn: 'Hypertension', description: 'Seeded chronic disease' },
+      });
+    }
+    let penicillin = await prisma.allergy.findFirst({ where: { nameEn: 'Penicillin' } });
+    if (!penicillin) {
+      penicillin = await prisma.allergy.create({
+        data: { nameAr: 'بنسلين', nameEn: 'Penicillin', description: 'Seeded allergy' },
+      });
+    }
+    let vitaminD = await prisma.medication.findFirst({ where: { nameEn: 'Vitamin D' } });
+    if (!vitaminD) {
+      vitaminD = await prisma.medication.create({
+        data: { nameAr: 'فيتامين د', nameEn: 'Vitamin D', description: 'Seeded medication' },
+      });
+    }
+
     await prisma.medicalProfile.upsert({
       where: { patientId: patientProfile.id },
       update: {
-        chronicDiseases: 'Hypertension',
-        allergies: 'Penicillin',
-        currentMedications: 'Vitamin D',
         surgeries: 'None',
         familyHistory: 'Diabetes',
         notes: 'Seeded medical profile',
+        chronicDiseases: { set: [{ id: hypertension.id }] },
+        allergies: { set: [{ id: penicillin.id }] },
+        medications: { set: [{ id: vitaminD.id }] },
       },
       create: {
         patientId: patientProfile.id,
-        chronicDiseases: 'Hypertension',
-        allergies: 'Penicillin',
-        currentMedications: 'Vitamin D',
         surgeries: 'None',
         familyHistory: 'Diabetes',
         notes: 'Seeded medical profile',
+        chronicDiseases: { connect: [{ id: hypertension.id }] },
+        allergies: { connect: [{ id: penicillin.id }] },
+        medications: { connect: [{ id: vitaminD.id }] },
       },
     });
 

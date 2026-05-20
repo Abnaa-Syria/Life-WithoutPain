@@ -13,6 +13,7 @@ function mapAppointmentListItem(appt) {
     patient: {
       id: appt.patient?.id,
       name: appt.patient?.user?.fullName,
+      age: calcAge(appt.patient?.dateOfBirth),
     },
     fees: Number(appt.amount) || 0,
   };
@@ -61,6 +62,12 @@ function mapSpecializations(items) {
   }));
 }
 
+function mapMedicalProfileSummary(profile) {
+  if (!profile) return null;
+  const { mapMedicalProfile } = require('./patientAppMappers');
+  return mapMedicalProfile(profile);
+}
+
 module.exports = {
   calcAge,
   mapAppointmentListItem,
@@ -68,4 +75,5 @@ module.exports = {
   mapPatientListItem,
   mapNotification,
   mapSpecializations,
+  mapMedicalProfileSummary,
 };

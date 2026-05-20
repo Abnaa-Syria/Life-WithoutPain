@@ -163,6 +163,51 @@ function mapDirectoryReport(item) {
   };
 }
 
+function mapCatalogItem(item) {
+  return {
+    id: item.id,
+    nameAr: item.nameAr,
+    nameEn: item.nameEn,
+    description: item.description ?? null,
+  };
+}
+
+function mapMedicalProfileAttachment(attachment) {
+  return {
+    id: attachment.id,
+    fileUrl: attachment.fileUrl,
+    mimeType: attachment.mimeType,
+    title: attachment.title,
+    createdAt: attachment.createdAt,
+  };
+}
+
+function mapMedicalProfile(profile) {
+  if (!profile) return null;
+
+  const chronicDiseases = profile.chronicDiseases || [];
+  const medications = profile.medications || [];
+  const allergies = profile.allergies || [];
+  const attachments = profile.attachments || [];
+
+  return {
+    id: profile.id,
+    patientId: profile.patientId,
+    chronicDiseaseIds: chronicDiseases.map((d) => d.id),
+    chronicDiseases: chronicDiseases.map(mapCatalogItem),
+    medicationIds: medications.map((m) => m.id),
+    medications: medications.map(mapCatalogItem),
+    allergyIds: allergies.map((a) => a.id),
+    allergies: allergies.map(mapCatalogItem),
+    reportAttachments: attachments.map(mapMedicalProfileAttachment),
+    surgeries: profile.surgeries ?? null,
+    familyHistory: profile.familyHistory ?? null,
+    notes: profile.notes ?? null,
+    createdAt: profile.createdAt,
+    updatedAt: profile.updatedAt,
+  };
+}
+
 module.exports = {
   getAppointmentDateTime,
   isComingAppointment,
@@ -174,4 +219,7 @@ module.exports = {
   mapPatientProfile,
   mapDirectoryPrescription,
   mapDirectoryReport,
+  mapCatalogItem,
+  mapMedicalProfileAttachment,
+  mapMedicalProfile,
 };

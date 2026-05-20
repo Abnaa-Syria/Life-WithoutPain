@@ -38,20 +38,35 @@ model PatientProfile {
 }
 
 model MedicalProfile {
-  id                 Int      @id @default(autoincrement())
-  patientId          Int      @unique
-  chronicDiseases    String?  @db.Text
-  allergies          String?  @db.Text
-  currentMedications String?  @db.Text
-  surgeries          String?  @db.Text
-  familyHistory      String?  @db.Text
-  notes              String?  @db.Text
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  patientId     Int      @unique
+  surgeries     String?  @db.Text
+  familyHistory String?  @db.Text
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  patient PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  patient         PatientProfile             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  chronicDiseases ChronicDisease[]
+  medications     Medication[]
+  allergies       Allergy[]
+  attachments     MedicalProfileAttachment[]
 
   @@map("medical_profiles")
+}
+
+model MedicalProfileAttachment {
+  id               Int      @id @default(autoincrement())
+  medicalProfileId Int
+  fileUrl          String   @db.VarChar(500)
+  mimeType         String   @db.VarChar(100)
+  title            String   @db.VarChar(255)
+  createdAt        DateTime @default(now())
+
+  medicalProfile MedicalProfile @relation(fields: [medicalProfileId], references: [id], onDelete: Cascade)
+
+  @@index([medicalProfileId])
+  @@map("medical_profile_attachments")
 }
 
 model FamilyMember {

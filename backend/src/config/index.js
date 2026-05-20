@@ -23,6 +23,8 @@ const config = {
     expiryMinutes: parseInt(process.env.OTP_EXPIRY_MINUTES, 10) || 5,
     length: parseInt(process.env.OTP_LENGTH, 10) || 6,
     provider: process.env.OTP_PROVIDER || 'mock',
+    stubCode: process.env.OTP_STUB_CODE || '12345',
+    allowStub: process.env.OTP_ALLOW_STUB === 'true' || (process.env.OTP_PROVIDER || 'mock') === 'mock',
   },
 
   upload: {

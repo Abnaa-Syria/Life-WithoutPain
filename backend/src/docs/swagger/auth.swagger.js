@@ -69,6 +69,7 @@
  *   post:
  *     tags: [Auth]
  *     summary: Verify OTP code
+ *     description: Patient app uses 5-digit stub `12345` when OTP provider is mock. Legacy auth uses the same code length.
  *     requestBody:
  *       required: true
  *       content:
@@ -77,9 +78,13 @@
  *             type: object
  *             required: [userId, code]
  *             properties:
- *               userId: { type: integer }
- *               code: { type: string }
- *               purpose: { type: string, enum: [verification, password_reset] }
+ *               userId: { type: integer, example: 1 }
+ *               code: { type: string, minLength: 5, maxLength: 5, example: '12345' }
+ *               purpose: { type: string, enum: [verification, password_reset], default: verification }
+ *           example:
+ *             userId: 1
+ *             code: '12345'
+ *             purpose: verification
  *     responses:
  *       200:
  *         description: OTP verified

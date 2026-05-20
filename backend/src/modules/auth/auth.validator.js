@@ -37,7 +37,7 @@ const mobileLoginSchema = z.object({
 
 const verifyOtpSchema = z.object({
   userId: z.number().int().positive(),
-  code: z.string().length(6),
+  code: z.string().length(5, 'OTP must be 5 digits'),
   purpose: z.enum(['verification', 'password_reset']).default('verification'),
 });
 

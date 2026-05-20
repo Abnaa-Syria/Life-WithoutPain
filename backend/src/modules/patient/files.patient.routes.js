@@ -12,7 +12,7 @@ router.get('/', asyncHandler(async (req, res) => {
 router.post('/', uploadSingle('file'), asyncHandler(async (req, res) => {
   const fileData = {
     fileUrl: req.file ? `/uploads/${req.file.filename}` : req.body.fileUrl,
-    fileName: req.file?.originalname || req.body.fileName,
+    title: req.body.title || req.file?.originalname || req.body.fileName || 'Medical file',
     category: req.body.category || 'OTHER',
     mimeType: req.file?.mimetype || req.body.mimeType,
   };

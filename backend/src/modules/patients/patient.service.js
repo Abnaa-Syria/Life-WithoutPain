@@ -27,25 +27,13 @@ class PatientService {
   }
 
   static async getMedicalProfile(userId) {
-    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
-
-    let medicalProfile = await prisma.medicalProfile.findUnique({ where: { patientId: patient.id } });
-    if (!medicalProfile) {
-      medicalProfile = await prisma.medicalProfile.create({ data: { patientId: patient.id } });
-    }
-    return medicalProfile;
+    const MedicalProfileService = require('../medical-profile/medical-profile.service');
+    return MedicalProfileService.getByUserId(userId);
   }
 
   static async updateMedicalProfile(userId, data) {
-    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
-
-    return prisma.medicalProfile.upsert({
-      where: { patientId: patient.id },
-      update: data,
-      create: { patientId: patient.id, ...data },
-    });
+    const MedicalProfileService = require('../medical-profile/medical-profile.service');
+    return MedicalProfileService.updateByUserId(userId, data);
   }
 
   static async getFamilyMembers(userId) {

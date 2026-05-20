@@ -384,7 +384,14 @@ class DoctorService {
       where: { id: parseInt(patientId) },
       include: {
         user: { select: { fullName: true } },
-        medicalProfile: true,
+        medicalProfile: {
+          include: {
+            chronicDiseases: { where: { isActive: true }, orderBy: { nameEn: 'asc' } },
+            medications: { where: { isActive: true }, orderBy: { nameEn: 'asc' } },
+            allergies: { where: { isActive: true }, orderBy: { nameEn: 'asc' } },
+            attachments: { orderBy: { createdAt: 'desc' } },
+          },
+        },
       },
     });
     if (!patient) throw new NotFoundError('Patient not found');
@@ -417,7 +424,7 @@ class DoctorService {
       age: this.calcAge(patient.dateOfBirth),
       gender: patient.gender,
       nextAppointment,
-      summary: patient.medicalProfile,
+      summary: require('../../shared/utils/doctorAppMappers').mapMedicalProfileSummary(patient.medicalProfile),
       prescriptions,
       reports,
     };

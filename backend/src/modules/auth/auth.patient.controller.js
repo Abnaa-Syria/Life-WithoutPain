@@ -18,7 +18,7 @@ const loginMobile = asyncHandler(async (req, res) => {
 });
 
 const verifyOtp = asyncHandler(async (req, res) => {
-  const result = await AuthService.verifyOtp(req.body);
+  const result = await AuthService.verifyOtpPatient(req.body);
   return successResponse(res, { data: result, message: 'OTP verified successfully' });
 });
 

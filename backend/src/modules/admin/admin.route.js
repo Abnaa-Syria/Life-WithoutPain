@@ -8,6 +8,23 @@ const { ROLES, ADMIN_ROLES } = require('../../constants');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { createAuditLog } = require('../../middlewares/auditLog');
 const bcrypt = require('bcryptjs');
+const MedicalProfileService = require('../medical-profile/medical-profile.service');
+const { uploadMultiple } = require('../../middlewares/upload');
+const { validate } = require('../../middlewares/validate');
+const {
+  updateMedicalProfileSchema,
+  attachmentIdParamSchema,
+  patientIdParamSchema,
+  patientIdFromIdParamSchema,
+} = require('../medical-profile/medical-profile.validator');
+const { mapMedicalProfile } = require('../../shared/utils/patientAppMappers');
+
+const MEDICAL_PROFILE_INCLUDE = {
+  chronicDiseases: { orderBy: { nameEn: 'asc' } },
+  medications: { orderBy: { nameEn: 'asc' } },
+  allergies: { orderBy: { nameEn: 'asc' } },
+  attachments: { orderBy: { createdAt: 'desc' } },
+};
 
 router.use(authenticate);
 router.use(authorize(...ADMIN_ROLES));
@@ -121,7 +138,7 @@ router.get('/patients/:id', asyncHandler(async (req, res) => {
     where: { id: parseInt(req.params.id) }, 
     include: { 
       user: true, 
-      medicalProfile: true, 
+      medicalProfile: { include: MEDICAL_PROFILE_INCLUDE },
       familyMembers: true, 
       insurances: { include: { provider: true } },
       prescriptions: { include: { items: true, doctor: { include: { user: { select: { fullName: true } } } } }, orderBy: { createdAt: 'desc' } },
@@ -130,8 +147,52 @@ router.get('/patients/:id', asyncHandler(async (req, res) => {
     } 
   });
   if (!data) throw new NotFoundError('Patient not found');
-  return successResponse(res, { data });
+  const response = {
+    ...data,
+    medicalProfile: data.medicalProfile ? mapMedicalProfile(data.medicalProfile) : null,
+  };
+  return successResponse(res, { data: response });
 }));
+
+router.put(
+  '/patients/:id/medical-profile',
+  validate(patientIdFromIdParamSchema, 'params'),
+  validate(updateMedicalProfileSchema),
+  asyncHandler(async (req, res) => {
+    const data = await MedicalProfileService.updateByPatientId(req.params.id, req.body);
+    return successResponse(res, { data, message: 'Medical profile updated' });
+  }),
+);
+
+router.post(
+  '/patients/:patientId/medical-profile/attachments',
+  validate(patientIdParamSchema, 'params'),
+  uploadMultiple('files', 10),
+  asyncHandler(async (req, res) => {
+    const titles = req.body.titles
+      ? (Array.isArray(req.body.titles) ? req.body.titles : [req.body.titles])
+      : [];
+    const attachments = await MedicalProfileService.addAttachmentsByPatientId(
+      req.params.patientId,
+      req.files,
+      titles,
+    );
+    return createdResponse(res, { data: attachments, message: 'Attachments uploaded' });
+  }),
+);
+
+router.delete(
+  '/patients/:patientId/medical-profile/attachments/:attachmentId',
+  validate(patientIdParamSchema, 'params'),
+  validate(attachmentIdParamSchema, 'params'),
+  asyncHandler(async (req, res) => {
+    const data = await MedicalProfileService.deleteAttachmentByPatientId(
+      req.params.patientId,
+      req.params.attachmentId,
+    );
+    return successResponse(res, { data, message: 'Attachment deleted' });
+  }),
+);
 router.put('/patients/:id', asyncHandler(async (req, res) => {
   const { userData, ...profileData } = req.body;
   const data = await prisma.patientProfile.update({ where: { id: parseInt(req.params.id) }, data: profileData });
@@ -463,6 +524,26 @@ router.get('/audit-logs/:id', asyncHandler(async (req, res) => {
   if (!data) throw new NotFoundError('Audit log not found');
   return successResponse(res, { data });
 }));
+
+// ═══════════════════════════════════════════
+//  CHRONIC DISEASES – full CRUD
+// ═══════════════════════════════════════════
+const chronicDiseaseCrud = crud('chronicDisease', { searchFields: ['nameAr', 'nameEn'], entityLabel: 'ChronicDisease' });
+router.get('/chronic-diseases', chronicDiseaseCrud.list);
+router.get('/chronic-diseases/:id', chronicDiseaseCrud.getOne);
+router.post('/chronic-diseases', chronicDiseaseCrud.create);
+router.put('/chronic-diseases/:id', chronicDiseaseCrud.update);
+router.delete('/chronic-diseases/:id', chronicDiseaseCrud.remove);
+
+// ═══════════════════════════════════════════
+//  ALLERGIES – full CRUD
+// ═══════════════════════════════════════════
+const allergyCrud = crud('allergy', { searchFields: ['nameAr', 'nameEn'], entityLabel: 'Allergy' });
+router.get('/allergies', allergyCrud.list);
+router.get('/allergies/:id', allergyCrud.getOne);
+router.post('/allergies', allergyCrud.create);
+router.put('/allergies/:id', allergyCrud.update);
+router.delete('/allergies/:id', allergyCrud.remove);
 
 // ═══════════════════════════════════════════
 //  MEDICATIONS – full CRUD
