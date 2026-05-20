@@ -8,6 +8,7 @@ const { resolvePatientProfile } = require('../../shared/utils/patientAppContext'
 const { resolveDoctorProfile } = require('../../shared/utils/doctorAppContext');
 const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 const { isStaffRole } = require('./support.mapper');
+const { emitSupportMessage, emitSupportStatusChanged } = require('../../socket/support.emit');
 const { ROLES } = require('../../constants');
 
 const TICKET_INCLUDE = {
@@ -139,6 +140,10 @@ class SupportTicketService {
 
     const full = await this.getTicketRaw(ticket.id);
     eventEmitter.emit(EVENTS.SUPPORT.TICKET_CREATED, full);
+    const initialMessage = full.messages?.[0];
+    if (initialMessage) {
+      emitSupportMessage(full.id, initialMessage);
+    }
     return full;
   }
 
@@ -253,6 +258,8 @@ class SupportTicketService {
       eventEmitter.emit(EVENTS.SUPPORT.TICKET_CREATED, ticket);
     }
 
+    emitSupportMessage(ticketId, fullMessage);
+
     return fullMessage;
   }
 
@@ -323,6 +330,7 @@ class SupportTicketService {
     });
 
     eventEmitter.emit(EVENTS.SUPPORT.STATUS_CHANGED, { ticket: data, actorId });
+    emitSupportStatusChanged(data);
     return data;
   }
 

@@ -75,11 +75,35 @@ Push/in-app notifications (`type: SUPPORT`) are created when:
 - Support staff replies to your ticket
 - Ticket status changes
 
+## Real-time messaging (Socket.IO)
+
+Connect to the API host with the same JWT used for REST (`accessToken`).
+
+- **URL:** `{API_HOST}` (e.g. `http://localhost:4000`)
+- **Path:** `/socket.io`
+- **Auth:** `auth: { token: '<accessToken>' }` on connect
+
+### Client → server
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `support:join` | `{ ticketId: number }` | Join the ticket room (access checked server-side) |
+| `support:leave` | `{ ticketId: number }` | Leave the ticket room |
+
+### Server → client
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `support:message` | `{ ticketId, message }` | New message (`message` matches REST message shape) |
+| `support:status` | `{ ticketId, status, ticket? }` | Ticket status updated |
+
+Call `support:join` when opening ticket detail; listen for `support:message` to append to the thread without polling.
+
 ## Mobile integration checklist
 
 1. Add `supportApi.getInfo()`, `listTickets()`, `createTicket()`, `getTicket()`, `sendMessage()`.
 2. Show unread badge from `unreadCount` on list items.
 3. Use `whatsappLink` for quick contact from the info screen.
-4. Poll or refresh ticket detail after sending a message.
+4. Connect Socket.IO on ticket detail: `support:join` + `support:message` listener (see above).
 
 Swagger: `/api-docs/patient/modules/support.json`

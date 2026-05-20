@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
+import useSupportTicketSocket from '../hooks/useSupportTicketSocket';
 import { useTranslation } from 'react-i18next';
 import DetailsHeader from '../components/ui/DetailsHeader';
 import DetailsSection from '../components/ui/DetailsSection';
@@ -33,6 +34,40 @@ export default function SupportTicketDetailsPage() {
 
   const ticket = response?.data;
 
+  useSupportTicketSocket(id, {
+    onMessage: (payload) => {
+      qc.setQueryData(['support-ticket', id], (old) => {
+        if (!old?.data) return old;
+        const exists = old.data.messages?.some((m) => m.id === payload.message?.id);
+        if (exists) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            messages: [...(old.data.messages || []), payload.message],
+            unreadCount: 0,
+            lastActivityAt: payload.message?.createdAt || old.data.lastActivityAt,
+          },
+        };
+      });
+      qc.invalidateQueries({ queryKey: ['admin-support-tickets'] });
+    },
+    onStatus: (payload) => {
+      if (payload.ticket) {
+        qc.setQueryData(['support-ticket', id], (old) => ({
+          ...old,
+          data: { ...old?.data, ...payload.ticket },
+        }));
+      } else if (payload.status) {
+        qc.setQueryData(['support-ticket', id], (old) => ({
+          ...old,
+          data: { ...old?.data, status: payload.status },
+        }));
+      }
+      qc.invalidateQueries({ queryKey: ['admin-support-tickets'] });
+    },
+  });
+
   const statusMutation = useMutation({
     mutationFn: (status) => api.patch(`/admin/support/tickets/${id}/status`, { status }),
     onSuccess: () => {
@@ -59,12 +94,26 @@ export default function SupportTicketDetailsPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       setReply('');
       setFiles([]);
       toast.success(t('messages.saved'));
-      qc.invalidateQueries(['support-ticket', id]);
-      qc.invalidateQueries(['admin-support-tickets']);
+      const newMsg = res?.data?.data;
+      if (newMsg) {
+        qc.setQueryData(['support-ticket', id], (old) => {
+          if (!old?.data) return old;
+          const exists = old.data.messages?.some((m) => m.id === newMsg.id);
+          if (exists) return old;
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              messages: [...(old.data.messages || []), newMsg],
+            },
+          };
+        });
+      }
+      qc.invalidateQueries({ queryKey: ['admin-support-tickets'] });
     },
     onError: () => toast.error(t('messages.error')),
   });

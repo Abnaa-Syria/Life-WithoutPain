@@ -1,19 +1,24 @@
+const http = require('http');
 const app = require('./app');
 const config = require('./config');
 const logger = require('./config/logger');
 const prisma = require('./config/database');
+const { initSocket } = require('./socket');
 
 const startServer = async () => {
   try {
     await prisma.$connect();
     logger.info({ msg: 'Database connected successfully' });
 
-    // Initialize application events
     require('./shared/events')();
 
-    app.listen(config.port, () => {
+    const httpServer = http.createServer(app);
+    initSocket(httpServer);
+
+    httpServer.listen(config.port, () => {
       logger.info({ msg: `Server running on port ${config.port}` });
       logger.info({ msg: `API: http://localhost:${config.port}${config.apiPrefix}` });
+      logger.info({ msg: `WebSocket: http://localhost:${config.port}/socket.io` });
       logger.info({ msg: `Swagger: http://localhost:${config.port}/api-docs` });
       logger.info({ msg: `Swagger: http://localhost:${config.port}/api-docs/doctor` });
       logger.info({ msg: `Patient App docs: http://localhost:${config.port}/api-docs/patient` });
