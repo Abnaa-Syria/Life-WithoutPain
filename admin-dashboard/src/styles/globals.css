@@ -146,3 +146,22 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.react-select-container .react-select__control {
+  min-height: 42px;
+  border-radius: 12px;
+  border-color: var(--border-color);
+  background: var(--bg-card);
+}
+.react-select-container .react-select__menu {
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+.react-select-container .react-select__option--is-focused {
+  background: rgba(99, 102, 241, 0.12);
+}
+.react-select-container .react-select__multi-value {
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 8px;
+}

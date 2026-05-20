@@ -26,6 +26,8 @@ export default function CrudPage({
   deleteConfirmMessage,
   detailPath,
   extraFilters,
+  embedded = false,
+  breadcrumbs: breadcrumbsProp,
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -94,23 +96,37 @@ export default function CrudPage({
       : ({ getValue }) => getValue() ?? '-'
   }));
 
+  const breadcrumbs = breadcrumbsProp ?? [
+    { label: t('sidebar.dashboard'), path: '/' },
+    { label: title, path: '#' },
+  ];
+
+  const createAction = canCreate && (
+    <button onClick={() => openForm()} className="btn btn-primary">
+      <Plus size={18} />
+      {createLabel || t('common.add_new')}
+    </button>
+  );
+
   return (
-    <div className="space-y-8">
-      <PageHeader 
-        title={title} 
-        breadcrumbs={[{ label: t('sidebar.dashboard'), path: '/' }, { label: title, path: '#' }]}
-        action={
-          <div className="flex gap-2">
-            {extraFilters}
-            {canCreate && (
-              <button onClick={() => openForm()} className="btn btn-primary">
-                <Plus size={18} />
-                {createLabel || t('common.add_new')}
-              </button>
-            )}
-          </div>
-        }
-      />
+    <div className={embedded ? 'space-y-6' : 'space-y-8'}>
+      {embedded ? (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {extraFilters}
+          {createAction}
+        </div>
+      ) : (
+        <PageHeader
+          title={title}
+          breadcrumbs={breadcrumbs}
+          action={
+            <div className="flex gap-2">
+              {extraFilters}
+              {createAction}
+            </div>
+          }
+        />
+      )}
 
       <Card subtitle={subtitle}>
         <DataTable 

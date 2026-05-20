@@ -7,10 +7,11 @@ import DetailsHeader from '../components/ui/DetailsHeader';
 import DetailsSection from '../components/ui/DetailsSection';
 import DetailItem from '../components/ui/DetailItem';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
-import Badge from '../components/ui/Badge';
-import { User, Activity, Shield, Users, FileText, Pill, ClipboardList, Paperclip, Clock } from 'lucide-react';
+import { User, Activity, Shield, Users, FileText, Pill, ClipboardList, Paperclip, Clock, HeartPulse, AlertTriangle } from 'lucide-react';
 import Tabs from '../components/ui/Tabs';
 import FilePreviewer from '../components/ui/FilePreviewer';
+import MedicalProfileCatalogTab from '../components/medical/MedicalProfileCatalogTab';
+import MedicalProfileAttachments from '../components/medical/MedicalProfileAttachments';
 
 export default function PatientDetailsPage() {
   const { t } = useTranslation();
@@ -27,8 +28,13 @@ export default function PatientDetailsPage() {
 
   if (!patient) return <div className="p-8 text-center">{t('common.not_found')}</div>;
 
+  const mp = patient.medicalProfile;
+
   const tabs = [
     { id: 'summary', label: t('common.summary') || 'Summary', icon: Activity },
+    { id: 'diseases', label: t('patients.tab_diseases') || 'Diseases', icon: HeartPulse },
+    { id: 'medications', label: t('patients.tab_medications') || 'Medications', icon: Pill },
+    { id: 'allergies', label: t('patients.tab_allergies') || 'Allergies', icon: AlertTriangle },
     { id: 'prescriptions', label: t('medical.prescriptions') || 'Prescriptions', icon: Pill },
     { id: 'reports', label: t('medical.reports') || 'Reports', icon: ClipboardList },
     { id: 'files', label: t('common.attachments') || 'Attachments', icon: Paperclip },
@@ -49,10 +55,21 @@ export default function PatientDetailsPage() {
         <DetailItem label={t('patients.blood_type')} value={patient.bloodType} />
         <DetailItem label={t('patients.height')} value={`${patient.height} cm`} />
         <DetailItem label={t('patients.weight')} value={`${patient.weight} kg`} />
-        <DetailItem label={t('patients.allergies') || 'Allergies'} value={patient.medicalProfile?.allergies || 'None'} fullWidth />
-        <DetailItem label={t('patients.chronic_diseases') || 'Chronic Diseases'} value={patient.medicalProfile?.chronicDiseases || 'None'} fullWidth />
-        <DetailItem label={t('patients.medications') || 'Main Medications'} value={patient.medicalProfile?.currentMedications || 'None'} fullWidth />
+        <DetailItem label={t('medical.summary') || 'Notes'} value={mp?.notes || '—'} fullWidth />
+        <DetailItem label={t('medical.clinical_findings') || 'Surgeries'} value={mp?.surgeries || '—'} fullWidth />
+        <DetailItem label={t('patients.family_members') || 'Family History'} value={mp?.familyHistory || '—'} fullWidth />
       </DetailsSection>
+
+      <div className="lg:col-span-2">
+        <DetailsSection title={t('patients.report_attachments') || 'Medical Report Attachments'} icon={Paperclip}>
+          <div className="col-span-full">
+            <MedicalProfileAttachments
+              patientId={patient.id}
+              attachments={mp?.reportAttachments || []}
+            />
+          </div>
+        </DetailsSection>
+      </div>
 
       <DetailsSection title={t('patients.insurance_info') || 'Insurance Information'} icon={Shield}>
         {patient.insurances?.length > 0 ? patient.insurances.map((ins, idx) => (
@@ -144,7 +161,7 @@ export default function PatientDetailsPage() {
 
   const renderFiles = () => (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <FilePreviewer files={patient.medicalFiles?.map(f => ({ url: f.fileUrl, name: f.title, type: f.category })) || []} height="600px" />
+      <FilePreviewer files={patient.medicalFiles?.map(f => ({ url: f.fileUrl, name: f.title, type: f.category, mimeType: f.mimeType })) || []} height="600px" />
     </div>
   );
 
@@ -161,6 +178,36 @@ export default function PatientDetailsPage() {
 
       <div className="pb-8">
         {activeTab === 'summary' && renderSummary()}
+        {activeTab === 'diseases' && (
+          <MedicalProfileCatalogTab
+            patientId={patient.id}
+            catalogEndpoint="/admin/chronic-diseases"
+            idsField="chronicDiseaseIds"
+            items={mp?.chronicDiseases}
+            medicalProfile={mp}
+            title={t('patients.tab_diseases')}
+          />
+        )}
+        {activeTab === 'medications' && (
+          <MedicalProfileCatalogTab
+            patientId={patient.id}
+            catalogEndpoint="/admin/medications"
+            idsField="medicationIds"
+            items={mp?.medications}
+            medicalProfile={mp}
+            title={t('patients.tab_medications')}
+          />
+        )}
+        {activeTab === 'allergies' && (
+          <MedicalProfileCatalogTab
+            patientId={patient.id}
+            catalogEndpoint="/admin/allergies"
+            idsField="allergyIds"
+            items={mp?.allergies}
+            medicalProfile={mp}
+            title={t('patients.tab_allergies')}
+          />
+        )}
         {activeTab === 'prescriptions' && renderPrescriptions()}
         {activeTab === 'reports' && renderReports()}
         {activeTab === 'files' && renderFiles()}

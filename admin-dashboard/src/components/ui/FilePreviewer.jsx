@@ -27,9 +27,14 @@ const FilePreviewer = ({ files = [], height = "500px" }) => {
   const currentFile = files[currentIndex];
   const fileUrl = typeof currentFile === 'string' ? currentFile : currentFile.url;
   const fileName = currentFile.name || `${t('common.file')} ${currentIndex + 1}`;
-  
-  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fileUrl);
-  const isPdf = /\.(pdf)$/i.test(fileUrl);
+  const mimeType = typeof currentFile === 'object' ? currentFile.mimeType : null;
+
+  const isImage = mimeType
+    ? mimeType.startsWith('image/')
+    : /\.(jpg|jpeg|png|gif|webp)$/i.test(fileUrl);
+  const isPdf = mimeType
+    ? mimeType === 'application/pdf'
+    : /\.(pdf)$/i.test(fileUrl);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);

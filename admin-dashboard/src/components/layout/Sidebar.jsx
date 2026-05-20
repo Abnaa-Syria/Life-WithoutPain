@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Heart, Stethoscope, Calendar, 
   Shield, CreditCard, Headphones, History, Settings, 
   LogOut, ChevronLeft, ChevronRight, Menu, X, 
-  Activity, Star, Briefcase, FileText, Bell, Pill, ClipboardList
+  Activity, Star, Briefcase, FileText, Bell, Database
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
@@ -24,8 +24,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
     { icon: Stethoscope, label: t('sidebar.doctors'), path: '/doctors', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Activity, label: t('sidebar.specialities'), path: '/specialities', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Briefcase, label: t('sidebar.services'), path: '/services', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-    { icon: Pill, label: t('sidebar.medications'), path: '/medications', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-    { icon: ClipboardList, label: t('sidebar.medical_tests'), path: '/medical-tests', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Database, label: t('sidebar.medical_master_data'), path: '/medical-master-data', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Calendar, label: t('sidebar.appointments'), path: '/appointments', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Shield, label: t('sidebar.insurance_cases'), path: '/insurance-cases', roles: ['SUPER_ADMIN', 'INSURANCE_STAFF', 'MEDICAL_ADMIN'] },
     { icon: FileText, label: t('sidebar.claims'), path: '/claims', roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
@@ -69,7 +68,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
             to={item.path}
             className={({ isActive }) => `
               flex items-center gap-3 px-3 py-3 rounded-xl transition-all group
-              ${isActive 
+              ${isActive
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
                 : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
               ${isCollapsed ? 'justify-center' : ''}

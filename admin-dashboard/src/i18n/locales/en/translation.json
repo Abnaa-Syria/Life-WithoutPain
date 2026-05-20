@@ -111,6 +111,9 @@
     "profile": "Profile",
     "services": "Services",
     "reports": "Reports",
+    "medical_master_data": "Medical Master Data",
+    "chronic_diseases": "Chronic Diseases",
+    "allergies": "Allergies",
     "medications": "Medications",
     "medical_tests": "Medical Tests",
     "reviews": "Reviews",
@@ -141,6 +144,18 @@
     "error": "An error occurred",
     "loading_data": "Loading data...",
     "status_updated": "Status updated successfully"
+  },
+  "medical_master_data": {
+    "title": "Medical Master Data",
+    "subtitle": "Manage shared medical catalogs used across patient profiles, appointments, and clinical workflows.",
+    "tabs": {
+      "diseases": "Chronic Diseases",
+      "medications": "Medications",
+      "allergies": "Allergies",
+      "lab_test_types": "Lab Test Types"
+    },
+    "add_item": "Add {{item}}",
+    "edit_item": "Edit {{item}}"
   },
   "medical": {
     "prescriptions": "Prescriptions",
@@ -225,8 +240,16 @@
     "weight": "Weight",
     "allergies": "Allergies",
     "chronic_diseases": "Chronic Diseases",
+    "medications": "Medications",
     "insurance_info": "Insurance Information",
-    "family_members": "Family Members"
+    "family_members": "Family Members",
+    "report_attachments": "Medical Report Attachments",
+    "tab_diseases": "Diseases",
+    "tab_medications": "Medications",
+    "tab_allergies": "Allergies",
+    "edit_profile": "Edit medical profile",
+    "save_profile": "Save changes",
+    "no_selection": "None selected"
   },
   "doctors": {
     "name": "Doctor Name",

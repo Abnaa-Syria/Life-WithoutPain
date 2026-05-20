@@ -28,8 +28,7 @@ import AppointmentDetailsPage from '../pages/AppointmentDetailsPage';
 import InsuranceCaseDetailsPage from '../pages/InsuranceCaseDetailsPage';
 import SupportCaseDetailsPage from '../pages/SupportCaseDetailsPage';
 import AuditLogDetailsPage from '../pages/AuditLogDetailsPage';
-import MedicationsPage from '../pages/MedicationsPage';
-import MedicalTestsPage from '../pages/MedicalTestsPage';
+import MedicalMasterDataPage from '../pages/MedicalMasterDataPage';
 import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Bell, Star, Settings, Pill, ClipboardList, Calendar, Paperclip } from 'lucide-react';
 
 const ALL_ADMIN = ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'];
@@ -121,8 +120,12 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
-        <Route path="medications" element={<ProtectedRoute roles={ADMIN_MED}><MedicationsPage /></ProtectedRoute>} />
-        <Route path="medical-tests" element={<ProtectedRoute roles={ADMIN_MED}><MedicalTestsPage /></ProtectedRoute>} />
+        <Route path="medical-master-data" element={<ProtectedRoute roles={ADMIN_MED}><Navigate to="/medical-master-data/diseases" replace /></ProtectedRoute>} />
+        <Route path="medical-master-data/:section" element={<ProtectedRoute roles={ADMIN_MED}><MedicalMasterDataPage /></ProtectedRoute>} />
+        <Route path="chronic-diseases" element={<Navigate to="/medical-master-data/diseases" replace />} />
+        <Route path="medications" element={<Navigate to="/medical-master-data/medications" replace />} />
+        <Route path="allergies" element={<Navigate to="/medical-master-data/allergies" replace />} />
+        <Route path="medical-tests" element={<Navigate to="/medical-master-data/lab-test-types" replace />} />
 
         <Route path="appointments" element={<ProtectedRoute roles={ADMIN_MED}><AppointmentsPage /></ProtectedRoute>} />
         <Route path="appointments/:id" element={<ProtectedRoute roles={ADMIN_MED}><AppointmentDetailsPage /></ProtectedRoute>} />

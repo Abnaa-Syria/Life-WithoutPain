@@ -111,6 +111,9 @@
     "profile": "الملف الشخصي",
     "services": "الخدمات",
     "reports": "التقارير",
+    "medical_master_data": "البيانات الطبية المرجعية",
+    "chronic_diseases": "الأمراض المزمنة",
+    "allergies": "الحساسية",
     "medications": "الأدوية",
     "medical_tests": "الفحوصات الطبية",
     "reviews": "التقييمات",
@@ -142,6 +145,18 @@
     "error": "حدث خطأ ما",
     "loading_data": "جاري تحميل البيانات...",
     "status_updated": "تم تحديث الحالة بنجاح"
+  },
+  "medical_master_data": {
+    "title": "البيانات الطبية المرجعية",
+    "subtitle": "إدارة القوائم الطبية المشتركة المستخدمة في ملفات المرضى والمواعيد وسير العمل السريري.",
+    "tabs": {
+      "diseases": "الأمراض المزمنة",
+      "medications": "الأدوية",
+      "allergies": "الحساسية",
+      "lab_test_types": "أنواع الفحوصات"
+    },
+    "add_item": "إضافة {{item}}",
+    "edit_item": "تعديل {{item}}"
   },
   "medical": {
     "prescriptions": "الوصفات الطبية",
@@ -226,8 +241,16 @@
     "weight": "الوزن",
     "allergies": "الحساسية",
     "chronic_diseases": "الأمراض المزمنة",
+    "medications": "الأدوية",
     "insurance_info": "معلومات التأمين",
-    "family_members": "أفراد العائلة"
+    "family_members": "أفراد العائلة",
+    "report_attachments": "مرفقات التقارير الطبية",
+    "tab_diseases": "الأمراض",
+    "tab_medications": "الأدوية",
+    "tab_allergies": "الحساسية",
+    "edit_profile": "تعديل الملف الطبي",
+    "save_profile": "حفظ التغييرات",
+    "no_selection": "لا يوجد اختيار"
   },
   "doctors": {
     "name": "اسم الطبيب",
