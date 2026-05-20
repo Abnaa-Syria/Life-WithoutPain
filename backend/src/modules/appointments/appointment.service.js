@@ -13,6 +13,24 @@ class AppointmentService {
     if (data.bookingFor === 'family' && !data.familyMemberId) {
       throw new BadRequestError('familyMemberId is required when booking for a family member');
     }
+
+    if (data.serviceId) {
+      const service = await prisma.service.findUnique({ where: { id: data.serviceId } });
+      if (service?.type === 'HOME') {
+        throw new BadRequestError('Home visits must be requested via POST /patient/home-services');
+      }
+    }
+
+    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!patient) throw new NotFoundError('Patient profile not found');
+
+    if (data.bookingFor === 'family' && data.familyMemberId) {
+      const member = await prisma.familyMember.findFirst({
+        where: { id: data.familyMemberId, patientId: patient.id },
+      });
+      if (!member) throw new BadRequestError('Family member not found');
+    }
+
     return this.create(userId, {
       ...data,
       familyMemberId: data.bookingFor === 'family' ? data.familyMemberId : null,

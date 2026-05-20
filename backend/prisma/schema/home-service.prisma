@@ -1,0 +1,37 @@
+// Home service visit requests (no doctor at booking time)
+
+enum HomeServiceRequestStatus {
+  PENDING
+  ASSIGNED
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+model HomeServiceRequest {
+  id                        Int                      @id @default(autoincrement())
+  patientId                 Int
+  serviceId                 Int
+  visitAddress              String                   @db.Text
+  notes                     String?                  @db.Text
+  preferredDate             DateTime                 @db.Date
+  requiresInsuranceApproval Boolean                  @default(false)
+  status                    HomeServiceRequestStatus @default(PENDING)
+  assignedDoctorId          Int?
+  appointmentId             Int?                     @unique
+  createdBy                 Int?
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+
+  patient        PatientProfile  @relation("PatientHomeServiceRequests", fields: [patientId], references: [id])
+  service        Service         @relation("ServiceHomeServiceRequests", fields: [serviceId], references: [id])
+  assignedDoctor DoctorProfile?  @relation("DoctorHomeServiceRequests", fields: [assignedDoctorId], references: [id])
+  appointment    Appointment?    @relation("HomeServiceAppointment", fields: [appointmentId], references: [id])
+  payments       Payment[]       @relation("HomeServicePayments")
+
+  @@index([patientId])
+  @@index([serviceId])
+  @@index([preferredDate])
+  @@index([status])
+  @@map("home_service_requests")
+}

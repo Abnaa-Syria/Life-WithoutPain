@@ -12,7 +12,8 @@
  *           schema:
  *             type: object
  *             properties:
- *               appointmentId: { type: integer }
+ *               appointmentId: { type: integer, description: Use for appointment bookings }
+ *               homeServiceRequestId: { type: integer, description: Use for home service requests }
  *               amount: { type: number }
  *               method: { type: string, enum: [VISA, MASTERCARD, APPLE_PAY, INSURANCE] }
  *           example:

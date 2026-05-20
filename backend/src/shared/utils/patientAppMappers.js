@@ -182,6 +182,42 @@ function mapMedicalProfileAttachment(attachment) {
   };
 }
 
+function mapHomeServiceRequestListItem(request) {
+  return {
+    id: request.id,
+    service: request.service
+      ? {
+          id: request.service.id,
+          nameAr: request.service.nameAr,
+          nameEn: request.service.nameEn,
+          type: request.service.type,
+        }
+      : null,
+    visitAddress: request.visitAddress,
+    preferredDate: request.preferredDate,
+    status: request.status,
+    requiresInsuranceApproval: request.requiresInsuranceApproval,
+    assignedDoctorName: request.assignedDoctor?.user?.fullName || null,
+  };
+}
+
+function mapHomeServiceRequestDetail(request) {
+  return {
+    ...mapHomeServiceRequestListItem(request),
+    notes: request.notes,
+    assignedDoctor: request.assignedDoctor
+      ? {
+          id: request.assignedDoctor.id,
+          fullName: request.assignedDoctor.user?.fullName,
+          avatarUrl: request.assignedDoctor.user?.avatarUrl,
+        }
+      : null,
+    appointmentId: request.appointmentId,
+    createdAt: request.createdAt,
+    updatedAt: request.updatedAt,
+  };
+}
+
 function mapMedicalProfile(profile) {
   if (!profile) return null;
 
@@ -215,6 +251,8 @@ module.exports = {
   mapInsurance,
   mapAppointmentListItem,
   mapAppointmentDetail,
+  mapHomeServiceRequestListItem,
+  mapHomeServiceRequestDetail,
   mapFamilyMember,
   mapPatientProfile,
   mapDirectoryPrescription,

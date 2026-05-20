@@ -229,6 +229,7 @@ model CallSession {
 model Payment {
   id                   Int           @id @default(autoincrement())
   appointmentId        Int?
+  homeServiceRequestId Int?
   patientId            Int
   amount               Decimal       @db.Decimal(10, 2)
   currency             String        @default("SAR") @db.VarChar(3)
@@ -241,10 +242,12 @@ model Payment {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
-  appointment Appointment?   @relation(fields: [appointmentId], references: [id])
-  patient     PatientProfile @relation("PatientPayments", fields: [patientId], references: [id])
+  appointment        Appointment?        @relation(fields: [appointmentId], references: [id])
+  homeServiceRequest HomeServiceRequest? @relation("HomeServicePayments", fields: [homeServiceRequestId], references: [id])
+  patient            PatientProfile      @relation("PatientPayments", fields: [patientId], references: [id])
 
   @@index([appointmentId])
+  @@index([homeServiceRequestId])
   @@index([patientId])
   @@index([status])
   @@map("payments")

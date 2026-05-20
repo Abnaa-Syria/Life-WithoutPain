@@ -12,6 +12,7 @@ router.use('/family-members', require('./family-members.patient.routes'));
 router.use('/insurances', require('./insurances.patient.routes'));
 router.use('/files', require('./files.patient.routes'));
 router.use('/appointments', require('./appointments.patient.routes'));
+router.use('/home-services', require('./home-services.patient.routes'));
 router.use('/doctors', require('./doctors.patient.routes'));
 router.use('/specializations', require('./specializations.patient.routes'));
 router.use('/services', require('./services.patient.routes'));

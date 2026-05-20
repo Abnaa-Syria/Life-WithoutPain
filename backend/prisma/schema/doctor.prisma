@@ -35,6 +35,7 @@ model DoctorProfile {
   callSessions          CallSession[]                @relation("DoctorCallSessions")
   reviews               Review[]                     @relation("ReviewDoctor")
   payouts               DoctorPayout[]
+  homeServiceRequests   HomeServiceRequest[] @relation("DoctorHomeServiceRequests")
 
   @@index([specialityId])
   @@index([verificationStatus])

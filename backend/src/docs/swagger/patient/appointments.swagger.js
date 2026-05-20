@@ -24,7 +24,8 @@
  *         description: Each item includes doctor name, specializations, datetime, fees, status, isComing
  *   post:
  *     tags: [Patient App - Appointments]
- *     summary: Book appointment
+ *     summary: Book clinic or remote appointment
+ *     description: Requires doctor and time slot. Home visits use POST /patient/home-services instead.
  *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
@@ -42,6 +43,7 @@
  *               bookingFor: { type: string, enum: [personal, family] }
  *               familyMemberId: { type: integer }
  *               paymentMode: { type: string, enum: [DIRECT, INSURANCE] }
+ *               notes: { type: string }
  *           example:
  *             doctorId: 1
  *             serviceId: 1
@@ -50,6 +52,7 @@
  *             endTime: '09:30'
  *             bookingFor: personal
  *             paymentMode: DIRECT
+ *             notes: 'Optional booking notes'
  *     responses:
  *       201:
  *         description: Appointment booked

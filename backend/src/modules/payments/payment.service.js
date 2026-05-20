@@ -1,6 +1,8 @@
 const PaymentRepository = require('./payment.repository');
 const PatientRepository = require('../patients/patient.repository');
 const AppointmentRepository = require('../appointments/appointment.repository');
+const HomeServiceService = require('../home-services/home-service.service');
+const { BadRequestError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
 const paymentProvider = require('../../shared/payments');
 
@@ -10,6 +12,13 @@ class PaymentService {
   }
 
   static async initiate(userId, body) {
+    const hasAppointment = body.appointmentId != null;
+    const hasHomeService = body.homeServiceRequestId != null;
+
+    if (hasAppointment === hasHomeService) {
+      throw new BadRequestError('Provide exactly one of appointmentId or homeServiceRequestId');
+    }
+
     const result = await paymentProvider.initiate({
       amount: body.amount,
       currency: body.currency || 'SAR',
@@ -17,10 +26,21 @@ class PaymentService {
     });
 
     const patient = await PatientRepository.findUnique({ where: { userId } });
+    if (!patient) throw new BadRequestError('Patient profile not found');
+
+    if (hasAppointment) {
+      const appointment = await AppointmentRepository.findUnique({ where: { id: body.appointmentId } });
+      if (!appointment || appointment.patientId !== patient.id) {
+        throw new BadRequestError('Appointment not found');
+      }
+    } else {
+      await HomeServiceService.assertPatientOwnsRequest(patient.id, body.homeServiceRequestId);
+    }
 
     const payment = await PaymentRepository.create({
       data: {
         appointmentId: body.appointmentId || null,
+        homeServiceRequestId: body.homeServiceRequestId || null,
         patientId: patient.id,
         amount: body.amount,
         currency: body.currency || 'SAR',

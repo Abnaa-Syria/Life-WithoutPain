@@ -30,8 +30,9 @@ model Service {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  doctorServices DoctorService[]
-  appointments   Appointment[]   @relation("ServiceAppointments")
+  doctorServices      DoctorService[]
+  appointments        Appointment[]        @relation("ServiceAppointments")
+  homeServiceRequests HomeServiceRequest[] @relation("ServiceHomeServiceRequests")
 
   @@map("services")
 }

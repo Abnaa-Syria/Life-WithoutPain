@@ -113,7 +113,8 @@ model Appointment {
   callSessions   CallSession[]
   prescriptions  Prescription[]
   reports        MedicalReport[]
-  payments       Payment[]
+  payments           Payment[]
+  homeServiceRequest HomeServiceRequest? @relation("HomeServiceAppointment")
   claimItems     ClaimItem[]
   reviews        Review[]
   doctorPayouts  DoctorPayout[]
