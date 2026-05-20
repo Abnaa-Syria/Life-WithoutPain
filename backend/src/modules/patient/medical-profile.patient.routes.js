@@ -1,43 +1,58 @@
 const router = require('express').Router();
 const MedicalProfileService = require('../medical-profile/medical-profile.service');
 const { validate } = require('../../middlewares/validate');
-const { uploadMultiple } = require('../../middlewares/upload');
 const { successResponse, createdResponse } = require('../../shared/responses');
 const { asyncHandler } = require('../../utils/helpers');
 const {
   updateMedicalProfileSchema,
   attachmentIdParamSchema,
+  attachmentUploadBodySchema,
 } = require('../medical-profile/medical-profile.validator');
+const {
+  medicalProfileAttachmentsUpload,
+  getAttachmentTitlesFromBody,
+} = require('../medical-profile/medical-profile.middleware');
 
 router.get('/', asyncHandler(async (req, res) => {
   const data = await MedicalProfileService.getByUserId(req.user.id);
   return successResponse(res, { data });
 }));
 
-router.put('/', validate(updateMedicalProfileSchema), asyncHandler(async (req, res) => {
-  const data = await MedicalProfileService.updateByUserId(req.user.id, req.body);
-  return successResponse(res, { data, message: 'Medical profile updated' });
+router.put(
+  '/',
+  validate(updateMedicalProfileSchema),
+  asyncHandler(async (req, res) => {
+    const data = await MedicalProfileService.updateByUserId(req.user.id, req.body);
+    return successResponse(res, { data, message: 'Medical profile updated' });
+  }),
+);
+
+router.get('/attachments', asyncHandler(async (req, res) => {
+  const data = await MedicalProfileService.listAttachmentsByUserId(req.user.id);
+  return successResponse(res, { data });
 }));
 
 router.post(
   '/attachments',
-  uploadMultiple('files', 10),
+  medicalProfileAttachmentsUpload,
+  validate(attachmentUploadBodySchema),
   asyncHandler(async (req, res) => {
-    const titles = req.body.titles
-      ? (Array.isArray(req.body.titles) ? req.body.titles : [req.body.titles])
-      : [];
-    const data = await MedicalProfileService.addAttachmentsByUserId(req.user.id, req.files, titles);
+    const data = await MedicalProfileService.addAttachmentsByUserId(
+      req.user.id,
+      req.files,
+      getAttachmentTitlesFromBody(req.body),
+    );
     return createdResponse(res, { data, message: 'Attachments uploaded' });
   }),
 );
 
 router.delete(
-  '/attachments/:attachmentId',
+  '/attachments/:id',
   validate(attachmentIdParamSchema, 'params'),
   asyncHandler(async (req, res) => {
     const data = await MedicalProfileService.deleteAttachmentByUserId(
       req.user.id,
-      req.params.attachmentId,
+      req.params.id,
     );
     return successResponse(res, { data, message: 'Attachment deleted' });
   }),

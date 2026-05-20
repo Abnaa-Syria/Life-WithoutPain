@@ -1,5 +1,14 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const config = require('../config');
+const {
+  DOCTOR_APP_PREFIX,
+  PATIENT_APP_PREFIX,
+  buildAppTags,
+  DOCTOR_APP_SUBMODULES,
+  PATIENT_APP_SUBMODULES,
+  allDoctorAppTagNames,
+  allPatientAppTagNames,
+} = require('./swagger/app-doc-tags');
 
 const options = {
   definition: {
@@ -7,7 +16,7 @@ const options = {
     info: {
       title: 'Haya Bila Alam - حياة بلا ألم API',
       version: '1.0.0',
-      description: 'Complete API reference for all platform modules. Endpoints are grouped by module tags (Auth, Patients, Doctors, Doctor App, Admin, etc.). Auto-discovered routes are merged with hand-written schemas.',
+      description: 'Complete API reference for all platform modules. Doctor and Patient mobile APIs are grouped by sub-module tags (e.g. Doctor App - Appointments, Patient App - Auth). Auto-discovered routes are merged with hand-written schemas.',
       contact: {
         name: 'API Support',
         email: 'support@hayabilaalam.com',
@@ -90,9 +99,9 @@ const options = {
       { name: 'Admin', description: 'Admin panel CRUD and operations' },
       { name: 'Auth', description: 'Authentication & Authorization' },
       { name: 'Patients', description: 'Legacy patient profile endpoints' },
-      { name: 'Patient App', description: 'Patient mobile application API' },
+      ...buildAppTags(PATIENT_APP_PREFIX, PATIENT_APP_SUBMODULES),
       { name: 'Doctors', description: 'Doctor discovery & profile' },
-      { name: 'Doctor App', description: 'Mobile doctor application API' },
+      ...buildAppTags(DOCTOR_APP_PREFIX, DOCTOR_APP_SUBMODULES),
       { name: 'Appointments', description: 'Appointment management' },
       { name: 'Prescriptions', description: 'Electronic prescriptions' },
       { name: 'Reports', description: 'Medical reports' },
@@ -116,8 +125,9 @@ const options = {
   },
   apis: [
     './src/docs/swagger/*.js',
+    './src/docs/swagger/**/*.swagger.js',
     './src/modules/**/route*.js',
-    './src/modules/**/*.route.js'
+    './src/modules/**/*.route.js',
   ],
 };
 
@@ -146,6 +156,37 @@ function filterSpecByTag(spec, tag) {
   };
 }
 
+/** Include all operations tagged under an app prefix (e.g. "Doctor App - Auth") */
+function filterSpecByApp(spec, appPrefix) {
+  const paths = {};
+  Object.entries(spec.paths || {}).forEach(([pathKey, methods]) => {
+    const filtered = {};
+    Object.entries(methods).forEach(([method, operation]) => {
+      const matches = operation?.tags?.some(
+        (t) => t === appPrefix || t.startsWith(`${appPrefix} - `),
+      );
+      if (matches) filtered[method] = operation;
+    });
+    if (Object.keys(filtered).length > 0) paths[pathKey] = filtered;
+  });
+
+  return {
+    ...spec,
+    paths,
+    tags: (spec.tags || []).filter(
+      (t) => t.name === appPrefix || t.name.startsWith(`${appPrefix} - `),
+    ),
+  };
+}
+
+function filterSpecByAppSubmodule(spec, appPrefix, submoduleKey) {
+  const tag = `${appPrefix} - ${submoduleKey.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
+  const submodules = appPrefix === DOCTOR_APP_PREFIX ? DOCTOR_APP_SUBMODULES : PATIENT_APP_SUBMODULES;
+  const found = submodules.find((m) => m.key === submoduleKey);
+  const exactTag = found ? `${appPrefix} - ${found.name}` : tag;
+  return filterSpecByTag(spec, exactTag);
+}
+
 function filterSpecByModule(spec, moduleName) {
   const mainTag = TAG_BY_MODULE[moduleName] || (moduleName.charAt(0).toUpperCase() + moduleName.slice(1));
   const adminTag = `Admin - ${mainTag}`;
@@ -171,13 +212,15 @@ function filterSpecByModule(spec, moduleName) {
 }
 
 function getBackendCoreSpec(spec) {
-  const excludedTags = ['Doctor App', 'Admin - Doctor App', 'Patient App'];
+  const excludedPrefixes = [DOCTOR_APP_PREFIX, PATIENT_APP_PREFIX];
   const paths = {};
   
   Object.entries(spec.paths || {}).forEach(([path, methods]) => {
     const filtered = {};
     Object.entries(methods).forEach(([method, operation]) => {
-      const isExcluded = operation?.tags?.some((tag) => excludedTags.includes(tag));
+      const isExcluded = operation?.tags?.some(
+        (tag) => excludedPrefixes.some((p) => tag === p || tag.startsWith(`${p} - `)),
+      );
       if (!isExcluded) {
         filtered[method] = operation;
       }
@@ -190,7 +233,9 @@ function getBackendCoreSpec(spec) {
   return {
     ...spec,
     paths,
-    tags: (spec.tags || []).filter((t) => !excludedTags.includes(t.name)),
+    tags: (spec.tags || []).filter(
+      (t) => !excludedPrefixes.some((p) => t.name === p || t.name.startsWith(`${p} - `)),
+    ),
   };
 }
 
@@ -201,8 +246,8 @@ function getAvailableModules() {
   });
 }
 
-const doctorAppSwaggerSpec = filterSpecByTag(swaggerSpec, 'Doctor App');
-const patientAppSwaggerSpec = filterSpecByTag(swaggerSpec, 'Patient App');
+const doctorAppSwaggerSpec = filterSpecByApp(swaggerSpec, DOCTOR_APP_PREFIX);
+const patientAppSwaggerSpec = filterSpecByApp(swaggerSpec, PATIENT_APP_PREFIX);
 const backendCoreSpec = getBackendCoreSpec(swaggerSpec);
 
 module.exports = swaggerSpec;
@@ -210,5 +255,9 @@ module.exports.backendCoreSpec = backendCoreSpec;
 module.exports.doctorAppSwaggerSpec = doctorAppSwaggerSpec;
 module.exports.patientAppSwaggerSpec = patientAppSwaggerSpec;
 module.exports.filterSpecByTag = filterSpecByTag;
+module.exports.filterSpecByApp = filterSpecByApp;
+module.exports.filterSpecByAppSubmodule = filterSpecByAppSubmodule;
 module.exports.filterSpecByModule = filterSpecByModule;
 module.exports.getAvailableModules = getAvailableModules;
+module.exports.allDoctorAppTagNames = allDoctorAppTagNames;
+module.exports.allPatientAppTagNames = allPatientAppTagNames;

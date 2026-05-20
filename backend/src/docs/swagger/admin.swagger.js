@@ -73,9 +73,21 @@
  *               notes: { type: string }
  *     responses:
  *       200:
- *         description: Medical profile updated
+ *         description: Medical profile updated (includes reportAttachments)
  *
  * /admin/patients/{patientId}/medical-profile/attachments:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List medical profile report attachments for a patient
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: patientId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Attachment list
  *   post:
  *     tags: [Admin]
  *     summary: Upload medical profile report attachments for a patient
@@ -90,15 +102,17 @@
  *       content:
  *         multipart/form-data:
  *           schema:
- *             type: object
- *             properties:
- *               files: { type: array, items: { type: string, format: binary } }
- *               titles: { type: array, items: { type: string } }
+ *             $ref: '#/components/schemas/MedicalProfileAttachmentUpload'
+ *           encoding:
+ *             file:
+ *               contentType: image/jpeg, image/png, image/gif, image/webp, application/pdf
+ *             files:
+ *               contentType: image/jpeg, image/png, image/gif, image/webp, application/pdf
  *     responses:
  *       201:
  *         description: Attachments uploaded
  *
- * /admin/patients/{patientId}/medical-profile/attachments/{attachmentId}:
+ * /admin/patients/{patientId}/medical-profile/attachments/{id}:
  *   delete:
  *     tags: [Admin]
  *     summary: Delete a patient medical profile attachment
@@ -109,7 +123,7 @@
  *         required: true
  *         schema: { type: integer }
  *       - in: path
- *         name: attachmentId
+ *         name: id
  *         required: true
  *         schema: { type: integer }
  *     responses:

@@ -12,8 +12,13 @@ const updateMedicalProfileSchema = z.object({
 }).strict();
 
 const attachmentIdParamSchema = z.object({
-  attachmentId: z.coerce.number().int().positive(),
+  id: z.coerce.number().int().positive(),
 });
+
+const attachmentUploadBodySchema = z.object({
+  title: z.string().max(255).optional(),
+  titles: z.union([z.string(), z.array(z.string())]).optional(),
+}).strict();
 
 const patientIdParamSchema = z.object({
   patientId: z.coerce.number().int().positive(),
@@ -26,6 +31,7 @@ const patientIdFromIdParamSchema = z.object({
 module.exports = {
   updateMedicalProfileSchema,
   attachmentIdParamSchema,
+  attachmentUploadBodySchema,
   patientIdParamSchema,
   patientIdFromIdParamSchema,
 };

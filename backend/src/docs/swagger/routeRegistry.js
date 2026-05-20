@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { tagForDoctorPatientRoute } = require('./app-doc-tags');
 
 const MODULES_DIR = path.join(__dirname, '..', '..', 'modules');
 
@@ -52,6 +53,9 @@ function resolveMountPrefix(moduleName, fileName) {
 }
 
 function tagForRoute(moduleName, fileName, mountPrefix) {
+  const appTag = tagForDoctorPatientRoute(moduleName, mountPrefix);
+  if (appTag) return appTag;
+
   if (fileName.endsWith('.admin.route.js') && moduleName !== 'admin') {
     return `Admin - ${TAG_BY_MODULE[moduleName] || moduleName}`;
   }
@@ -167,6 +171,27 @@ function buildPathsFromRoutes() {
   return { paths, tags: Array.from(tagSet) };
 }
 
+function mergeRequestBody(autoOp, manualOp) {
+  if (!manualOp?.requestBody) return manualOp?.requestBody || autoOp?.requestBody;
+  if (!autoOp?.requestBody) return manualOp.requestBody;
+  return {
+    ...autoOp.requestBody,
+    ...manualOp.requestBody,
+    content: {
+      ...(autoOp.requestBody.content || {}),
+      ...(manualOp.requestBody.content || {}),
+    },
+  };
+}
+
+function mergeOperation(autoOp, manualOp) {
+  if (!autoOp) return manualOp;
+  if (!manualOp) return autoOp;
+  const merged = { ...autoOp, ...manualOp };
+  merged.requestBody = mergeRequestBody(autoOp, manualOp);
+  return merged;
+}
+
 function mergeSpecs(manualSpec, autoSpec) {
   const mergedPaths = { ...autoSpec.paths };
 
@@ -175,7 +200,9 @@ function mergeSpecs(manualSpec, autoSpec) {
       mergedPaths[pathKey] = { ...methods };
       return;
     }
-    mergedPaths[pathKey] = { ...mergedPaths[pathKey], ...methods };
+    Object.entries(methods).forEach(([method, manualOp]) => {
+      mergedPaths[pathKey][method] = mergeOperation(mergedPaths[pathKey][method], manualOp);
+    });
   });
 
   const tagMap = new Map();
@@ -186,8 +213,18 @@ function mergeSpecs(manualSpec, autoSpec) {
     }
   });
 
+  const {
+    DOCTOR_APP_PREFIX,
+    PATIENT_APP_PREFIX,
+    DOCTOR_APP_SUBMODULES,
+    PATIENT_APP_SUBMODULES,
+  } = require('./app-doc-tags');
+
+  const doctorAppTags = DOCTOR_APP_SUBMODULES.map((m) => `${DOCTOR_APP_PREFIX} - ${m.name}`);
+  const patientAppTags = PATIENT_APP_SUBMODULES.map((m) => `${PATIENT_APP_PREFIX} - ${m.name}`);
+
   const tagOrder = [
-    'Dashboard', 'Admin', 'Auth', 'Patients', 'Patient App', 'Doctors', 'Doctor App',
+    'Dashboard', 'Admin', 'Auth', 'Patients', ...patientAppTags, 'Doctors', ...doctorAppTags,
     'Appointments', 'Prescriptions', 'Reports', 'Lab Tests',
     'Conversations', 'Call Sessions', 'Notifications', 'Reviews',
     'Specialities', 'Services', 'Insurance Providers', 'Insurance Cases',

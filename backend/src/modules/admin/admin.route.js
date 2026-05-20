@@ -9,14 +9,18 @@ const { NotFoundError } = require('../../shared/errors/AppError');
 const { createAuditLog } = require('../../middlewares/auditLog');
 const bcrypt = require('bcryptjs');
 const MedicalProfileService = require('../medical-profile/medical-profile.service');
-const { uploadMultiple } = require('../../middlewares/upload');
 const { validate } = require('../../middlewares/validate');
 const {
   updateMedicalProfileSchema,
   attachmentIdParamSchema,
+  attachmentUploadBodySchema,
   patientIdParamSchema,
   patientIdFromIdParamSchema,
 } = require('../medical-profile/medical-profile.validator');
+const {
+  medicalProfileAttachmentsUpload,
+  getAttachmentTitlesFromBody,
+} = require('../medical-profile/medical-profile.middleware');
 const { mapMedicalProfile } = require('../../shared/utils/patientAppMappers');
 
 const MEDICAL_PROFILE_INCLUDE = {
@@ -164,14 +168,22 @@ router.put(
   }),
 );
 
+router.get(
+  '/patients/:patientId/medical-profile/attachments',
+  validate(patientIdParamSchema, 'params'),
+  asyncHandler(async (req, res) => {
+    const data = await MedicalProfileService.listAttachmentsByPatientId(req.params.patientId);
+    return successResponse(res, { data });
+  }),
+);
+
 router.post(
   '/patients/:patientId/medical-profile/attachments',
   validate(patientIdParamSchema, 'params'),
-  uploadMultiple('files', 10),
+  medicalProfileAttachmentsUpload,
+  validate(attachmentUploadBodySchema),
   asyncHandler(async (req, res) => {
-    const titles = req.body.titles
-      ? (Array.isArray(req.body.titles) ? req.body.titles : [req.body.titles])
-      : [];
+    const titles = getAttachmentTitlesFromBody(req.body);
     const attachments = await MedicalProfileService.addAttachmentsByPatientId(
       req.params.patientId,
       req.files,
@@ -182,13 +194,13 @@ router.post(
 );
 
 router.delete(
-  '/patients/:patientId/medical-profile/attachments/:attachmentId',
+  '/patients/:patientId/medical-profile/attachments/:id',
   validate(patientIdParamSchema, 'params'),
   validate(attachmentIdParamSchema, 'params'),
   asyncHandler(async (req, res) => {
     const data = await MedicalProfileService.deleteAttachmentByPatientId(
       req.params.patientId,
-      req.params.attachmentId,
+      req.params.id,
     );
     return successResponse(res, { data, message: 'Attachment deleted' });
   }),

@@ -3,6 +3,13 @@ const router = require('express').Router();
 const controller = require('./patient.controller');
 const { authenticate, authorize } = require('../../middlewares/auth');
 const { uploadSingle } = require('../../middlewares/upload');
+const { validate } = require('../../middlewares/validate');
+const {
+  updateMedicalProfileSchema,
+  attachmentIdParamSchema,
+  attachmentUploadBodySchema,
+} = require('../medical-profile/medical-profile.validator');
+const { medicalProfileAttachmentsUpload } = require('../medical-profile/medical-profile.middleware');
 const { ROLES } = require('../../constants');
 
 router.use(authenticate);
@@ -12,7 +19,24 @@ router.get('/me/profile', controller.getProfile);
 router.put('/me/profile', controller.updateProfile);
 
 router.get('/me/medical-profile', controller.getMedicalProfile);
-router.put('/me/medical-profile', controller.updateMedicalProfile);
+router.put(
+  '/me/medical-profile',
+  validate(updateMedicalProfileSchema),
+  controller.updateMedicalProfile,
+);
+
+router.get('/me/medical-profile/attachments', controller.listMedicalProfileAttachments);
+router.post(
+  '/me/medical-profile/attachments',
+  medicalProfileAttachmentsUpload,
+  validate(attachmentUploadBodySchema),
+  controller.addMedicalProfileAttachments,
+);
+router.delete(
+  '/me/medical-profile/attachments/:id',
+  validate(attachmentIdParamSchema, 'params'),
+  controller.deleteMedicalProfileAttachment,
+);
 
 router.get('/me/family-members', controller.getFamilyMembers);
 router.post('/me/family-members', controller.createFamilyMember);

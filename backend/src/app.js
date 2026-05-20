@@ -7,7 +7,15 @@ const swaggerUi = require('swagger-ui-express');
 
 const config = require('./config');
 const swaggerSpec = require('./docs/swagger');
-const { backendCoreSpec, doctorAppSwaggerSpec, patientAppSwaggerSpec, filterSpecByModule, getAvailableModules } = swaggerSpec;
+const {
+  backendCoreSpec,
+  doctorAppSwaggerSpec,
+  patientAppSwaggerSpec,
+  filterSpecByModule,
+  filterSpecByAppSubmodule,
+  getAvailableModules,
+} = swaggerSpec;
+const { DOCTOR_APP_SUBMODULES, PATIENT_APP_SUBMODULES } = require('./docs/swagger/app-doc-tags');
 const errorHandler = require('./middlewares/errorHandler');
 const { globalLimiter } = require('./middlewares/rateLimiter');
 const logger = require('./config/logger');
@@ -101,14 +109,26 @@ const customCss = `
 `;
 
 const availableModules = getAvailableModules();
+const doctorSubmoduleUrls = DOCTOR_APP_SUBMODULES.map((m) => ({
+  url: `/api-docs/doctor/modules/${m.key}.json`,
+  name: `Doctor App — ${m.name}`,
+}));
+
+const patientSubmoduleUrls = PATIENT_APP_SUBMODULES.map((m) => ({
+  url: `/api-docs/patient/modules/${m.key}.json`,
+  name: `Patient App — ${m.name}`,
+}));
+
 const swaggerUrls = [
   { url: '/api-docs/backend.json', name: 'Core Backend API' },
-  { url: '/api-docs/patient.json', name: 'Patient App' },
-  { url: '/api-docs/doctor.json', name: 'Doctor Mobile App' },
-  ...availableModules.map(mod => ({
+  { url: '/api-docs/patient.json', name: 'Patient App (all modules)' },
+  ...patientSubmoduleUrls,
+  { url: '/api-docs/doctor.json', name: 'Doctor App (all modules)' },
+  ...doctorSubmoduleUrls,
+  ...availableModules.map((mod) => ({
     url: `/api-docs/modules/${mod}.json`,
-    name: `${mod.charAt(0).toUpperCase() + mod.slice(1).replace(/-([a-z])/g, (g) => ' ' + g[1].toUpperCase())} Module`
-  }))
+    name: `${mod.charAt(0).toUpperCase() + mod.slice(1).replace(/-([a-z])/g, (g) => ' ' + g[1].toUpperCase())} Module`,
+  })),
 ];
 
 // 1. JSON endpoints
@@ -125,6 +145,24 @@ app.get('/api-docs/doctor.json', (req, res) => {
 app.get('/api-docs/patient.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(patientAppSwaggerSpec);
+});
+
+app.get('/api-docs/doctor/modules/:submodule.json', (req, res) => {
+  const spec = filterSpecByAppSubmodule(swaggerSpec, 'Doctor App', req.params.submodule);
+  if (!spec || Object.keys(spec.paths).length === 0) {
+    return res.status(404).json({ success: false, message: `Doctor app module "${req.params.submodule}" not found` });
+  }
+  res.setHeader('Content-Type', 'application/json');
+  res.send(spec);
+});
+
+app.get('/api-docs/patient/modules/:submodule.json', (req, res) => {
+  const spec = filterSpecByAppSubmodule(swaggerSpec, 'Patient App', req.params.submodule);
+  if (!spec || Object.keys(spec.paths).length === 0) {
+    return res.status(404).json({ success: false, message: `Patient app module "${req.params.submodule}" not found` });
+  }
+  res.setHeader('Content-Type', 'application/json');
+  res.send(spec);
 });
 
 app.get('/api-docs/modules/:moduleName.json', (req, res) => {

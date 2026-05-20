@@ -36,6 +36,21 @@ class PatientService {
     return MedicalProfileService.updateByUserId(userId, data);
   }
 
+  static async listMedicalProfileAttachments(userId) {
+    const MedicalProfileService = require('../medical-profile/medical-profile.service');
+    return MedicalProfileService.listAttachmentsByUserId(userId);
+  }
+
+  static async addMedicalProfileAttachments(userId, files, titles = []) {
+    const MedicalProfileService = require('../medical-profile/medical-profile.service');
+    return MedicalProfileService.addAttachmentsByUserId(userId, files, titles);
+  }
+
+  static async deleteMedicalProfileAttachment(userId, attachmentId) {
+    const MedicalProfileService = require('../medical-profile/medical-profile.service');
+    return MedicalProfileService.deleteAttachmentByUserId(userId, attachmentId);
+  }
+
   static async getFamilyMembers(userId) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
     if (!patient) throw new NotFoundError('Patient profile not found');

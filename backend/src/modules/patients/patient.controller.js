@@ -22,6 +22,26 @@ const updateMedicalProfile = asyncHandler(async (req, res) => {
   return successResponse(res, { data, message: 'Medical profile updated successfully' });
 });
 
+const listMedicalProfileAttachments = asyncHandler(async (req, res) => {
+  const data = await PatientService.listMedicalProfileAttachments(req.user.id);
+  return successResponse(res, { data, message: 'Attachments fetched successfully' });
+});
+
+const addMedicalProfileAttachments = asyncHandler(async (req, res) => {
+  const { getAttachmentTitlesFromBody } = require('../medical-profile/medical-profile.middleware');
+  const data = await PatientService.addMedicalProfileAttachments(
+    req.user.id,
+    req.files,
+    getAttachmentTitlesFromBody(req.body),
+  );
+  return createdResponse(res, { data, message: 'Attachments uploaded successfully' });
+});
+
+const deleteMedicalProfileAttachment = asyncHandler(async (req, res) => {
+  const data = await PatientService.deleteMedicalProfileAttachment(req.user.id, req.params.id);
+  return successResponse(res, { data, message: 'Attachment deleted successfully' });
+});
+
 const getFamilyMembers = asyncHandler(async (req, res) => {
   const data = await PatientService.getFamilyMembers(req.user.id);
   return successResponse(res, { data, message: 'Family members fetched successfully' });
@@ -107,6 +127,7 @@ const updateSettings = asyncHandler(async (req, res) => {
 
 module.exports = {
   getProfile, updateProfile, getMedicalProfile, updateMedicalProfile,
+  listMedicalProfileAttachments, addMedicalProfileAttachments, deleteMedicalProfileAttachment,
   getFamilyMembers, createFamilyMember, updateFamilyMember, deleteFamilyMember,
   getInsurances, createInsurance, updateInsurance, deleteInsurance,
   getMedicalFiles, uploadMedicalFile, getDashboardSummary,

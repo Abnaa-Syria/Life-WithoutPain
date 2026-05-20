@@ -8,13 +8,8 @@ const register = asyncHandler(async (req, res) => {
 });
 
 const login = asyncHandler(async (req, res) => {
-  const result = await AuthService.login(req.body, req);
-  return successResponse(res, { data: result, message: 'Login successful' });
-});
-
-const loginMobile = asyncHandler(async (req, res) => {
-  const result = await AuthService.loginMobile(req.body, req);
-  return successResponse(res, { data: result, message: 'Login successful' });
+  const data = await AuthService.loginPatientByMobile(req.body, req);
+  return successResponse(res, { data, message: 'Login successful' });
 });
 
 const verifyOtp = asyncHandler(async (req, res) => {
@@ -60,7 +55,6 @@ const getMe = asyncHandler(async (req, res) => {
 module.exports = {
   register,
   login,
-  loginMobile,
   verifyOtp,
   resendOtp,
   refreshToken,

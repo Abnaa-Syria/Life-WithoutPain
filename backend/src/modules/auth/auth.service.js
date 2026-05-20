@@ -4,9 +4,11 @@ const prisma = require('../../config/database');
 const config = require('../../config');
 const { generateOTP, generateRefreshToken } = require('../../utils/helpers');
 const otpProvider = require('../../shared/otp');
-const { ConflictError, UnauthorizedError, BadRequestError, NotFoundError, ValidationError } = require('../../shared/errors/AppError');
+const { ConflictError, UnauthorizedError, ForbiddenError, BadRequestError, NotFoundError, ValidationError } = require('../../shared/errors/AppError');
 const { createAuditLog } = require('../../middlewares/auditLog');
 const { normalizePhone } = require('../../shared/utils/phone');
+const { ROLES, ADMIN_ROLES } = require('../../constants');
+const { mapPatientLoginResponseDto } = require('./dto/patient-login-response.dto');
 
 class AuthService {
   static async registerPatient({ fullName, identityNumber, dateOfBirth, email, phone, password, preferredLanguage }) {
@@ -267,10 +269,6 @@ class AuthService {
       req,
     });
 
-    const doctorProfile = user.role === 'DOCTOR' 
-      ? await prisma.doctorProfile.findUnique({ where: { userId: user.id } })
-      : null;
-
     return {
       user: {
         id: user.id,
@@ -280,15 +278,19 @@ class AuthService {
         role: user.role,
         isVerified: user.isVerified,
         preferredLanguage: user.preferredLanguage,
-        doctorProfile: doctorProfile ? {
-          id: doctorProfile.id,
-          specialityId: doctorProfile.specialityId,
-          verificationStatus: doctorProfile.verificationStatus,
-        } : null,
       },
       accessToken,
       refreshToken,
     };
+  }
+
+  static assertPatientAppRole(user) {
+    if (ADMIN_ROLES.includes(user.role)) {
+      throw new ForbiddenError('This account must sign in through the admin portal.');
+    }
+    if (user.role !== ROLES.PATIENT) {
+      throw new ForbiddenError('This account cannot sign in to the patient app. Use the doctor app or contact support.');
+    }
   }
 
   static async completeVerification({ userId, purpose }) {
@@ -521,6 +523,39 @@ class AuthService {
     });
 
     return { message: 'Signup submitted for approval', status: 'pending' };
+  }
+
+  static async loginPatientByMobile({ phone, password }, req) {
+    const result = await this.login({ identifier: phone, password }, req);
+    this.assertPatientAppRole(result.user);
+
+    const patientProfile = await prisma.patientProfile.findUnique({
+      where: { userId: result.user.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+            avatarUrl: true,
+            isVerified: true,
+            preferredLanguage: true,
+            darkModeEnabled: true,
+          },
+        },
+      },
+    });
+
+    if (!patientProfile) {
+      throw new NotFoundError('Patient profile not found');
+    }
+
+    return mapPatientLoginResponseDto({
+      patientProfile,
+      token: result.accessToken,
+      refreshToken: result.refreshToken,
+    });
   }
 
   static async loginByMobile({ mobileNumber, password }, req) {

@@ -1,6 +1,11 @@
+/**
+ * Medical profile catalog/text updates and report attachments.
+ * Attachment CRUD is isolated here for a future migration to a unified MedicalFile model.
+ */
 const prisma = require('../../config/database');
 const { NotFoundError, BadRequestError } = require('../../shared/errors/AppError');
-const { mapMedicalProfile } = require('../../shared/utils/patientAppMappers');
+const { mapMedicalProfile, mapMedicalProfileAttachment } = require('../../shared/utils/patientAppMappers');
+const { deleteStoredFile } = require('./medical-profile.storage');
 
 const MEDICAL_PROFILE_INCLUDE = {
   chronicDiseases: { where: { isActive: true }, orderBy: { nameEn: 'asc' } },
@@ -46,6 +51,10 @@ function buildRelationUpdate(data) {
   if (data.familyHistory !== undefined) update.familyHistory = data.familyHistory;
   if (data.notes !== undefined) update.notes = data.notes;
   return update;
+}
+
+function mapAttachmentRows(attachments) {
+  return attachments.map(mapMedicalProfileAttachment);
 }
 
 class MedicalProfileService {
@@ -95,14 +104,28 @@ class MedicalProfileService {
 
     const relationUpdate = buildRelationUpdate(data);
 
-    const profile = await prisma.medicalProfile.upsert({
+    await prisma.medicalProfile.upsert({
       where: { patientId },
       update: relationUpdate,
       create: { patientId, ...relationUpdate },
-      include: MEDICAL_PROFILE_INCLUDE,
     });
 
-    return mapMedicalProfile(profile);
+    return mapMedicalProfile(await this.ensureMedicalProfile(patientId));
+  }
+
+  static async listAttachmentsByUserId(userId) {
+    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!patient) throw new NotFoundError('Patient profile not found');
+    return this.listAttachmentsByPatientId(patient.id);
+  }
+
+  static async listAttachmentsByPatientId(patientId) {
+    const profile = await this.ensureMedicalProfile(patientId);
+    const attachments = await prisma.medicalProfileAttachment.findMany({
+      where: { medicalProfileId: profile.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    return mapAttachmentRows(attachments);
   }
 
   static async addAttachmentsByUserId(userId, files, titles = []) {
@@ -129,13 +152,7 @@ class MedicalProfileService {
       ),
     );
 
-    return created.map((a) => ({
-      id: a.id,
-      fileUrl: a.fileUrl,
-      mimeType: a.mimeType,
-      title: a.title,
-      createdAt: a.createdAt,
-    }));
+    return mapAttachmentRows(created);
   }
 
   static async deleteAttachmentByUserId(userId, attachmentId) {
@@ -153,6 +170,7 @@ class MedicalProfileService {
     });
     if (!attachment) throw new NotFoundError('Attachment not found');
 
+    await deleteStoredFile(attachment.fileUrl);
     await prisma.medicalProfileAttachment.delete({ where: { id: attachmentId } });
     return { id: attachmentId };
   }
