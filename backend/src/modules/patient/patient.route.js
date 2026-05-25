@@ -10,6 +10,7 @@ router.use('/profile', require('./profile.patient.routes'));
 router.use('/medical-profile', require('./medical-profile.patient.routes'));
 router.use('/family-members', require('./family-members.patient.routes'));
 router.use('/insurances', require('./insurances.patient.routes'));
+router.use('/insurance-requests', require('./insurance-requests.patient.routes'));
 router.use('/files', require('./files.patient.routes'));
 router.use('/appointments', require('./appointments.patient.routes'));
 router.use('/home-services', require('./home-services.patient.routes'));

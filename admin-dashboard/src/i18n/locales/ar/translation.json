@@ -36,13 +36,6 @@
       "yes_delete": "نعم، احذف",
       "no_cancel": "إلغاء"
     },
-    "messages": {
-      "saved": "تم الحفظ بنجاح",
-      "deleted": "تم الحذف بنجاح",
-      "error": "حدث خطأ ما",
-      "loading_data": "جاري تحميل البيانات...",
-      "status_updated": "تم تحديث الحالة بنجاح"
-    },
     "roles": {
       "SUPER_ADMIN": "مدير النظام",
       "MEDICAL_ADMIN": "مدير طبي",
@@ -94,7 +87,25 @@
       "string": "نص",
       "number": "رقم",
       "boolean": "منطقي"
-    }
+    },
+    "role": "الدور",
+    "confirm_action": "تأكيد",
+    "confirm_delete": "حذف هذا الملف؟",
+    "date": "التاريخ",
+    "id": "المعرف",
+    "error": "حدث خطأ",
+    "system": "النظام",
+    "linked": "مرتبط",
+    "not_linked": "غير مرتبط",
+    "submit": "إرسال",
+    "mark_paid": "تعيين كمدفوع",
+    "no_data_desc": "لا يوجد محتوى لعرضه هنا بعد.",
+    "upload": "رفع",
+    "upload_desc": "اسحب الملفات وأفلتها هنا، أو انقر للتصفح",
+    "upload_subdesc": "PNG أو JPG أو PDF حتى 10 ميجابايت",
+    "drop_here": "أفلت الملفات هنا",
+    "suspended": "موقوف",
+    "banned": "محظور"
   },
   "sidebar": {
     "dashboard": "لوحة التحكم",
@@ -125,7 +136,27 @@
     "notifications": "الإشعارات",
     "lab_tests": "فحوصات المختبر",
     "payouts": "المستحقات",
-    "prescriptions": "الوصفات الطبية"
+    "roles": "الأدوار والصلاحيات"
+  },
+  "rbac": {
+    "no_access": "ليس لديك صلاحية إدارة الأدوار",
+    "create_role": "إنشاء دور",
+    "role_created": "تم إنشاء الدور بنجاح",
+    "role_name": "مفتاح الدور",
+    "display_name": "الاسم المعروض",
+    "type": "النوع",
+    "system_role": "نظام",
+    "custom_role": "مخصص",
+    "permissions_count": "الصلاحيات",
+    "edit_permissions": "تعديل الصلاحيات",
+    "cannot_delete_system": "لا يمكن حذف أدوار النظام",
+    "create_role_hint": "يمكن منح الصلاحيات للأدوار المخصصة هنا. تعيين المستخدمين يتطلب إضافة الدور إلى UserRole في قاعدة البيانات.",
+    "invalid_name": "استخدم UPPER_SNAKE_CASE (حروف وأرقام وشرطة سفلية)",
+    "custom_role_assign_hint": "لا يمكن تعيين هذا الدور للمستخدمين حتى يُضاف إلى UserRole enum في الخادم.",
+    "super_admin_locked": "كل الصلاحيات",
+    "super_admin_permissions_note": "مدير النظام يملك جميع الصلاحيات ولا يمكن تعديلها.",
+    "save_permissions": "حفظ الصلاحيات",
+    "permissions_saved": "تم تحديث صلاحيات الدور"
   },
   "login": {
     "subtitle": "أدخل بيانات الدخول للوصول للوحة التحكم",
@@ -138,7 +169,70 @@
   },
   "validation": {
     "identifier_required": "يرجى إدخال البريد الإلكتروني أو رقم الهاتف",
-    "password_required": "كلمة المرور مطلوبة"
+    "password_required": "كلمة المرور مطلوبة",
+    "email_required": "البريد الإلكتروني مطلوب",
+    "invalid_email": "عنوان بريد إلكتروني غير صالح"
+  },
+  "audit": {
+    "user": "المستخدم",
+    "action": "الإجراء",
+    "module": "الوحدة",
+    "details": "التفاصيل",
+    "date": "التاريخ والوقت",
+    "subtitle": "سجل النشاط والتغييرات على مستوى النظام",
+    "search_placeholder": "البحث حسب نوع الكيان...",
+    "actor": "معلومات المنفّذ",
+    "metadata": "بيانات الحدث",
+    "entity_type": "نوع الكيان",
+    "entity_id": "معرف الكيان",
+    "payload": "تغييرات البيانات"
+  },
+  "claims": {
+    "id": "رقم المطالبة",
+    "provider": "شركة التأمين",
+    "amount": "المبلغ",
+    "patient": "المريض",
+    "date": "تاريخ التقديم"
+  },
+  "confirm": {
+    "delete_patient_title": "حذف المريض؟",
+    "delete_patient_text": "هل أنت متأكد من حذف {{name}}؟ لا يمكن التراجع عن هذا الإجراء."
+  },
+  "users": {
+    "full_name": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "role": "الدور",
+    "password": "كلمة المرور",
+    "add": "إضافة مستخدم",
+    "edit": "تعديل المستخدم",
+    "stats": {
+      "total_staff": "مستخدمي النظام (الموظفين)"
+    },
+    "verified": "موثّق",
+    "preferences": "التفضيلات",
+    "language": "اللغة",
+    "theme": "المظهر",
+    "account_info": "معلومات الحساب",
+    "security": "الأمان والنشاط",
+    "last_login": "آخر تسجيل دخول"
+  },
+  "payments": {
+    "transaction_id": "رقم المعاملة",
+    "amount": "المبلغ",
+    "method": "طريقة الدفع",
+    "user": "المستخدم",
+    "date": "التاريخ"
+  },
+  "specialities": {
+    "add": "إضافة تخصص",
+    "edit": "تعديل التخصص",
+    "name_ar": "الاسم بالعربي",
+    "name_en": "الاسم بالإنجليزي",
+    "description_ar": "الوصف بالعربي",
+    "description_en": "الوصف بالإنجليزي",
+    "icon": "الأيقونة",
+    "doctors_count": "الأطباء"
   },
   "messages": {
     "login_success": "تم تسجيل الدخول بنجاح",
@@ -147,7 +241,9 @@
     "deleted": "تم الحذف بنجاح",
     "error": "حدث خطأ ما",
     "loading_data": "جاري تحميل البيانات...",
-    "status_updated": "تم تحديث الحالة بنجاح"
+    "status_updated": "تم تحديث الحالة بنجاح",
+    "approved": "تمت الموافقة بنجاح",
+    "rejected": "تم الرفض بنجاح"
   },
   "medical_master_data": {
     "title": "البيانات الطبية المرجعية",
@@ -208,7 +304,25 @@
       "cancelled_today": "ملغاة اليوم",
       "pending_confirmation": "بانتظار التأكيد",
       "approved_doctors": "الأطباء المعتمدين",
-      "average_rating": "متوسط التقييم"
+      "average_rating": "متوسط التقييم",
+      "total_payments": "إجمالي المدفوعات",
+      "total_revenue": "إجمالي الإيرادات",
+      "completed_payments": "مدفوعات مكتملة",
+      "failed_payments": "مدفوعات فاشلة",
+      "pending_support": "دعم معلّق",
+      "resolved_today": "تم حلها اليوم",
+      "high_priority": "أولوية عالية",
+      "under_review": "قيد المراجعة",
+      "approved_today": "موافق عليها اليوم",
+      "pending_insurance_policies": "بوليصات بانتظار التحقق",
+      "escalated_cases": "حالات مصعّدة",
+      "total_claims": "إجمالي المطالبات",
+      "pending_claims": "مطالبات معلّقة",
+      "submitted_claims": "مطالبات مقدّمة",
+      "paid_claims": "مطالبات مدفوعة",
+      "new_this_month": "جدد هذا الشهر",
+      "active_cases": "حالات نشطة",
+      "insurance_linked": "مرتبطون بالتأمين"
     }
   },
   "appointments": {
@@ -231,6 +345,10 @@
     }
   },
   "patients": {
+    "name": "الاسم",
+    "edit_patient": "تعديل ملف المريض",
+    "insurance": "التأمين",
+    "search_placeholder": "البحث بالاسم أو البريد الإلكتروني...",
     "personal_info": "المعلومات الشخصية",
     "full_name": "الاسم الكامل",
     "email": "البريد الإلكتروني",
@@ -248,6 +366,7 @@
     "insurance_info": "معلومات التأمين",
     "family_members": "أفراد العائلة",
     "report_attachments": "مرفقات التقارير الطبية",
+    "tab_insurance": "التأمين",
     "tab_diseases": "الأمراض",
     "tab_medications": "الأدوية",
     "tab_allergies": "الحساسية",
@@ -274,7 +393,9 @@
     "edit_doctor": "تعديل ملف الطبيب",
     "publicly_bookable": "قابل للحجز العام",
     "fee": "الرسوم",
-    "license_number": "رقم الترخيص الطبي"
+    "license_number": "رقم الترخيص الطبي",
+    "approved_success": "تم اعتماد الطبيب بنجاح",
+    "rejected_success": "تم رفض الطبيب بنجاح"
   },
   "services": {
     "name": "اسم الخدمة",
@@ -298,7 +419,35 @@
     "api_mode": "وضع التكامل",
     "add_provider": "إضافة شركة",
     "edit_provider": "تعديل الشركة",
-    "provider_details": "معلومات الشركة"
+    "provider_details": "معلومات الشركة",
+    "name": "اسم الشركة",
+    "patient": "المريض",
+    "date": "التاريخ",
+    "edit_case": "تحديث حالة التأمين",
+    "request_source": "المصدر",
+    "source_appointment": "موعد",
+    "source_home_service": "زيارة منزلية",
+    "requested_amount": "المبلغ المطلوب",
+    "approved_amount": "المبلغ المعتمد",
+    "amounts": "مطلوب / معتمد",
+    "requests": "طلبات التأمين",
+    "member_id": "رقم العضوية",
+    "primary": "البوليصة الأساسية",
+    "policy_used": "البوليصة المستخدمة",
+    "linked_appointment": "الموعد المرتبط",
+    "linked_home_service": "الزيارة المنزلية",
+    "visit_address": "عنوان الزيارة",
+    "preferred_date": "التاريخ المفضل",
+    "service": "الخدمة",
+    "doctor": "الطبيب",
+    "decision_panel": "المراجعة والقرار",
+    "update_price": "تحديث السعر المعتمد",
+    "request_info": "طلب معلومات إضافية",
+    "card_image": "بطاقة التأمين",
+    "quick_approve_note": "موافقة من قائمة الطلبات",
+    "quick_reject_note": "رفض من قائمة الطلبات",
+    "rejected_default": "مرفوض من موظف التأمين",
+    "review_pending": "مراجعة طلبات التأمين المعلقة"
   },
   "support": {
     "tabs": {
@@ -331,7 +480,10 @@
     "no_messages": "لا توجد رسائل بعد",
     "reply_placeholder": "اكتب ردك للمستخدم...",
     "send_reply": "إرسال الرد",
-    "attachments": "المرفقات"
+    "attachments": "المرفقات",
+    "resolved_at": "تاريخ الحل",
+    "admin_notes": "رد الإدارة",
+    "update_case": "تحديث حالة الدعم"
   },
   "status": {
     "open": "مفتوح",
@@ -350,7 +502,15 @@
     "paid": "مدفوع",
     "failed": "فشل",
     "matched": "متطابق",
-    "discrepancy": "فرق"
+    "discrepancy": "فرق",
+    "escalated": "متصاعد",
+    "submitted": "مقدّم",
+    "under_review": "قيد المراجعة",
+    "rescheduled": "معاد جدولته",
+    "refunded": "مسترد",
+    "more_info_requested": "مطلوب معلومات إضافية",
+    "draft": "مسودة",
+    "scheduled": "مجدول"
   },
   "payouts": {
     "title": "مستحقات الأطباء",

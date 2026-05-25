@@ -10,6 +10,15 @@ const { isComingAppointment } = require('../../shared/utils/patientAppMappers');
 class AppointmentService {
   static async createForPatient(userId, data) {
     const requiresInsuranceApproval = data.paymentMode === 'INSURANCE';
+    if (requiresInsuranceApproval) {
+      const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+      const policyCount = patient
+        ? await prisma.patientInsurance.count({ where: { patientId: patient.id } })
+        : 0;
+      if (!policyCount) {
+        throw new BadRequestError('Add an insurance policy before booking with medical insurance.');
+      }
+    }
     if (data.bookingFor === 'family' && !data.familyMemberId) {
       throw new BadRequestError('familyMemberId is required when booking for a family member');
     }
@@ -35,6 +44,7 @@ class AppointmentService {
       ...data,
       familyMemberId: data.bookingFor === 'family' ? data.familyMemberId : null,
       requiresInsuranceApproval,
+      patientInsuranceId: data.patientInsuranceId,
     });
   }
 
@@ -58,6 +68,11 @@ class AppointmentService {
     const include = {
       doctor: { include: { user: { select: { fullName: true, avatarUrl: true } }, speciality: true } },
       service: true,
+      insuranceCases: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        include: { approvals: { orderBy: { createdAt: 'desc' }, take: 1 } },
+      },
     };
 
     if (filter === 'coming') {
@@ -186,6 +201,22 @@ class AppointmentService {
 
     // Emit event for side effects (notifications, etc)
     eventEmitter.emit(EVENTS.APPOINTMENT.CREATED, appointment);
+
+    if (data.requiresInsuranceApproval) {
+      const InsuranceRequestOrchestrator = require('../insurance-cases/insuranceRequest.orchestrator');
+      await InsuranceRequestOrchestrator.createForAppointment(appointment, {
+        patientInsuranceId: data.patientInsuranceId,
+      });
+      return prisma.appointment.findUnique({
+        where: { id: appointment.id },
+        include: {
+          doctor: { include: { user: { select: { fullName: true, avatarUrl: true } }, speciality: true } },
+          patient: { include: { user: { select: { fullName: true } } } },
+          service: true,
+          insuranceCases: { orderBy: { createdAt: 'desc' }, take: 1 },
+        },
+      });
+    }
 
     return appointment;
   }

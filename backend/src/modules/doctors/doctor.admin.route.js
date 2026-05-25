@@ -1,18 +1,16 @@
 const router = require('express').Router();
-const { authenticate, authorize } = require('../../middlewares/auth');
-const { ADMIN_ROLES } = require('../../constants');
+const { authenticate } = require('../../middlewares/auth');
+const { guard, MEDICAL, SUPER } = require('../admin/admin.permissions');
 const DoctorAdminController = require('./doctor.admin.controller');
 
 router.use(authenticate);
-router.use(authorize(...ADMIN_ROLES));
 
-// DOCTORS Admin Routes
-router.get('/', DoctorAdminController.list);
-router.get('/:id', DoctorAdminController.getOne);
-router.put('/:id', DoctorAdminController.update);
-router.delete('/:id', DoctorAdminController.delete);
-router.patch('/:id/approve', DoctorAdminController.approve);
-router.patch('/:id/reject', DoctorAdminController.reject);
-router.patch('/:id/status', DoctorAdminController.updateStatus);
+router.get('/', guard('doctors.list', ...MEDICAL), DoctorAdminController.list);
+router.get('/:id', guard('doctors.read', ...MEDICAL), DoctorAdminController.getOne);
+router.put('/:id', guard('doctors.update', ...MEDICAL), DoctorAdminController.update);
+router.delete('/:id', guard('doctors.delete', ...SUPER), DoctorAdminController.delete);
+router.patch('/:id/approve', guard('doctors.verify', ...MEDICAL), DoctorAdminController.approve);
+router.patch('/:id/reject', guard('doctors.verify', ...MEDICAL), DoctorAdminController.reject);
+router.patch('/:id/status', guard('doctors.update', ...MEDICAL), DoctorAdminController.updateStatus);
 
 module.exports = router;

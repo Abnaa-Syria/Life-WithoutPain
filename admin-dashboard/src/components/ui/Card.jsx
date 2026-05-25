@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Card = ({ title, subtitle, children, actions, className = '' }) => {
+const Card = ({ title, subtitle, children, actions, className = '', bodyClassName = '' }) => {
   return (
     <div className={`card ${className}`}>
       {(title || subtitle || actions) && (
@@ -12,9 +12,10 @@ const Card = ({ title, subtitle, children, actions, className = '' }) => {
           {actions && <div className="flex gap-2">{actions}</div>}
         </div>
       )}
-      <div className="card-body">{children}</div>
+      <div className={`card-body ${bodyClassName}`}>{children}</div>
     </div>
   );
 };
 
 export default Card;
+

@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const prisma = require('../config/database');
 const { UnauthorizedError, ForbiddenError } = require('../shared/errors/AppError');
+const { getEffectivePermissions } = require('../modules/rbac/permission.service');
 
 const authenticate = async (req, res, next) => {
   try {
@@ -35,7 +36,8 @@ const authenticate = async (req, res, next) => {
       throw new ForbiddenError('Account is not active');
     }
 
-    req.user = user;
+    const permissions = await getEffectivePermissions(user.id, user.role);
+    req.user = { ...user, permissions };
     next();
   } catch (error) {
     if (error instanceof UnauthorizedError || error instanceof ForbiddenError) {
@@ -80,7 +82,10 @@ const optionalAuth = async (req, res, next) => {
       },
     });
 
-    if (user) req.user = user;
+    if (user) {
+      const permissions = await getEffectivePermissions(user.id, user.role);
+      req.user = { ...user, permissions };
+    }
     next();
   } catch {
     next();

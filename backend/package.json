@@ -11,8 +11,11 @@
     "db:migrate:prod": "npx prisma migrate deploy --schema=prisma/schema",
     "db:push": "npx prisma db push --schema=prisma/schema",
     "db:seed": "node prisma/seed.js",
+    "db:seed:rbac": "node prisma/seed-rbac.js",
     "db:studio": "npx prisma studio --schema=prisma/schema",
     "db:reset": "npx prisma migrate reset --schema=prisma/schema",
+    "test:rbac": "node tests/rbac/permission.service.test.js && node tests/rbac/authorization.matrix.test.js",
+    "test:insurance": "node tests/insurance/insuranceRequest.orchestrator.test.js",
     "lint": "eslint src/",
     "swagger:generate": "node src/docs/generate.js"
   },

@@ -1,10 +1,11 @@
 const router = require('express').Router();
-const { authenticate, authorize } = require('../../middlewares/auth');
+const { authenticate } = require('../../middlewares/auth');
+const { guard, MEDICAL, SUPPORT, INSURANCE, FINANCE, SUPER } = require('./admin.permissions');
 const { asyncHandler } = require('../../utils/helpers');
 const { successResponse, createdResponse, paginatedResponse } = require('../../shared/responses');
 const { buildPagination } = require('../../utils/pagination');
 const prisma = require('../../config/database');
-const { ROLES, ADMIN_ROLES } = require('../../constants');
+const { ROLES } = require('../../constants');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { createAuditLog } = require('../../middlewares/auditLog');
 const bcrypt = require('bcryptjs');
@@ -31,7 +32,6 @@ const MEDICAL_PROFILE_INCLUDE = {
 };
 
 router.use(authenticate);
-router.use(authorize(...ADMIN_ROLES));
 
 // ═══════════════════════════════════════════
 //  Helper: generic CRUD factory
@@ -87,7 +87,7 @@ function crud(model, { searchFields = [], include, defaultOrder = { createdAt: '
 // ═══════════════════════════════════════════
 //  USERS – full CRUD
 // ═══════════════════════════════════════════
-router.get('/users', asyncHandler(async (req, res) => {
+router.get('/users', guard('users.list', ...MEDICAL), asyncHandler(async (req, res) => {
   const { page, limit, skip } = buildPagination(req.query);
   const where = { deletedAt: null };
   if (req.query.role) where.role = req.query.role;
@@ -99,26 +99,26 @@ router.get('/users', asyncHandler(async (req, res) => {
   ]);
   return paginatedResponse(res, { data, total, page, limit });
 }));
-router.get('/users/:id', asyncHandler(async (req, res) => {
+router.get('/users/:id', guard('users.read', ...MEDICAL), asyncHandler(async (req, res) => {
   const data = await prisma.user.findUnique({ where: { id: parseInt(req.params.id) }, select: { id: true, fullName: true, email: true, phone: true, role: true, status: true, isVerified: true, preferredLanguage: true, darkModeEnabled: true, avatarUrl: true, createdAt: true, lastLoginAt: true } });
   if (!data) throw new NotFoundError('User not found');
   return successResponse(res, { data });
 }));
-router.post('/users', asyncHandler(async (req, res) => {
+router.post('/users', guard('users.create', ...SUPER), asyncHandler(async (req, res) => {
   const passwordHash = await bcrypt.hash(req.body.password || 'Password123', 12);
   const { password, ...rest } = req.body;
   const data = await prisma.user.create({ data: { ...rest, passwordHash, isVerified: true }, select: { id: true, fullName: true, email: true, phone: true, role: true, status: true } });
   createAuditLog({ actorId: req.user.id, entityType: 'User', entityId: data.id, action: 'CREATE', newValues: { role: rest.role }, req });
   return createdResponse(res, { data });
 }));
-router.put('/users/:id', asyncHandler(async (req, res) => {
+router.put('/users/:id', guard('users.update', ...SUPER), asyncHandler(async (req, res) => {
   const { password, ...updateData } = req.body;
   if (password) updateData.passwordHash = await bcrypt.hash(password, 12);
   const data = await prisma.user.update({ where: { id: parseInt(req.params.id) }, data: updateData, select: { id: true, fullName: true, email: true, phone: true, role: true, status: true } });
   createAuditLog({ actorId: req.user.id, entityType: 'User', entityId: data.id, action: 'UPDATE', newValues: updateData, req });
   return successResponse(res, { data });
 }));
-router.delete('/users/:id', asyncHandler(async (req, res) => {
+router.delete('/users/:id', guard('users.delete', ...SUPER), asyncHandler(async (req, res) => {
   await prisma.user.update({ where: { id: parseInt(req.params.id) }, data: { deletedAt: new Date(), status: 'INACTIVE' } });
   createAuditLog({ actorId: req.user.id, entityType: 'User', entityId: parseInt(req.params.id), action: 'DELETE', req });
   return successResponse(res, { data: null, message: 'User deactivated' });
@@ -127,7 +127,7 @@ router.delete('/users/:id', asyncHandler(async (req, res) => {
 // ═══════════════════════════════════════════
 //  PATIENTS – full CRUD
 // ═══════════════════════════════════════════
-router.get('/patients', asyncHandler(async (req, res) => {
+router.get('/patients', guard('patients.list', ...MEDICAL, ROLES.SUPPORT_STAFF), asyncHandler(async (req, res) => {
   const { page, limit, skip } = buildPagination(req.query);
   const where = {};
   if (req.query.search) where.user = { fullName: { contains: req.query.search } };
@@ -137,7 +137,7 @@ router.get('/patients', asyncHandler(async (req, res) => {
   ]);
   return paginatedResponse(res, { data, total, page, limit });
 }));
-router.get('/patients/:id', asyncHandler(async (req, res) => {
+router.get('/patients/:id', guard('patients.read', ...MEDICAL, ROLES.SUPPORT_STAFF), asyncHandler(async (req, res) => {
   const data = await prisma.patientProfile.findUnique({ 
     where: { id: parseInt(req.params.id) }, 
     include: { 
@@ -160,6 +160,7 @@ router.get('/patients/:id', asyncHandler(async (req, res) => {
 
 router.put(
   '/patients/:id/medical-profile',
+  guard('patients.update', ...MEDICAL),
   validate(patientIdFromIdParamSchema, 'params'),
   validate(updateMedicalProfileSchema),
   asyncHandler(async (req, res) => {
@@ -170,6 +171,7 @@ router.put(
 
 router.get(
   '/patients/:patientId/medical-profile/attachments',
+  guard('patients.read', ...MEDICAL, ROLES.SUPPORT_STAFF),
   validate(patientIdParamSchema, 'params'),
   asyncHandler(async (req, res) => {
     const data = await MedicalProfileService.listAttachmentsByPatientId(req.params.patientId);
@@ -179,6 +181,7 @@ router.get(
 
 router.post(
   '/patients/:patientId/medical-profile/attachments',
+  guard('patients.update', ...MEDICAL),
   validate(patientIdParamSchema, 'params'),
   medicalProfileAttachmentsUpload,
   validate(attachmentUploadBodySchema),
@@ -195,6 +198,7 @@ router.post(
 
 router.delete(
   '/patients/:patientId/medical-profile/attachments/:id',
+  guard('patients.update', ...MEDICAL),
   validate(patientIdParamSchema, 'params'),
   validate(attachmentIdParamSchema, 'params'),
   asyncHandler(async (req, res) => {
@@ -205,7 +209,7 @@ router.delete(
     return successResponse(res, { data, message: 'Attachment deleted' });
   }),
 );
-router.put('/patients/:id', asyncHandler(async (req, res) => {
+router.put('/patients/:id', guard('patients.update', ...MEDICAL), asyncHandler(async (req, res) => {
   const { userData, ...profileData } = req.body;
   const data = await prisma.patientProfile.update({ where: { id: parseInt(req.params.id) }, data: profileData });
   if (userData) {
@@ -214,7 +218,7 @@ router.put('/patients/:id', asyncHandler(async (req, res) => {
   createAuditLog({ actorId: req.user.id, entityType: 'PatientProfile', entityId: data.id, action: 'UPDATE', newValues: req.body, req });
   return successResponse(res, { data });
 }));
-router.delete('/patients/:id', asyncHandler(async (req, res) => {
+router.delete('/patients/:id', guard('patients.delete', ...SUPER), asyncHandler(async (req, res) => {
   const pat = await prisma.patientProfile.findUnique({ where: { id: parseInt(req.params.id) } });
   if (pat) await prisma.user.update({ where: { id: pat.userId }, data: { deletedAt: new Date(), status: 'INACTIVE' } });
   createAuditLog({ actorId: req.user.id, entityType: 'PatientProfile', entityId: parseInt(req.params.id), action: 'DELETE', req });
@@ -225,26 +229,26 @@ router.delete('/patients/:id', asyncHandler(async (req, res) => {
 //  SERVICES – full CRUD
 // ═══════════════════════════════════════════
 const svcCrud = crud('service', { searchFields: ['nameAr', 'nameEn'], entityLabel: 'Service', defaultOrder: { sortOrder: 'asc' } });
-router.get('/services', svcCrud.list);
-router.get('/services/:id', svcCrud.getOne);
-router.post('/services', svcCrud.create);
-router.put('/services/:id', svcCrud.update);
-router.delete('/services/:id', svcCrud.remove);
+router.get('/services', guard('services.list', ...MEDICAL), svcCrud.list);
+router.get('/services/:id', guard('services.read', ...MEDICAL), svcCrud.getOne);
+router.post('/services', guard('services.create', ...MEDICAL), svcCrud.create);
+router.put('/services/:id', guard('services.update', ...MEDICAL), svcCrud.update);
+router.delete('/services/:id', guard('services.delete', ...SUPER), svcCrud.remove);
 
 // ═══════════════════════════════════════════
 //  INSURANCE PROVIDERS – full CRUD
 // ═══════════════════════════════════════════
 const ipCrud = crud('insuranceProvider', { searchFields: ['nameAr', 'nameEn', 'code'], entityLabel: 'InsuranceProvider' });
-router.get('/insurance-providers', ipCrud.list);
-router.get('/insurance-providers/:id', ipCrud.getOne);
-router.post('/insurance-providers', ipCrud.create);
-router.put('/insurance-providers/:id', ipCrud.update);
-router.delete('/insurance-providers/:id', ipCrud.remove);
+router.get('/insurance-providers', guard('insurance.providers.manage', ...SUPER), ipCrud.list);
+router.get('/insurance-providers/:id', guard('insurance.providers.manage', ...SUPER), ipCrud.getOne);
+router.post('/insurance-providers', guard('insurance.providers.manage', ...SUPER), ipCrud.create);
+router.put('/insurance-providers/:id', guard('insurance.providers.manage', ...SUPER), ipCrud.update);
+router.delete('/insurance-providers/:id', guard('insurance.providers.manage', ...SUPER), ipCrud.remove);
 
 // ═══════════════════════════════════════════
 //  APPOINTMENTS – full CRUD
 // ═══════════════════════════════════════════
-router.get('/appointments', asyncHandler(async (req, res) => {
+router.get('/appointments', guard('appointments.list', ...MEDICAL), asyncHandler(async (req, res) => {
   const { page, limit, skip } = buildPagination(req.query);
   const where = {};
   if (req.query.status) where.status = req.query.status;
@@ -256,60 +260,99 @@ router.get('/appointments', asyncHandler(async (req, res) => {
   ]);
   return paginatedResponse(res, { data, total, page, limit });
 }));
-router.get('/appointments/:id', asyncHandler(async (req, res) => {
+router.get('/appointments/:id', guard('appointments.read', ...MEDICAL, ROLES.SUPPORT_STAFF), asyncHandler(async (req, res) => {
   const data = await prisma.appointment.findUnique({ where: { id: parseInt(req.params.id) }, include: { patient: { include: { user: true } }, doctor: { include: { user: true, speciality: true } }, service: true, attachments: true, prescriptions: true, reports: true } });
   if (!data) throw new NotFoundError('Appointment not found');
   return successResponse(res, { data });
 }));
-router.put('/appointments/:id', asyncHandler(async (req, res) => {
+router.put('/appointments/:id', guard('appointments.update', ...MEDICAL), asyncHandler(async (req, res) => {
   const data = await prisma.appointment.update({ where: { id: parseInt(req.params.id) }, data: req.body });
   createAuditLog({ actorId: req.user.id, entityType: 'Appointment', entityId: data.id, action: 'UPDATE', newValues: req.body, req });
   return successResponse(res, { data });
 }));
-router.delete('/appointments/:id', asyncHandler(async (req, res) => {
+router.delete('/appointments/:id', guard('appointments.delete', ...SUPER), asyncHandler(async (req, res) => {
   await prisma.appointment.update({ where: { id: parseInt(req.params.id) }, data: { status: 'CANCELLED', cancellationReason: 'Cancelled by admin' } });
   createAuditLog({ actorId: req.user.id, entityType: 'Appointment', entityId: parseInt(req.params.id), action: 'DELETE', req });
   return successResponse(res, { data: null, message: 'Appointment cancelled' });
 }));
 
 // ═══════════════════════════════════════════
-//  INSURANCE CASES – full CRUD
+//  INSURANCE CASES – full CRUD + workflow
 // ═══════════════════════════════════════════
-router.get('/insurance-cases', asyncHandler(async (req, res) => {
-  const { page, limit, skip } = buildPagination(req.query);
-  const where = {};
-  if (req.query.status) where.status = req.query.status;
-  if (req.query.search) where.patient = { user: { fullName: { contains: req.query.search } } };
-  const [data, total] = await Promise.all([
-    prisma.insuranceCase.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { provider: true, patient: { include: { user: { select: { fullName: true } } } } } }),
-    prisma.insuranceCase.count({ where }),
-  ]);
+const InsuranceCaseService = require('../insurance-cases/insuranceCase.service');
+const InsuranceRequestOrchestrator = require('../insurance-cases/insuranceRequest.orchestrator');
+
+const INSURANCE_CASE_ADMIN_INCLUDE = InsuranceRequestOrchestrator.caseInclude();
+
+router.get('/insurance-cases', guard('insurance.cases.list', ...INSURANCE), asyncHandler(async (req, res) => {
+  const { data, total, page, limit } = await InsuranceCaseService.list(req.query);
   return paginatedResponse(res, { data, total, page, limit });
 }));
-router.get('/insurance-cases/:id', asyncHandler(async (req, res) => {
-  const data = await prisma.insuranceCase.findUnique({ where: { id: parseInt(req.params.id) }, include: { provider: true, patient: { include: { user: true } }, approvals: true } });
-  if (!data) throw new NotFoundError('Insurance case not found');
+router.get('/insurance-cases/:id', guard('insurance.cases.read', ...INSURANCE), asyncHandler(async (req, res) => {
+  const data = await InsuranceCaseService.getById(req.params.id);
   return successResponse(res, { data });
 }));
-router.put('/insurance-cases/:id', asyncHandler(async (req, res) => {
+router.put('/insurance-cases/:id', guard('insurance.cases.update', ...INSURANCE), asyncHandler(async (req, res) => {
   const data = await prisma.insuranceCase.update({ where: { id: parseInt(req.params.id) }, data: req.body });
   createAuditLog({ actorId: req.user.id, entityType: 'InsuranceCase', entityId: data.id, action: 'UPDATE', newValues: req.body, req });
   return successResponse(res, { data });
 }));
-router.delete('/insurance-cases/:id', asyncHandler(async (req, res) => {
+router.patch('/insurance-cases/:id/approve', guard('insurance.cases.decide', ...INSURANCE), asyncHandler(async (req, res) => {
+  const data = await InsuranceCaseService.approve(req.params.id, req.body, req.user.id, req);
+  return successResponse(res, { data, message: 'Insurance case approved' });
+}));
+router.patch('/insurance-cases/:id/reject', guard('insurance.cases.decide', ...INSURANCE), asyncHandler(async (req, res) => {
+  const data = await InsuranceCaseService.reject(req.params.id, req.body, req.user.id, req);
+  return successResponse(res, { data, message: 'Insurance case rejected' });
+}));
+router.patch('/insurance-cases/:id/request-info', guard('insurance.cases.decide', ...INSURANCE), asyncHandler(async (req, res) => {
+  const data = await InsuranceCaseService.requestInfo(req.params.id, req.body, req.user.id, req);
+  return successResponse(res, { data, message: 'More information requested' });
+}));
+router.patch('/insurance-cases/:id/escalate', guard('insurance.cases.update', ...INSURANCE), asyncHandler(async (req, res) => {
+  const data = await InsuranceCaseService.escalate(req.params.id, req.body, req.user.id, req);
+  return successResponse(res, { data, message: 'Case escalated' });
+}));
+router.patch('/insurance-cases/:id/approval', guard('insurance.cases.decide', ...INSURANCE), asyncHandler(async (req, res) => {
+  const data = await InsuranceCaseService.updateApproval(req.params.id, req.body, req.user.id, req);
+  return successResponse(res, { data, message: 'Insurance approval updated' });
+}));
+router.delete('/insurance-cases/:id', guard('insurance.cases.delete', ...INSURANCE), asyncHandler(async (req, res) => {
   await prisma.insuranceCase.update({ where: { id: parseInt(req.params.id) }, data: { status: 'CLOSED', resolvedAt: new Date() } });
   createAuditLog({ actorId: req.user.id, entityType: 'InsuranceCase', entityId: parseInt(req.params.id), action: 'DELETE', req });
   return successResponse(res, { data: null, message: 'Insurance case closed' });
+}));
+
+router.get('/patients/:id/insurances', guard('patients.insurance.read', ...MEDICAL, ...INSURANCE, ROLES.SUPPORT_STAFF), asyncHandler(async (req, res) => {
+  const data = await prisma.patientInsurance.findMany({
+    where: { patientId: parseInt(req.params.id, 10) },
+    include: { provider: true },
+    orderBy: [{ isPrimary: 'desc' }, { createdAt: 'desc' }],
+  });
+  return successResponse(res, { data });
+}));
+router.patch('/patients/:id/insurances/:insuranceId/verify', guard('patients.insurance.verify', ...INSURANCE), asyncHandler(async (req, res) => {
+  const patientId = parseInt(req.params.id, 10);
+  const insuranceId = parseInt(req.params.insuranceId, 10);
+  const existing = await prisma.patientInsurance.findFirst({ where: { id: insuranceId, patientId } });
+  if (!existing) throw new NotFoundError('Patient insurance not found');
+  const data = await prisma.patientInsurance.update({
+    where: { id: insuranceId },
+    data: { verificationStatus: req.body.verificationStatus },
+    include: { provider: true },
+  });
+  createAuditLog({ actorId: req.user.id, entityType: 'PatientInsurance', entityId: data.id, action: 'VERIFY', newValues: req.body, req });
+  return successResponse(res, { data });
 }));
 
 // ═══════════════════════════════════════════
 //  SUPPORT CASES – legacy aliases (see /admin/support)
 // ═══════════════════════════════════════════
 const supportAdmin = require('../support/support.admin.controller');
-router.get('/support-cases', supportAdmin.listTickets);
-router.get('/support-cases/:id', supportAdmin.getTicket);
-router.patch('/support-cases/:id', supportAdmin.updateStatus);
-router.delete('/support-cases/:id', asyncHandler(async (req, res) => {
+router.get('/support-cases', guard('support.cases.list', ...SUPPORT), supportAdmin.listTickets);
+router.get('/support-cases/:id', guard('support.cases.read', ...SUPPORT), supportAdmin.getTicket);
+router.patch('/support-cases/:id', guard('support.cases.manage', ...SUPPORT), supportAdmin.updateStatus);
+router.delete('/support-cases/:id', guard('support.cases.manage', ...SUPPORT), asyncHandler(async (req, res) => {
   await require('../support/supportTicket.service').updateStatus(
     req.params.id,
     { status: 'CLOSED', resolutionNotes: 'Closed by admin' },
@@ -328,15 +371,15 @@ const labCrud = crud('labTestRequest', {
   include: { patient: { include: { user: { select: { fullName: true } } } }, doctor: { include: { user: { select: { fullName: true } } } }, results: true },
   filterFn: (q) => ({ ...(q.status ? { status: q.status } : {}) }),
 });
-router.get('/lab-tests', labCrud.list);
-router.get('/lab-tests/:id', labCrud.getOne);
-router.put('/lab-tests/:id', labCrud.update);
-router.delete('/lab-tests/:id', labCrud.remove);
+router.get('/lab-tests', guard('lab-tests.list', ...MEDICAL), labCrud.list);
+router.get('/lab-tests/:id', guard('lab-tests.read', ...MEDICAL), labCrud.getOne);
+router.put('/lab-tests/:id', guard('lab-tests.update', ...MEDICAL), labCrud.update);
+router.delete('/lab-tests/:id', guard('lab-tests.delete', ...SUPER), labCrud.remove);
 
 // ═══════════════════════════════════════════
 //  PAYMENTS – full CRUD
 // ═══════════════════════════════════════════
-router.get('/payments', asyncHandler(async (req, res) => {
+router.get('/payments', guard('payments.list', ...FINANCE), asyncHandler(async (req, res) => {
   const { page, limit, skip } = buildPagination(req.query);
   const where = {};
   if (req.query.status) where.status = req.query.status;
@@ -347,17 +390,17 @@ router.get('/payments', asyncHandler(async (req, res) => {
   ]);
   return paginatedResponse(res, { data, total, page, limit });
 }));
-router.get('/payments/:id', asyncHandler(async (req, res) => {
+router.get('/payments/:id', guard('payments.read', ...FINANCE), asyncHandler(async (req, res) => {
   const data = await prisma.payment.findUnique({ where: { id: parseInt(req.params.id) }, include: { patient: { include: { user: true } }, appointment: true } });
   if (!data) throw new NotFoundError('Payment not found');
   return successResponse(res, { data });
 }));
-router.put('/payments/:id', asyncHandler(async (req, res) => {
+router.put('/payments/:id', guard('payments.update', ...FINANCE), asyncHandler(async (req, res) => {
   const data = await prisma.payment.update({ where: { id: parseInt(req.params.id) }, data: req.body });
   createAuditLog({ actorId: req.user.id, entityType: 'Payment', entityId: data.id, action: 'UPDATE', newValues: req.body, req });
   return successResponse(res, { data });
 }));
-router.delete('/payments/:id', asyncHandler(async (req, res) => {
+router.delete('/payments/:id', guard('payments.delete', ...SUPER), asyncHandler(async (req, res) => {
   await prisma.payment.update({ where: { id: parseInt(req.params.id) }, data: { status: 'REFUNDED' } });
   createAuditLog({ actorId: req.user.id, entityType: 'Payment', entityId: parseInt(req.params.id), action: 'DELETE', req });
   return successResponse(res, { data: null, message: 'Payment refunded' });
@@ -374,12 +417,12 @@ const claimCrud = crud('claimItem', {
   entityLabel: 'Claim',
   filterFn: (q) => ({ ...(q.status ? { status: q.status } : {}) })
 });
-router.get('/claims', claimCrud.list);
-router.get('/claims/:id', claimCrud.getOne);
-router.put('/claims/:id', claimCrud.update);
-router.delete('/claims/:id', claimCrud.remove);
+router.get('/claims', guard('claims.list', ...FINANCE), claimCrud.list);
+router.get('/claims/:id', guard('claims.list', ...FINANCE), claimCrud.getOne);
+router.put('/claims/:id', guard('claims.manage', ...FINANCE), claimCrud.update);
+router.delete('/claims/:id', guard('claims.manage', ...FINANCE), claimCrud.remove);
 
-router.get('/claims/batches', asyncHandler(async (req, res) => {
+router.get('/claims/batches', guard('claims.list', ...FINANCE), asyncHandler(async (req, res) => {
   const { page, limit, skip } = buildPagination(req.query);
   const where = {};
   if (req.query.status) where.status = req.query.status;
@@ -389,22 +432,22 @@ router.get('/claims/batches', asyncHandler(async (req, res) => {
   ]);
   return paginatedResponse(res, { data, total, page, limit });
 }));
-router.get('/claims/batches/:id', asyncHandler(async (req, res) => {
+router.get('/claims/batches/:id', guard('claims.list', ...FINANCE), asyncHandler(async (req, res) => {
   const data = await prisma.claimBatch.findUnique({ where: { id: parseInt(req.params.id) }, include: { provider: true, items: true } });
   if (!data) throw new NotFoundError('Claim batch not found');
   return successResponse(res, { data });
 }));
-router.post('/claims/batches', asyncHandler(async (req, res) => {
+router.post('/claims/batches', guard('claims.manage', ...FINANCE), asyncHandler(async (req, res) => {
   const data = await prisma.claimBatch.create({ data: req.body });
   createAuditLog({ actorId: req.user.id, entityType: 'ClaimBatch', entityId: data.id, action: 'CREATE', newValues: req.body, req });
   return createdResponse(res, { data });
 }));
-router.put('/claims/batches/:id', asyncHandler(async (req, res) => {
+router.put('/claims/batches/:id', guard('claims.manage', ...FINANCE), asyncHandler(async (req, res) => {
   const data = await prisma.claimBatch.update({ where: { id: parseInt(req.params.id) }, data: req.body });
   createAuditLog({ actorId: req.user.id, entityType: 'ClaimBatch', entityId: data.id, action: 'UPDATE', newValues: req.body, req });
   return successResponse(res, { data });
 }));
-router.delete('/claims/batches/:id', asyncHandler(async (req, res) => {
+router.delete('/claims/batches/:id', guard('claims.manage', ...FINANCE), asyncHandler(async (req, res) => {
   await prisma.claimBatch.delete({ where: { id: parseInt(req.params.id) } });
   createAuditLog({ actorId: req.user.id, entityType: 'ClaimBatch', entityId: parseInt(req.params.id), action: 'DELETE', req });
   return successResponse(res, { data: null, message: 'Claim batch deleted' });
@@ -414,49 +457,49 @@ router.delete('/claims/batches/:id', asyncHandler(async (req, res) => {
 //  RECONCILIATIONS – full CRUD
 // ═══════════════════════════════════════════
 const recCrud = crud('reconciliation', { include: { provider: { select: { nameAr: true, nameEn: true } } }, entityLabel: 'Reconciliation' });
-router.get('/reconciliations', recCrud.list);
-router.get('/reconciliations/:id', recCrud.getOne);
-router.post('/reconciliations', recCrud.create);
-router.put('/reconciliations/:id', recCrud.update);
-router.delete('/reconciliations/:id', recCrud.remove);
+router.get('/reconciliations', guard('reconciliations.manage', ...FINANCE), recCrud.list);
+router.get('/reconciliations/:id', guard('reconciliations.manage', ...FINANCE), recCrud.getOne);
+router.post('/reconciliations', guard('reconciliations.manage', ...FINANCE), recCrud.create);
+router.put('/reconciliations/:id', guard('reconciliations.manage', ...FINANCE), recCrud.update);
+router.delete('/reconciliations/:id', guard('reconciliations.manage', ...FINANCE), recCrud.remove);
 
 // ═══════════════════════════════════════════
 //  DOCTOR PAYOUTS – full CRUD
 // ═══════════════════════════════════════════
 const payoutCrud = crud('doctorPayout', { include: { doctor: { include: { user: { select: { fullName: true } } } } }, entityLabel: 'DoctorPayout', filterFn: (q) => ({ ...(q.status ? { status: q.status } : {}) }) });
-router.get('/doctor-payouts', payoutCrud.list);
-router.get('/doctor-payouts/:id', payoutCrud.getOne);
-router.post('/doctor-payouts', payoutCrud.create);
-router.put('/doctor-payouts/:id', payoutCrud.update);
-router.delete('/doctor-payouts/:id', payoutCrud.remove);
+router.get('/doctor-payouts', guard('payouts.manage', ...FINANCE), payoutCrud.list);
+router.get('/doctor-payouts/:id', guard('payouts.manage', ...FINANCE), payoutCrud.getOne);
+router.post('/doctor-payouts', guard('payouts.manage', ...FINANCE), payoutCrud.create);
+router.put('/doctor-payouts/:id', guard('payouts.manage', ...FINANCE), payoutCrud.update);
+router.delete('/doctor-payouts/:id', guard('payouts.manage', ...FINANCE), payoutCrud.remove);
 
 // ═══════════════════════════════════════════
 //  REPORTS – full CRUD
 // ═══════════════════════════════════════════
 const reportCrud = crud('medicalReport', { include: { patient: { include: { user: { select: { fullName: true } } } }, doctor: { include: { user: { select: { fullName: true } } } } }, entityLabel: 'MedicalReport' });
-router.get('/reports', reportCrud.list);
-router.get('/reports/:id', reportCrud.getOne);
-router.put('/reports/:id', reportCrud.update);
-router.delete('/reports/:id', reportCrud.remove);
+router.get('/reports', guard('reports.admin.list', ...MEDICAL), reportCrud.list);
+router.get('/reports/:id', guard('reports.admin.list', ...MEDICAL), reportCrud.getOne);
+router.put('/reports/:id', guard('reports.admin.update', ...MEDICAL), reportCrud.update);
+router.delete('/reports/:id', guard('reports.admin.delete', ...SUPER), reportCrud.remove);
 
 // ═══════════════════════════════════════════
 //  PRESCRIPTIONS – full CRUD
 // ═══════════════════════════════════════════
 const rxCrud = crud('prescription', { include: { items: true, patient: { include: { user: { select: { fullName: true } } } }, doctor: { include: { user: { select: { fullName: true } } } } }, entityLabel: 'Prescription' });
-router.get('/prescriptions', rxCrud.list);
-router.get('/prescriptions/:id', rxCrud.getOne);
-router.put('/prescriptions/:id', rxCrud.update);
-router.delete('/prescriptions/:id', rxCrud.remove);
+router.get('/prescriptions', guard('prescriptions.admin.list', ...MEDICAL), rxCrud.list);
+router.get('/prescriptions/:id', guard('prescriptions.admin.list', ...MEDICAL), rxCrud.getOne);
+router.put('/prescriptions/:id', guard('prescriptions.admin.update', ...MEDICAL), rxCrud.update);
+router.delete('/prescriptions/:id', guard('prescriptions.admin.delete', ...SUPER), rxCrud.remove);
 
 // ═══════════════════════════════════════════
 //  NOTIFICATIONS – full CRUD
 // ═══════════════════════════════════════════
 const notifCrud = crud('notification', { entityLabel: 'Notification' });
-router.get('/notifications', notifCrud.list);
-router.get('/notifications/:id', notifCrud.getOne);
-router.post('/notifications', notifCrud.create);
-router.put('/notifications/:id', notifCrud.update);
-router.delete('/notifications/:id', notifCrud.remove);
+router.get('/notifications', guard('notifications.admin.manage', ...SUPER), notifCrud.list);
+router.get('/notifications/:id', guard('notifications.admin.manage', ...SUPER), notifCrud.getOne);
+router.post('/notifications', guard('notifications.admin.send', ...SUPER), notifCrud.create);
+router.put('/notifications/:id', guard('notifications.admin.manage', ...SUPER), notifCrud.update);
+router.delete('/notifications/:id', guard('notifications.admin.manage', ...SUPER), notifCrud.remove);
 
 // ═══════════════════════════════════════════
 //  REVIEWS – full CRUD
@@ -465,34 +508,34 @@ const reviewCrud = crud('review', {
   include: { patient: { include: { user: { select: { fullName: true } } } }, doctor: { include: { user: { select: { fullName: true } } } }, appointment: { select: { id: true, appointmentDate: true } } },
   entityLabel: 'Review',
 });
-router.get('/reviews', reviewCrud.list);
-router.get('/reviews/:id', reviewCrud.getOne);
-router.put('/reviews/:id', reviewCrud.update);
-router.delete('/reviews/:id', reviewCrud.remove);
+router.get('/reviews', guard('reviews.moderate', ...MEDICAL), reviewCrud.list);
+router.get('/reviews/:id', guard('reviews.moderate', ...MEDICAL), reviewCrud.getOne);
+router.put('/reviews/:id', guard('reviews.moderate', ...MEDICAL), reviewCrud.update);
+router.delete('/reviews/:id', guard('reviews.moderate', ...MEDICAL), reviewCrud.remove);
 
 // ═══════════════════════════════════════════
 //  SETTINGS – full CRUD
 // ═══════════════════════════════════════════
-router.get('/settings', asyncHandler(async (req, res) => {
+router.get('/settings', guard('settings.manage', ...SUPER), asyncHandler(async (req, res) => {
   const data = await prisma.systemSetting.findMany({ orderBy: { key: 'asc' } });
   return successResponse(res, { data });
 }));
-router.get('/settings/:id', asyncHandler(async (req, res) => {
+router.get('/settings/:id', guard('settings.manage', ...SUPER), asyncHandler(async (req, res) => {
   const data = await prisma.systemSetting.findUnique({ where: { id: parseInt(req.params.id) } });
   if (!data) throw new NotFoundError('Setting not found');
   return successResponse(res, { data });
 }));
-router.post('/settings', asyncHandler(async (req, res) => {
+router.post('/settings', guard('settings.manage', ...SUPER), asyncHandler(async (req, res) => {
   const data = await prisma.systemSetting.create({ data: req.body });
   createAuditLog({ actorId: req.user.id, entityType: 'SystemSetting', entityId: data.id, action: 'CREATE', newValues: req.body, req });
   return createdResponse(res, { data });
 }));
-router.put('/settings/:id', asyncHandler(async (req, res) => {
+router.put('/settings/:id', guard('settings.manage', ...SUPER), asyncHandler(async (req, res) => {
   const data = await prisma.systemSetting.update({ where: { id: parseInt(req.params.id) }, data: req.body });
   createAuditLog({ actorId: req.user.id, entityType: 'SystemSetting', entityId: data.id, action: 'UPDATE', newValues: req.body, req });
   return successResponse(res, { data });
 }));
-router.delete('/settings/:id', asyncHandler(async (req, res) => {
+router.delete('/settings/:id', guard('settings.manage', ...SUPER), asyncHandler(async (req, res) => {
   await prisma.systemSetting.delete({ where: { id: parseInt(req.params.id) } });
   createAuditLog({ actorId: req.user.id, entityType: 'SystemSetting', entityId: parseInt(req.params.id), action: 'DELETE', req });
   return successResponse(res, { data: null, message: 'Setting deleted' });
@@ -501,7 +544,7 @@ router.delete('/settings/:id', asyncHandler(async (req, res) => {
 // ═══════════════════════════════════════════
 //  AUDIT LOGS – read only
 // ═══════════════════════════════════════════
-router.get('/audit-logs', asyncHandler(async (req, res) => {
+router.get('/audit-logs', guard('audit.view', ...SUPER), asyncHandler(async (req, res) => {
   const { page, limit, skip } = buildPagination(req.query);
   const where = {};
   if (req.query.entityType) where.entityType = req.query.entityType;
@@ -515,7 +558,7 @@ router.get('/audit-logs', asyncHandler(async (req, res) => {
   return paginatedResponse(res, { data, total, page, limit });
 }));
 
-router.get('/audit-logs/:id', asyncHandler(async (req, res) => {
+router.get('/audit-logs/:id', guard('audit.view', ...SUPER), asyncHandler(async (req, res) => {
   const data = await prisma.auditLog.findUnique({ 
     where: { id: parseInt(req.params.id) }, 
     include: { actor: { select: { id: true, fullName: true, email: true, role: true } } } 
@@ -528,40 +571,40 @@ router.get('/audit-logs/:id', asyncHandler(async (req, res) => {
 //  CHRONIC DISEASES – full CRUD
 // ═══════════════════════════════════════════
 const chronicDiseaseCrud = crud('chronicDisease', { searchFields: ['nameAr', 'nameEn'], entityLabel: 'ChronicDisease' });
-router.get('/chronic-diseases', chronicDiseaseCrud.list);
-router.get('/chronic-diseases/:id', chronicDiseaseCrud.getOne);
-router.post('/chronic-diseases', chronicDiseaseCrud.create);
-router.put('/chronic-diseases/:id', chronicDiseaseCrud.update);
-router.delete('/chronic-diseases/:id', chronicDiseaseCrud.remove);
+router.get('/chronic-diseases', guard('medical-master.list', ...MEDICAL), chronicDiseaseCrud.list);
+router.get('/chronic-diseases/:id', guard('medical-master.list', ...MEDICAL), chronicDiseaseCrud.getOne);
+router.post('/chronic-diseases', guard('medical-master.create', ...MEDICAL), chronicDiseaseCrud.create);
+router.put('/chronic-diseases/:id', guard('medical-master.update', ...MEDICAL), chronicDiseaseCrud.update);
+router.delete('/chronic-diseases/:id', guard('medical-master.delete', ...SUPER), chronicDiseaseCrud.remove);
 
 // ═══════════════════════════════════════════
 //  ALLERGIES – full CRUD
 // ═══════════════════════════════════════════
 const allergyCrud = crud('allergy', { searchFields: ['nameAr', 'nameEn'], entityLabel: 'Allergy' });
-router.get('/allergies', allergyCrud.list);
-router.get('/allergies/:id', allergyCrud.getOne);
-router.post('/allergies', allergyCrud.create);
-router.put('/allergies/:id', allergyCrud.update);
-router.delete('/allergies/:id', allergyCrud.remove);
+router.get('/allergies', guard('medical-master.list', ...MEDICAL), allergyCrud.list);
+router.get('/allergies/:id', guard('medical-master.list', ...MEDICAL), allergyCrud.getOne);
+router.post('/allergies', guard('medical-master.create', ...MEDICAL), allergyCrud.create);
+router.put('/allergies/:id', guard('medical-master.update', ...MEDICAL), allergyCrud.update);
+router.delete('/allergies/:id', guard('medical-master.delete', ...SUPER), allergyCrud.remove);
 
 // ═══════════════════════════════════════════
 //  MEDICATIONS – full CRUD
 // ═══════════════════════════════════════════
 const medCrud = crud('medication', { searchFields: ['nameAr', 'nameEn'], entityLabel: 'Medication' });
-router.get('/medications', medCrud.list);
-router.get('/medications/:id', medCrud.getOne);
-router.post('/medications', medCrud.create);
-router.put('/medications/:id', medCrud.update);
-router.delete('/medications/:id', medCrud.remove);
+router.get('/medications', guard('medical-master.list', ...MEDICAL), medCrud.list);
+router.get('/medications/:id', guard('medical-master.list', ...MEDICAL), medCrud.getOne);
+router.post('/medications', guard('medical-master.create', ...MEDICAL), medCrud.create);
+router.put('/medications/:id', guard('medical-master.update', ...MEDICAL), medCrud.update);
+router.delete('/medications/:id', guard('medical-master.delete', ...SUPER), medCrud.remove);
 
 // ═══════════════════════════════════════════
 //  MEDICAL TESTS – full CRUD
 // ═══════════════════════════════════════════
 const testCrud = crud('medicalTest', { searchFields: ['nameAr', 'nameEn', 'categoryAr', 'categoryEn'], entityLabel: 'MedicalTest' });
-router.get('/medical-tests', testCrud.list);
-router.get('/medical-tests/:id', testCrud.getOne);
-router.post('/medical-tests', testCrud.create);
-router.put('/medical-tests/:id', testCrud.update);
-router.delete('/medical-tests/:id', testCrud.remove);
+router.get('/medical-tests', guard('medical-master.list', ...MEDICAL), testCrud.list);
+router.get('/medical-tests/:id', guard('medical-master.list', ...MEDICAL), testCrud.getOne);
+router.post('/medical-tests', guard('medical-master.create', ...MEDICAL), testCrud.create);
+router.put('/medical-tests/:id', guard('medical-master.update', ...MEDICAL), testCrud.update);
+router.delete('/medical-tests/:id', guard('medical-master.delete', ...SUPER), testCrud.remove);
 
 module.exports = router;

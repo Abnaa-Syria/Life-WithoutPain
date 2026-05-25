@@ -25,7 +25,7 @@
  *   post:
  *     tags: [Patient App - Home Services]
  *     summary: Request a home service visit
- *     description: Date-only booking with visit address. Use POST /patient/appointments for clinic or remote visits.
+ *     description: Date-only booking with visit address. Use POST /patient/appointments for clinic or remote visits. paymentMode INSURANCE creates a pre-authorization case and sets insuranceStatus to PENDING_VERIFICATION; track via GET /patient/insurance-requests.
  *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true

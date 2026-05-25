@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
@@ -27,6 +28,7 @@ export default function DashboardPage() {
   if (isLoading) return <LoadingSkeleton type="stats" />;
 
   const stats = data || {};
+  const isInsuranceStaff = user?.role === 'INSURANCE_STAFF';
 
   // Mock data for charts if API doesn't provide it
   const revenueData = [
@@ -58,6 +60,34 @@ export default function DashboardPage() {
         </h1>
         <p className="text-[var(--text-muted)] mt-1">{t('dashboard.overview')}</p>
       </div>
+
+      {isInsuranceStaff && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            label={t('dashboard.stats.open_insurance_cases')}
+            value={stats.openInsuranceCases || 0}
+            icon={Shield}
+            color="indigo"
+          />
+          <StatCard
+            label={t('dashboard.stats.pending_insurance_policies')}
+            value={stats.pendingInsurancePolicies || 0}
+            icon={UserCheck}
+            color="yellow"
+          />
+          <StatCard
+            label={t('dashboard.stats.approved_today')}
+            value={stats.insuranceApprovedToday || 0}
+            icon={Shield}
+            color="green"
+          />
+          <Card className="flex items-center justify-center p-6">
+            <Link to="/insurance-cases?status=UNDER_REVIEW" className="btn btn-primary w-full text-center">
+              {t('insurance.review_pending')}
+            </Link>
+          </Card>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">

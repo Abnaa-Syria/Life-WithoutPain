@@ -12,11 +12,19 @@ import Tabs from '../components/ui/Tabs';
 import FilePreviewer from '../components/ui/FilePreviewer';
 import MedicalProfileCatalogTab from '../components/medical/MedicalProfileCatalogTab';
 import MedicalProfileAttachments from '../components/medical/MedicalProfileAttachments';
+import PatientInsuranceTab from '../components/patients/PatientInsuranceTab';
+import { useAuth } from '../hooks/useAuth';
+import { canAccess, ROUTE_PERMISSIONS as P } from '../auth/permissions';
 
 export default function PatientDetailsPage() {
   const { t } = useTranslation();
   const { id } = useParams();
+  const { permissions, role } = useAuth();
   const [activeTab, setActiveTab] = React.useState('summary');
+  const showInsuranceTab = canAccess(
+    { permissions, role },
+    { permission: P.patientsInsurance, anyOf: [P.patients] },
+  );
 
   const { data: response, isLoading } = useQuery({
     queryKey: ['patient', id],
@@ -32,6 +40,7 @@ export default function PatientDetailsPage() {
 
   const tabs = [
     { id: 'summary', label: t('common.summary') || 'Summary', icon: Activity },
+    ...(showInsuranceTab ? [{ id: 'insurance', label: t('patients.tab_insurance') || 'Insurance', icon: Shield }] : []),
     { id: 'diseases', label: t('patients.tab_diseases') || 'Diseases', icon: HeartPulse },
     { id: 'medications', label: t('patients.tab_medications') || 'Medications', icon: Pill },
     { id: 'allergies', label: t('patients.tab_allergies') || 'Allergies', icon: AlertTriangle },
@@ -70,16 +79,6 @@ export default function PatientDetailsPage() {
           </div>
         </DetailsSection>
       </div>
-
-      <DetailsSection title={t('patients.insurance_info') || 'Insurance Information'} icon={Shield}>
-        {patient.insurances?.length > 0 ? patient.insurances.map((ins, idx) => (
-          <React.Fragment key={idx}>
-            <DetailItem label={t('insurance.provider')} value={ins.provider?.nameAr} />
-            <DetailItem label={t('insurance.policy_number') || 'Policy Number'} value={ins.policyNumber} />
-            <DetailItem label={t('insurance.expiry_date') || 'Expiry Date'} value={new Date(ins.expiryDate).toLocaleDateString()} />
-          </React.Fragment>
-        )) : <div className="col-span-full text-center text-[var(--text-muted)] py-4">{t('common.no_data')}</div>}
-      </DetailsSection>
 
       <DetailsSection title={t('patients.family_members') || 'Family Members'} icon={Users}>
         {patient.familyMembers?.length > 0 ? patient.familyMembers.map((member, idx) => (
@@ -178,6 +177,7 @@ export default function PatientDetailsPage() {
 
       <div className="pb-8">
         {activeTab === 'summary' && renderSummary()}
+        {activeTab === 'insurance' && showInsuranceTab && <PatientInsuranceTab patientId={patient.id} />}
         {activeTab === 'diseases' && (
           <MedicalProfileCatalogTab
             patientId={patient.id}

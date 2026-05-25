@@ -1,33 +1,53 @@
-const statusConfig = {
-  ACTIVE: { label: 'نشط', className: 'badge-success' },
-  INACTIVE: { label: 'غير نشط', className: 'badge-warning' },
-  SUSPENDED: { label: 'موقوف', className: 'badge-danger' },
-  BANNED: { label: 'محظور', className: 'badge-danger' },
-  PENDING: { label: 'قيد الانتظار', className: 'badge-warning' },
-  UNDER_REVIEW: { label: 'قيد المراجعة', className: 'badge-info' },
-  APPROVED: { label: 'مقبول', className: 'badge-success' },
-  REJECTED: { label: 'مرفوض', className: 'badge-danger' },
-  OPEN: { label: 'مفتوح', className: 'badge-info' },
-  IN_PROGRESS: { label: 'جاري', className: 'badge-warning' },
-  COMPLETED: { label: 'مكتمل', className: 'badge-success' },
-  CANCELLED: { label: 'ملغي', className: 'badge-danger' },
-  CONFIRMED: { label: 'مؤكد', className: 'badge-success' },
-  RESCHEDULED: { label: 'معاد جدولته', className: 'badge-warning' },
-  NO_SHOW: { label: 'لم يحضر', className: 'badge-danger' },
-  PAID: { label: 'مدفوع', className: 'badge-success' },
-  FAILED: { label: 'فشل', className: 'badge-danger' },
-  REFUNDED: { label: 'مسترد', className: 'badge-info' },
-  ESCALATED: { label: 'متصاعد', className: 'badge-danger' },
-  MORE_INFO_REQUESTED: { label: 'معلومات إضافية مطلوبة', className: 'badge-warning' },
-  CLOSED: { label: 'مغلق', className: 'badge-secondary' },
-  RESOLVED: { label: 'محلول', className: 'badge-success' },
-  DRAFT: { label: 'مسودة', className: 'badge-secondary' },
-  SUBMITTED: { label: 'مقدم', className: 'badge-info' },
-  PROCESSING: { label: 'قيد المعالجة', className: 'badge-warning' },
-  SCHEDULED: { label: 'مجدول', className: 'badge-info' },
+import { useTranslation } from 'react-i18next';
+
+const STATUS_CLASS = {
+  ACTIVE: 'badge-success',
+  INACTIVE: 'badge-warning',
+  SUSPENDED: 'badge-danger',
+  BANNED: 'badge-danger',
+  PENDING: 'badge-warning',
+  UNDER_REVIEW: 'badge-info',
+  APPROVED: 'badge-success',
+  REJECTED: 'badge-danger',
+  OPEN: 'badge-info',
+  IN_PROGRESS: 'badge-warning',
+  COMPLETED: 'badge-success',
+  CANCELLED: 'badge-danger',
+  CONFIRMED: 'badge-success',
+  RESCHEDULED: 'badge-warning',
+  NO_SHOW: 'badge-danger',
+  PAID: 'badge-success',
+  FAILED: 'badge-danger',
+  REFUNDED: 'badge-info',
+  ESCALATED: 'badge-danger',
+  MORE_INFO_REQUESTED: 'badge-warning',
+  CLOSED: 'badge-secondary',
+  RESOLVED: 'badge-success',
+  DRAFT: 'badge-secondary',
+  SUBMITTED: 'badge-info',
+  PROCESSING: 'badge-warning',
+  SCHEDULED: 'badge-info',
+  SAMPLE_COLLECTED: 'badge-info',
+  MATCHED: 'badge-success',
+  DISCREPANCY: 'badge-danger',
 };
 
+/** Maps API status codes to i18n keys (status.* or common.*). */
+function statusTranslationKey(status) {
+  if (!status) return null;
+  const normalized = status.toLowerCase();
+  const userAccountStatuses = ['active', 'inactive', 'suspended', 'banned'];
+  if (userAccountStatuses.includes(normalized)) {
+    return `common.${normalized}`;
+  }
+  return `status.${normalized}`;
+}
+
 export default function StatusBadge({ status }) {
-  const config = statusConfig[status] || { label: status, className: 'badge-info' };
-  return <span className={config.className}>{config.label}</span>;
+  const { t } = useTranslation();
+  const key = statusTranslationKey(status);
+  const label = key ? t(key, { defaultValue: status }) : status;
+  const className = STATUS_CLASS[status] || 'badge-info';
+
+  return <span className={className}>{label}</span>;
 }

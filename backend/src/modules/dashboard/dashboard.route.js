@@ -1,21 +1,25 @@
 const router = require('express').Router();
-const { authenticate, authorize } = require('../../middlewares/auth');
+const { authenticate } = require('../../middlewares/auth');
+const { guard, ADMIN_ROLES } = require('../admin/admin.permissions');
 const { asyncHandler } = require('../../utils/helpers');
 const { successResponse } = require('../../shared/responses');
 const prisma = require('../../config/database');
-const { ROLES, ADMIN_ROLES } = require('../../constants');
 
 router.use(authenticate);
 
-router.get('/', authorize(...ADMIN_ROLES), asyncHandler(async (req, res) => {
+router.get('/', guard('dashboard.view', ...ADMIN_ROLES), asyncHandler(async (req, res) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
   const [
     totalPatients, totalDoctors, totalAppointments,
     todayAppointments, pendingVerifications, openInsuranceCases,
+    insuranceApprovedToday, pendingInsurancePolicies,
     openSupportCases, monthlyRevenue, completedAppointments,
     pendingPayouts,
   ] = await Promise.all([
@@ -25,6 +29,10 @@ router.get('/', authorize(...ADMIN_ROLES), asyncHandler(async (req, res) => {
     prisma.appointment.count({ where: { appointmentDate: { gte: today } } }),
     prisma.doctorProfile.count({ where: { verificationStatus: 'PENDING' } }),
     prisma.insuranceCase.count({ where: { status: { in: ['OPEN', 'UNDER_REVIEW', 'ESCALATED'] } } }),
+    prisma.insuranceCase.count({
+      where: { status: 'APPROVED', resolvedAt: { gte: today, lt: tomorrow } },
+    }),
+    prisma.patientInsurance.count({ where: { verificationStatus: 'PENDING' } }),
     prisma.supportCase.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
     prisma.payment.aggregate({ where: { status: 'PAID', paidAt: { gte: thisMonth } }, _sum: { amount: true } }),
     prisma.appointment.count({ where: { status: 'COMPLETED', completedAt: { gte: thisMonth } } }),
@@ -39,6 +47,8 @@ router.get('/', authorize(...ADMIN_ROLES), asyncHandler(async (req, res) => {
       todayAppointments,
       pendingVerifications,
       openInsuranceCases,
+      insuranceApprovedToday,
+      pendingInsurancePolicies,
       openSupportCases,
       monthlyRevenue: monthlyRevenue._sum.amount || 0,
       completedThisMonth: completedAppointments,

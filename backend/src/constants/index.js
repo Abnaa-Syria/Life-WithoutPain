@@ -18,6 +18,9 @@ const ADMIN_ROLES = [
 
 const STAFF_ROLES = [...ADMIN_ROLES];
 
+/** Values allowed on User.role (Prisma UserRole enum) */
+const USER_ROLE_ENUM = Object.values(ROLES);
+
 const APPOINTMENT_STATUS_TRANSITIONS = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
   CONFIRMED: ['IN_PROGRESS', 'CANCELLED', 'RESCHEDULED', 'NO_SHOW'],
@@ -44,6 +47,7 @@ module.exports = {
   ROLES,
   ADMIN_ROLES,
   STAFF_ROLES,
+  USER_ROLE_ENUM,
   APPOINTMENT_STATUS_TRANSITIONS,
   PAGINATION,
   FILE_TYPES,

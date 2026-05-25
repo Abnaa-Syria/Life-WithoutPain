@@ -1,4 +1,5 @@
 const SupportTicketService = require('../modules/support/supportTicket.service');
+const { hasPermission } = require('../modules/rbac/permission.service');
 const { ticketRoom } = require('./support.emit');
 const logger = require('../config/logger');
 
@@ -15,7 +16,12 @@ function registerSupportSocketHandlers(io) {
         }
 
         const ticket = await SupportTicketService.getTicketRaw(ticketId);
-        await SupportTicketService.assertTicketAccess(ticket, user.id, user.role);
+        const staffViaPermission =
+          hasPermission(user.permissions, 'support.tickets.read') ||
+          hasPermission(user.permissions, 'support.cases.read');
+        if (!staffViaPermission) {
+          await SupportTicketService.assertTicketAccess(ticket, user.id, user.role);
+        }
 
         await socket.join(ticketRoom(ticketId));
         if (typeof callback === 'function') {

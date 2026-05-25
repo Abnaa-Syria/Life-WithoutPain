@@ -8,6 +8,9 @@ const HOME_SERVICE_INCLUDE = {
   assignedDoctor: {
     include: { user: { select: { fullName: true, avatarUrl: true } } },
   },
+  insuranceCase: {
+    include: { approvals: { orderBy: { createdAt: 'desc' }, take: 1 } },
+  },
 };
 
 class HomeServiceService {
@@ -35,25 +38,50 @@ class HomeServiceService {
 
   static async createForPatient(userId, data) {
     const { patientId } = await resolvePatientProfile(userId);
-    await this.validateHomeService(data.serviceId);
+    const service = await this.validateHomeService(data.serviceId);
+    const requiresInsuranceApproval = data.paymentMode === 'INSURANCE';
+
+    if (requiresInsuranceApproval) {
+      const policyCount = await prisma.patientInsurance.count({ where: { patientId } });
+      if (!policyCount) {
+        throw new BadRequestError('Add an insurance policy before booking with medical insurance.');
+      }
+    }
 
     const preferredDate = new Date(data.preferredDate);
     if (Number.isNaN(preferredDate.getTime())) {
       throw new BadRequestError('Invalid preferredDate');
     }
 
-    return prisma.homeServiceRequest.create({
+    const homeRequest = await prisma.homeServiceRequest.create({
       data: {
         patientId,
         serviceId: data.serviceId,
         visitAddress: data.visitAddress,
         notes: data.notes || null,
         preferredDate,
-        requiresInsuranceApproval: data.paymentMode === 'INSURANCE',
+        requiresInsuranceApproval,
         createdBy: userId,
       },
       include: HOME_SERVICE_INCLUDE,
     });
+
+    if (requiresInsuranceApproval) {
+      const InsuranceRequestOrchestrator = require('../insurance-cases/insuranceRequest.orchestrator');
+      await InsuranceRequestOrchestrator.createForHomeService(
+        { ...homeRequest, service },
+        { patientInsuranceId: data.patientInsuranceId },
+      );
+      return prisma.homeServiceRequest.findUnique({
+        where: { id: homeRequest.id },
+        include: {
+          ...HOME_SERVICE_INCLUDE,
+          insuranceCase: { include: { approvals: { orderBy: { createdAt: 'desc' }, take: 1 } } },
+        },
+      });
+    }
+
+    return homeRequest;
   }
 
   static async listForPatient(userId, query) {

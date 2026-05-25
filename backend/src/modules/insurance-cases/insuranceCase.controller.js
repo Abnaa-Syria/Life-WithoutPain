@@ -29,8 +29,13 @@ class InsuranceCaseController {
   });
 
   static requestInfo = asyncHandler(async (req, res) => {
-    const data = await InsuranceCaseService.requestInfo(req.params.id, req.body);
+    const data = await InsuranceCaseService.requestInfo(req.params.id, req.body, req.user.id, req);
     return successResponse(res, { data, message: 'More information requested' });
+  });
+
+  static updateApproval = asyncHandler(async (req, res) => {
+    const data = await InsuranceCaseService.updateApproval(req.params.id, req.body, req.user.id, req);
+    return successResponse(res, { data, message: 'Insurance approval updated' });
   });
 
   static escalate = asyncHandler(async (req, res) => {

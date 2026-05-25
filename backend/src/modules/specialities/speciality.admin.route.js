@@ -1,16 +1,14 @@
 const router = require('express').Router();
 const SpecialityController = require('./speciality.controller');
-const { authenticate, authorize } = require('../../middlewares/auth');
-const { ADMIN_ROLES } = require('../../constants');
+const { authenticate } = require('../../middlewares/auth');
+const { guard, MEDICAL, SUPER } = require('../admin/admin.permissions');
 
 router.use(authenticate);
-router.use(authorize(...ADMIN_ROLES));
 
-// SPECIALITIES Admin Routes
-router.get('/', SpecialityController.list);
-router.get('/:id', SpecialityController.getById);
-router.post('/', SpecialityController.create);
-router.put('/:id', SpecialityController.update);
-router.delete('/:id', SpecialityController.delete);
+router.get('/', guard('specialities.list', ...MEDICAL), SpecialityController.list);
+router.get('/:id', guard('specialities.read', ...MEDICAL), SpecialityController.getById);
+router.post('/', guard('specialities.create', ...MEDICAL), SpecialityController.create);
+router.put('/:id', guard('specialities.update', ...MEDICAL), SpecialityController.update);
+router.delete('/:id', guard('specialities.delete', ...SUPER), SpecialityController.delete);
 
 module.exports = router;

@@ -48,11 +48,63 @@ function mapInsurance(insurance) {
   };
 }
 
+function mapInsuranceCase(insuranceCase, options = {}) {
+  const approval = insuranceCase.approvals?.[0];
+  const base = {
+    id: insuranceCase.id,
+    status: insuranceCase.status,
+    caseType: insuranceCase.caseType,
+    requestType: insuranceCase.requestType,
+    requestedAmount: insuranceCase.requestedAmount ?? approval?.requestedAmount,
+    approvedAmount: approval?.approvedAmount ?? null,
+    approvalStatus: approval?.approvalStatus ?? null,
+    provider: insuranceCase.provider
+      ? { id: insuranceCase.provider.id, nameAr: insuranceCase.provider.nameAr, nameEn: insuranceCase.provider.nameEn }
+      : null,
+    submittedAt: insuranceCase.submittedAt,
+    resolvedAt: insuranceCase.resolvedAt,
+    appointmentId: insuranceCase.appointmentId,
+    homeServiceRequestId: insuranceCase.homeServiceRequestId,
+    notes: insuranceCase.notes,
+  };
+  if (!options.detailed) return base;
+  return {
+    ...base,
+    patientInsurance: insuranceCase.patientInsurance ? mapInsurance(insuranceCase.patientInsurance) : null,
+    appointment: insuranceCase.appointment
+      ? {
+          id: insuranceCase.appointment.id,
+          appointmentDate: insuranceCase.appointment.appointmentDate,
+          startTime: insuranceCase.appointment.startTime,
+          amount: insuranceCase.appointment.amount,
+          insuranceStatus: insuranceCase.appointment.insuranceStatus,
+        }
+      : null,
+    homeServiceRequest: insuranceCase.homeServiceRequest
+      ? mapHomeServiceRequestListItem(insuranceCase.homeServiceRequest)
+      : null,
+    approvals: (insuranceCase.approvals || []).map((a) => ({
+      id: a.id,
+      requestedProcedure: a.requestedProcedure,
+      approvalStatus: a.approvalStatus,
+      requestedAmount: a.requestedAmount,
+      approvedAmount: a.approvedAmount,
+      decisionNotes: a.decisionNotes,
+      decidedAt: a.decidedAt,
+    })),
+  };
+}
+
 function mapAppointmentListItem(appointment) {
   const doctor = appointment.doctor;
   const speciality = doctor?.speciality;
+  const insuranceCase = appointment.insuranceCases?.[0];
   return {
     id: appointment.id,
+    insuranceRequestId: insuranceCase?.id ?? appointment.approvedInsuranceCaseId ?? null,
+    insuranceStatus: appointment.insuranceStatus,
+    requiresInsuranceApproval: appointment.requiresInsuranceApproval,
+    approvedAmount: insuranceCase?.approvals?.[0]?.approvedAmount ?? null,
     doctorName: doctor?.user?.fullName || null,
     specializations: speciality
       ? [{ id: speciality.id, nameAr: speciality.nameAr, nameEn: speciality.nameEn }]
@@ -183,8 +235,13 @@ function mapMedicalProfileAttachment(attachment) {
 }
 
 function mapHomeServiceRequestListItem(request) {
+  const insuranceCase = request.insuranceCase;
   return {
     id: request.id,
+    insuranceRequestId: insuranceCase?.id ?? request.approvedInsuranceCaseId ?? null,
+    insuranceStatus: request.insuranceStatus,
+    requiresInsuranceApproval: request.requiresInsuranceApproval,
+    approvedAmount: insuranceCase?.approvals?.[0]?.approvedAmount ?? null,
     service: request.service
       ? {
           id: request.service.id,
@@ -249,6 +306,7 @@ module.exports = {
   isComingAppointment,
   computeAge,
   mapInsurance,
+  mapInsuranceCase,
   mapAppointmentListItem,
   mapAppointmentDetail,
   mapHomeServiceRequestListItem,

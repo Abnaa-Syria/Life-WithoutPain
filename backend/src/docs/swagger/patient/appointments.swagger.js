@@ -25,7 +25,7 @@
  *   post:
  *     tags: [Patient App - Appointments]
  *     summary: Book clinic or remote appointment
- *     description: Requires doctor and time slot. Home visits use POST /patient/home-services instead.
+ *     description: Requires doctor and time slot. Home visits use POST /patient/home-services instead. When paymentMode is INSURANCE, a pre-authorization request is created automatically and insuranceStatus becomes PENDING_VERIFICATION until an agent approves (patient receives an in-app notification).
  *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true

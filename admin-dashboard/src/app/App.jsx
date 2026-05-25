@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from '../hooks/useAuth';
 import { ThemeProvider } from '../hooks/useTheme';
 import AppLayout from '../components/layout/AppLayout';
 import ProtectedRoute from '../routes/ProtectedRoute';
+import { ROUTE_PERMISSIONS as P } from '../auth/permissions';
 import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
 import UsersPage from '../pages/UsersPage';
@@ -29,6 +30,8 @@ import InsuranceCaseDetailsPage from '../pages/InsuranceCaseDetailsPage';
 import SupportTicketDetailsPage from '../pages/SupportTicketDetailsPage';
 import AuditLogDetailsPage from '../pages/AuditLogDetailsPage';
 import MedicalMasterDataPage from '../pages/MedicalMasterDataPage';
+import RolesPage from '../pages/RolesPage';
+import RoleDetailsPage from '../pages/RoleDetailsPage';
 import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Bell, Star, Settings, Pill, ClipboardList, Calendar, Paperclip } from 'lucide-react';
 
 const ALL_ADMIN = ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'];
@@ -49,20 +52,20 @@ function AppRoutes() {
 
       <Route element={<ProtectedRoute roles={ALL_ADMIN}><AppLayout /></ProtectedRoute>}>
         <Route index element={<DashboardPage />} />
-        <Route path="users" element={<ProtectedRoute roles={ADMIN_MED}><UsersPage /></ProtectedRoute>} />
-        <Route path="users/:id" element={<ProtectedRoute roles={ADMIN_MED}><UserDetailsPage /></ProtectedRoute>} />
+        <Route path="users" element={<ProtectedRoute permission={P.users} roles={ADMIN_MED}><UsersPage /></ProtectedRoute>} />
+        <Route path="users/:id" element={<ProtectedRoute permission={P.users} roles={ADMIN_MED}><UserDetailsPage /></ProtectedRoute>} />
         
-        <Route path="patients" element={<ProtectedRoute roles={[...ADMIN_MED, 'SUPPORT_STAFF']}><PatientsPage /></ProtectedRoute>} />
-        <Route path="patients/:id" element={<ProtectedRoute roles={[...ADMIN_MED, 'SUPPORT_STAFF']}><PatientDetailsPage /></ProtectedRoute>} />
+        <Route path="patients" element={<ProtectedRoute permission={P.patients} roles={[...ADMIN_MED, 'SUPPORT_STAFF']}><PatientsPage /></ProtectedRoute>} />
+        <Route path="patients/:id" element={<ProtectedRoute permission={P.patients} roles={[...ADMIN_MED, 'SUPPORT_STAFF']}><PatientDetailsPage /></ProtectedRoute>} />
         
-        <Route path="doctors" element={<ProtectedRoute roles={ADMIN_MED}><DoctorsPage /></ProtectedRoute>} />
-        <Route path="doctors/:id" element={<ProtectedRoute roles={ADMIN_MED}><DoctorDetailsPage /></ProtectedRoute>} />
+        <Route path="doctors" element={<ProtectedRoute permission={P.doctors} roles={ADMIN_MED}><DoctorsPage /></ProtectedRoute>} />
+        <Route path="doctors/:id" element={<ProtectedRoute permission={P.doctors} roles={ADMIN_MED}><DoctorDetailsPage /></ProtectedRoute>} />
         
-        <Route path="doctor-verification" element={<ProtectedRoute roles={ADMIN_MED}><DoctorsPage /></ProtectedRoute>} />
+        <Route path="doctor-verification" element={<ProtectedRoute permission={P.doctors} roles={ADMIN_MED}><DoctorsPage /></ProtectedRoute>} />
         
-        <Route path="specialities" element={<ProtectedRoute roles={ADMIN_MED}><SpecialitiesPage /></ProtectedRoute>} />
+        <Route path="specialities" element={<ProtectedRoute permission={P.specialities} roles={ADMIN_MED}><SpecialitiesPage /></ProtectedRoute>} />
         <Route path="specialities/:id" element={
-          <ProtectedRoute roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.specialities} roles={ADMIN_MED}>
              <GenericDetailsPage 
                entityName={t('sidebar.specialities')} endpoint="/admin/specialities" titleField="nameAr"
                sections={[
@@ -79,7 +82,7 @@ function AppRoutes() {
 
         {/* Services – full CRUD */}
         <Route path="services" element={
-          <ProtectedRoute roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
             <CrudPage
               title={t('sidebar.services')} subtitle={t('services.manage') || 'Manage platform services'} endpoint="/admin/services" queryKey="admin-services"
               detailPath="/services"
@@ -103,7 +106,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="services/:id" element={
-          <ProtectedRoute roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
              <GenericDetailsPage 
                entityName={t('sidebar.services')} endpoint="/admin/services" titleField="nameAr"
                sections={[
@@ -120,19 +123,19 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
-        <Route path="medical-master-data" element={<ProtectedRoute roles={ADMIN_MED}><Navigate to="/medical-master-data/diseases" replace /></ProtectedRoute>} />
-        <Route path="medical-master-data/:section" element={<ProtectedRoute roles={ADMIN_MED}><MedicalMasterDataPage /></ProtectedRoute>} />
+        <Route path="medical-master-data" element={<ProtectedRoute permission={P.medicalMaster} roles={ADMIN_MED}><Navigate to="/medical-master-data/diseases" replace /></ProtectedRoute>} />
+        <Route path="medical-master-data/:section" element={<ProtectedRoute permission={P.medicalMaster} roles={ADMIN_MED}><MedicalMasterDataPage /></ProtectedRoute>} />
         <Route path="chronic-diseases" element={<Navigate to="/medical-master-data/diseases" replace />} />
         <Route path="medications" element={<Navigate to="/medical-master-data/medications" replace />} />
         <Route path="allergies" element={<Navigate to="/medical-master-data/allergies" replace />} />
         <Route path="medical-tests" element={<Navigate to="/medical-master-data/lab-test-types" replace />} />
 
-        <Route path="appointments" element={<ProtectedRoute roles={ADMIN_MED}><AppointmentsPage /></ProtectedRoute>} />
-        <Route path="appointments/:id" element={<ProtectedRoute roles={ADMIN_MED}><AppointmentDetailsPage /></ProtectedRoute>} />
+        <Route path="appointments" element={<ProtectedRoute permission={P.appointments} roles={ADMIN_MED}><AppointmentsPage /></ProtectedRoute>} />
+        <Route path="appointments/:id" element={<ProtectedRoute permission={P.appointments} roles={ADMIN_MED}><AppointmentDetailsPage /></ProtectedRoute>} />
 
         {/* Insurance Providers – full CRUD */}
         <Route path="insurance-providers" element={
-          <ProtectedRoute roles={ADMIN_INS}>
+          <ProtectedRoute permission={P.insurance} roles={ADMIN_INS}>
             <CrudPage
               title="شركات التأمين" subtitle="إدارة شركات التأمين" endpoint="/admin/insurance-providers" queryKey="admin-insurance-providers"
               detailPath="/insurance-providers"
@@ -155,20 +158,20 @@ function AppRoutes() {
             />
           </ProtectedRoute>
         } />
-        <Route path="insurance-providers/:id" element={<ProtectedRoute roles={ADMIN_INS}><GenericDetailsPage title="تفاصيل شركة التأمين" endpoint="/admin/insurance-providers" fields={[{ label: "وضع التكامل", key: "apiMode" }, { label: "الحالة", key: "isActive", render: (v) => v ? "نشط" : "غير نشط" }]} /></ProtectedRoute>} />
+        <Route path="insurance-providers/:id" element={<ProtectedRoute permission={P.insurance} roles={ADMIN_INS}><GenericDetailsPage title="تفاصيل شركة التأمين" endpoint="/admin/insurance-providers" fields={[{ label: "وضع التكامل", key: "apiMode" }, { label: "الحالة", key: "isActive", render: (v) => v ? "نشط" : "غير نشط" }]} /></ProtectedRoute>} />
 
-        <Route path="insurance-cases" element={<ProtectedRoute roles={ADMIN_INS}><InsuranceCasesPage /></ProtectedRoute>} />
-        <Route path="insurance-cases/:id" element={<ProtectedRoute roles={ADMIN_INS}><InsuranceCaseDetailsPage /></ProtectedRoute>} />
+        <Route path="insurance-cases" element={<ProtectedRoute permission={P.insurance} roles={ADMIN_INS}><InsuranceCasesPage /></ProtectedRoute>} />
+        <Route path="insurance-cases/:id" element={<ProtectedRoute permission={P.insurance} roles={ADMIN_INS}><InsuranceCaseDetailsPage /></ProtectedRoute>} />
         
-        <Route path="support/tickets/:id" element={<ProtectedRoute roles={ADMIN_SUP}><SupportTicketDetailsPage /></ProtectedRoute>} />
-        <Route path="support/:section" element={<ProtectedRoute roles={ADMIN_SUP}><SupportPage /></ProtectedRoute>} />
+        <Route path="support/tickets/:id" element={<ProtectedRoute permission={P.support} roles={ADMIN_SUP}><SupportTicketDetailsPage /></ProtectedRoute>} />
+        <Route path="support/:section" element={<ProtectedRoute permission={P.support} roles={ADMIN_SUP}><SupportPage /></ProtectedRoute>} />
         <Route path="support" element={<Navigate to="/support/tickets" replace />} />
         <Route path="support-cases" element={<Navigate to="/support/tickets" replace />} />
-        <Route path="support-cases/:id" element={<ProtectedRoute roles={ADMIN_SUP}><SupportTicketDetailsPage /></ProtectedRoute>} />
+        <Route path="support-cases/:id" element={<ProtectedRoute permission={P.support} roles={ADMIN_SUP}><SupportTicketDetailsPage /></ProtectedRoute>} />
 
         {/* Lab Tests – view/edit/delete */}
         <Route path="lab-tests" element={
-          <ProtectedRoute roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
             <CrudPage
               title={t('sidebar.medical_tests')} subtitle={t('medical.manage_tests') || "متابعة طلبات الفحوصات"} endpoint="/admin/lab-tests" queryKey="admin-lab-tests"
               canCreate={false} detailPath="/lab-tests"
@@ -189,7 +192,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="lab-tests/:id" element={
-          <ProtectedRoute roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
             <GenericDetailsPage 
               entityName={t('sidebar.medical_tests')} endpoint="/admin/lab-tests" titleField="title"
               sections={[
@@ -205,9 +208,9 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
-        <Route path="payments" element={<ProtectedRoute roles={ADMIN_ACC}><PaymentsPage /></ProtectedRoute>} />
+        <Route path="payments" element={<ProtectedRoute permission={P.payments} roles={ADMIN_ACC}><PaymentsPage /></ProtectedRoute>} />
         <Route path="payments/:id" element={
-          <ProtectedRoute roles={ADMIN_ACC}>
+          <ProtectedRoute permission={P.claims} roles={ADMIN_ACC}>
             <GenericDetailsPage 
               entityName="المدفوعات" endpoint="/admin/payments" titleField="transactionId"
               sections={[
@@ -223,9 +226,9 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         
-        <Route path="claims" element={<ProtectedRoute roles={ADMIN_ACC}><ClaimsPage /></ProtectedRoute>} />
+        <Route path="claims" element={<ProtectedRoute permission={P.claims} roles={ADMIN_ACC}><ClaimsPage /></ProtectedRoute>} />
         <Route path="claims/:id" element={
-          <ProtectedRoute roles={ADMIN_ACC}>
+          <ProtectedRoute permission={P.claims} roles={ADMIN_ACC}>
             <GenericDetailsPage 
               entityName="المطالبات" endpoint="/admin/claims" titleField="id"
               sections={[
@@ -243,7 +246,7 @@ function AppRoutes() {
 
         {/* Doctor Payouts – full CRUD */}
         <Route path="doctor-payouts" element={
-          <ProtectedRoute roles={ADMIN_ACC}>
+          <ProtectedRoute permission={P.claims} roles={ADMIN_ACC}>
             <CrudPage
               title={t('payouts.title') || "مستحقات الأطباء"} subtitle={t('payouts.subtitle') || "إدارة عمولات ومستحقات الأطباء"} endpoint="/admin/doctor-payouts" queryKey="admin-doctor-payouts"
               detailPath="/doctor-payouts"
@@ -267,7 +270,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="doctor-payouts/:id" element={
-          <ProtectedRoute roles={ADMIN_ACC}>
+          <ProtectedRoute permission={P.claims} roles={ADMIN_ACC}>
             <GenericDetailsPage 
               entityName="مستحقات الأطباء" endpoint="/admin/doctor-payouts" titleField="id"
               sections={[
@@ -285,7 +288,7 @@ function AppRoutes() {
 
         {/* Reconciliations – full CRUD */}
         <Route path="reconciliations" element={
-          <ProtectedRoute roles={ADMIN_ACC}>
+          <ProtectedRoute permission={P.reconciliations} roles={ADMIN_ACC}>
              <CrudPage
                title={t('sidebar.reconciliations') || "التسويات"} subtitle={t('reconciliations.manage') || "إدارة تسويات المطالبات"} endpoint="/admin/reconciliations" queryKey="admin-reconciliations"
                detailPath="/reconciliations"
@@ -309,7 +312,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="reconciliations/:id" element={
-          <ProtectedRoute roles={ADMIN_ACC}>
+          <ProtectedRoute permission={P.reconciliations} roles={ADMIN_ACC}>
              <GenericDetailsPage 
                entityName={t('sidebar.reconciliations') || "التسويات"} endpoint="/admin/reconciliations" titleField="referenceNumber"
               sections={[
@@ -328,7 +331,7 @@ function AppRoutes() {
 
         {/* Reports – view/edit/delete */}
         <Route path="reports" element={
-          <ProtectedRoute roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
             <CrudPage
               title={t('medical.reports')} subtitle={t('medical.all_reports') || "جميع التقارير الطبية"} endpoint="/admin/reports" queryKey="admin-reports"
               canCreate={false} detailPath="/reports"
@@ -351,7 +354,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="reports/:id" element={
-          <ProtectedRoute roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
             <GenericDetailsPage 
               entityName={t('medical.reports')} endpoint="/admin/reports" titleField="id"
               sections={[
@@ -416,7 +419,7 @@ function AppRoutes() {
 
         {/* Prescriptions – view/edit/delete */}
         <Route path="prescriptions" element={
-          <ProtectedRoute roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
             <CrudPage
               title={t('medical.prescriptions')} subtitle={t('medical.all_prescriptions') || "جميع الوصفات الطبية"} endpoint="/admin/prescriptions" queryKey="admin-prescriptions"
               canCreate={false} detailPath="/prescriptions"
@@ -437,7 +440,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="prescriptions/:id" element={
-          <ProtectedRoute roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
             <GenericDetailsPage 
               entityName={t('medical.prescriptions')} endpoint="/admin/prescriptions" titleField="id"
               sections={[
@@ -454,7 +457,7 @@ function AppRoutes() {
 
         {/* Notifications – full CRUD */}
         <Route path="notifications" element={
-          <ProtectedRoute roles={['SUPER_ADMIN']}>
+          <ProtectedRoute permission={P.notifications} roles={['SUPER_ADMIN']}>
             <CrudPage
               title={t('sidebar.notifications') || "الإشعارات"} subtitle={t('notifications.manage') || "إدارة إشعارات النظام"} endpoint="/admin/notifications" queryKey="admin-notifications"
               detailPath="/notifications"
@@ -479,7 +482,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="notifications/:id" element={
-          <ProtectedRoute roles={['SUPER_ADMIN']}>
+          <ProtectedRoute permission={P.notifications} roles={['SUPER_ADMIN']}>
             <GenericDetailsPage 
               entityName={t('sidebar.notifications') || "الإشعارات"} endpoint="/admin/notifications" titleField="titleAr"
               sections={[
@@ -498,7 +501,7 @@ function AppRoutes() {
 
         {/* Reviews – view/edit/delete */}
         <Route path="reviews" element={
-          <ProtectedRoute roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
             <CrudPage
               title={t('sidebar.reviews') || "التقييمات"} subtitle={t('reviews.subtitle') || "تقييمات المرضى للأطباء"} endpoint="/admin/reviews" queryKey="admin-reviews"
               canCreate={false} detailPath="/reviews"
@@ -520,7 +523,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="reviews/:id" element={
-          <ProtectedRoute roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
             <GenericDetailsPage 
               entityName={t('sidebar.reviews') || "التقييمات"} endpoint="/admin/reviews" titleField="id"
               sections={[
@@ -538,7 +541,7 @@ function AppRoutes() {
 
         {/* Settings – full CRUD */}
         <Route path="settings" element={
-          <ProtectedRoute roles={['SUPER_ADMIN']}>
+          <ProtectedRoute permission={P.settings} roles={['SUPER_ADMIN']}>
             <CrudPage
               title={t('sidebar.settings')} subtitle={t('settings.manage') || "إعدادات النظام"} endpoint="/admin/settings" queryKey="admin-settings"
               detailPath="/settings"
@@ -560,7 +563,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="settings/:id" element={
-          <ProtectedRoute roles={['SUPER_ADMIN']}>
+          <ProtectedRoute permission={P.settings} roles={['SUPER_ADMIN']}>
             <GenericDetailsPage 
               entityName={t('sidebar.settings')} endpoint="/admin/settings" titleField="key"
               sections={[
@@ -575,8 +578,11 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
-        <Route path="audit-logs" element={<ProtectedRoute roles={['SUPER_ADMIN']}><AuditLogsPage /></ProtectedRoute>} />
-        <Route path="audit-logs/:id" element={<ProtectedRoute roles={['SUPER_ADMIN']}><AuditLogDetailsPage /></ProtectedRoute>} />
+        <Route path="roles" element={<ProtectedRoute permission={P.roles} roles={['SUPER_ADMIN']}><RolesPage /></ProtectedRoute>} />
+        <Route path="roles/:id" element={<ProtectedRoute permission={P.roles} roles={['SUPER_ADMIN']}><RoleDetailsPage /></ProtectedRoute>} />
+
+        <Route path="audit-logs" element={<ProtectedRoute permission={P.audit} roles={['SUPER_ADMIN']}><AuditLogsPage /></ProtectedRoute>} />
+        <Route path="audit-logs/:id" element={<ProtectedRoute permission={P.audit} roles={['SUPER_ADMIN']}><AuditLogDetailsPage /></ProtectedRoute>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

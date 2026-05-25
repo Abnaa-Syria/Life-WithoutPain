@@ -1,17 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import api from '../services/api';
 import DataTable from '../components/ui/DataTable';
+import StatCard from '../components/ui/StatCard';
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Badge from '../components/ui/Badge';
 import { useTranslation } from 'react-i18next';
-import { Plus, ShieldCheck, Mail, Phone, Lock } from 'lucide-react';
+import {
+  Plus,
+  Users,
+  ShieldCheck,
+  Stethoscope,
+  Shield,
+  Headphones,
+  Wallet,
+} from 'lucide-react';
 import useConfirmDelete from '../hooks/useConfirmDelete';
 import toast from 'react-hot-toast';
+
+const STAFF_ROLES = [
+  { key: 'SUPER_ADMIN', icon: ShieldCheck, color: 'indigo' },
+  { key: 'MEDICAL_ADMIN', icon: Stethoscope, color: 'green' },
+  { key: 'INSURANCE_STAFF', icon: Shield, color: 'purple' },
+  { key: 'SUPPORT_STAFF', icon: Headphones, color: 'yellow' },
+  { key: 'ACCOUNTANT', icon: Wallet, color: 'blue' },
+];
 
 export default function UsersPage() {
   const { t } = useTranslation();
@@ -20,10 +37,39 @@ export default function UsersPage() {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [roleFilter, setRoleFilter] = useState('');
+
+  const { data: statsData } = useQuery({
+    queryKey: ['admin-users-stats'],
+    queryFn: () => api.get('/admin/users', { params: { limit: 200 } }).then((r) => r.data),
+  });
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: () => api.get('/admin/users').then((r) => r.data),
+    queryKey: ['admin-users', roleFilter],
+    queryFn: () =>
+      api
+        .get('/admin/users', {
+          params: { limit: 200, role: roleFilter || undefined },
+        })
+        .then((r) => r.data),
+  });
+
+  const roleCounts = useMemo(() => {
+    const users = statsData?.data || [];
+    const byRole = Object.fromEntries(STAFF_ROLES.map(({ key }) => [key, 0]));
+    let staffTotal = 0;
+    users.forEach((u) => {
+      if (byRole[u.role] !== undefined) {
+        byRole[u.role] += 1;
+        staffTotal += 1;
+      }
+    });
+    return { byRole, staffTotal };
+  }, [statsData?.data]);
+
+  const { data: assignableRoles } = useQuery({
+    queryKey: ['rbac-assignable-roles'],
+    queryFn: () => api.get('/admin/rbac/roles/assignable').then((r) => r.data.data),
   });
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
@@ -37,6 +83,7 @@ export default function UsersPage() {
       toast.success(t('messages.saved'));
       setIsModalOpen(false);
       qc.invalidateQueries(['admin-users']);
+      qc.invalidateQueries(['admin-users-stats']);
     },
   });
 
@@ -45,6 +92,7 @@ export default function UsersPage() {
     onSuccess: () => {
       toast.success(t('messages.deleted'));
       qc.invalidateQueries(['admin-users']);
+      qc.invalidateQueries(['admin-users-stats']);
     },
   });
 
@@ -89,10 +137,40 @@ export default function UsersPage() {
         action={
           <button onClick={() => openForm()} className="btn btn-primary">
             <Plus size={18} />
-            {t('users.add_admin') || 'Add Admin'}
+            {t('users.add')}
           </button>
         }
       />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <button
+          type="button"
+          onClick={() => setRoleFilter('')}
+          className={`text-left transition-opacity ${roleFilter === '' ? 'ring-2 ring-indigo-500 rounded-2xl' : 'opacity-90 hover:opacity-100'}`}
+        >
+          <StatCard
+            label={t('users.stats.total_staff')}
+            value={roleCounts.staffTotal}
+            icon={Users}
+            color="indigo"
+          />
+        </button>
+        {STAFF_ROLES.map(({ key, icon: Icon, color }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setRoleFilter(roleFilter === key ? '' : key)}
+            className={`text-left transition-opacity ${roleFilter === key ? 'ring-2 ring-indigo-500 rounded-2xl' : 'opacity-90 hover:opacity-100'}`}
+          >
+            <StatCard
+              label={t(`common.roles.${key}`)}
+              value={roleCounts.byRole[key] ?? 0}
+              icon={Icon}
+              color={color}
+            />
+          </button>
+        ))}
+      </div>
 
       <Card>
         <DataTable 
@@ -135,11 +213,11 @@ export default function UsersPage() {
             <div>
               <label className="label">{t('users.role')}</label>
               <select {...register('role', { required: true })} className="input">
-                <option value="MEDICAL_ADMIN">{t('common.roles.MEDICAL_ADMIN')}</option>
-                <option value="INSURANCE_STAFF">{t('common.roles.INSURANCE_STAFF')}</option>
-                <option value="SUPPORT_STAFF">{t('common.roles.SUPPORT_STAFF')}</option>
-                <option value="ACCOUNTANT">{t('common.roles.ACCOUNTANT')}</option>
-                <option value="SUPER_ADMIN">{t('common.roles.SUPER_ADMIN')}</option>
+                {(assignableRoles || []).map((r) => (
+                  <option key={r.id} value={r.name}>
+                    {r.displayName || t(`common.roles.${r.name}`) || r.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

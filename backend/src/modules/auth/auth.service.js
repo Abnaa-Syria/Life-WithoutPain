@@ -601,7 +601,10 @@ class AuthService {
     });
 
     if (!user) throw new NotFoundError('User not found');
-    return user;
+
+    const { getEffectivePermissions } = require('../rbac/permission.service');
+    const permissions = await getEffectivePermissions(userId, user.role);
+    return { ...user, permissions };
   }
 }
 

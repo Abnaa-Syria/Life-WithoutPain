@@ -2,44 +2,47 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Heart, Stethoscope, Calendar, 
-  Shield, CreditCard, Headphones, History, Settings, 
+  Shield, CreditCard, Headphones,   History, Settings, 
   LogOut, ChevronLeft, ChevronRight, Menu, X, 
-  Activity, Star, Briefcase, FileText, Bell, Database
+  Activity, Star, Briefcase, FileText, Bell, Database, KeyRound
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import useLanguage from '../../hooks/useLanguage';
+import { ROUTE_PERMISSIONS } from '../../auth/permissions';
 import Avatar from '../ui/Avatar';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen }) => {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, canRoute } = useAuth();
   const { isRTL } = useLanguage();
   const navigate = useNavigate();
 
   const navItems = [
-     { icon: LayoutDashboard, label: t('sidebar.dashboard'), path: '/', roles: ['ANY'] },
-    { icon: Users, label: t('sidebar.users'), path: '/users', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-    { icon: Heart, label: t('sidebar.patients'), path: '/patients', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'SUPPORT_STAFF'] },
-    { icon: Stethoscope, label: t('sidebar.doctors'), path: '/doctors', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-    { icon: Activity, label: t('sidebar.specialities'), path: '/specialities', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-    { icon: Briefcase, label: t('sidebar.services'), path: '/services', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-    { icon: Database, label: t('sidebar.medical_master_data'), path: '/medical-master-data', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-    { icon: Calendar, label: t('sidebar.appointments'), path: '/appointments', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-    { icon: Shield, label: t('sidebar.insurance_cases'), path: '/insurance-cases', roles: ['SUPER_ADMIN', 'INSURANCE_STAFF', 'MEDICAL_ADMIN'] },
-    { icon: FileText, label: t('sidebar.claims'), path: '/claims', roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
-    { icon: CreditCard, label: t('sidebar.payments'), path: '/payments', roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
-    { icon: History, label: t('sidebar.reconciliations'), path: '/reconciliations', roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
-    { icon: Headphones, label: t('sidebar.support'), path: '/support/tickets', roles: ['SUPER_ADMIN', 'SUPPORT_STAFF'] },
-    { icon: Bell, label: t('sidebar.notifications'), path: '/notifications', roles: ['SUPER_ADMIN'] },
-    { icon: Star, label: t('sidebar.reviews'), path: '/reviews', roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-    { icon: History, label: t('sidebar.audit_logs'), path: '/audit-logs', roles: ['SUPER_ADMIN'] },
-    { icon: Settings, label: t('sidebar.settings'), path: '/settings', roles: ['SUPER_ADMIN'] },
+    { icon: LayoutDashboard, label: t('sidebar.dashboard'), path: '/', permission: ROUTE_PERMISSIONS.dashboard, roles: ['ANY'] },
+    { icon: Users, label: t('sidebar.users'), path: '/users', permission: ROUTE_PERMISSIONS.users, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Heart, label: t('sidebar.patients'), path: '/patients', permission: ROUTE_PERMISSIONS.patients, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'SUPPORT_STAFF'] },
+    { icon: Stethoscope, label: t('sidebar.doctors'), path: '/doctors', permission: ROUTE_PERMISSIONS.doctors, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Activity, label: t('sidebar.specialities'), path: '/specialities', permission: ROUTE_PERMISSIONS.specialities, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Briefcase, label: t('sidebar.services'), path: '/services', permission: ROUTE_PERMISSIONS.services, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Database, label: t('sidebar.medical_master_data'), path: '/medical-master-data', permission: ROUTE_PERMISSIONS.medicalMaster, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Calendar, label: t('sidebar.appointments'), path: '/appointments', permission: ROUTE_PERMISSIONS.appointments, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Shield, label: t('sidebar.insurance_cases'), path: '/insurance-cases', permission: ROUTE_PERMISSIONS.insurance, roles: ['SUPER_ADMIN', 'INSURANCE_STAFF', 'MEDICAL_ADMIN'] },
+    { icon: FileText, label: t('sidebar.claims'), path: '/claims', permission: ROUTE_PERMISSIONS.claims, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
+    { icon: CreditCard, label: t('sidebar.payments'), path: '/payments', permission: ROUTE_PERMISSIONS.payments, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
+    { icon: History, label: t('sidebar.reconciliations'), path: '/reconciliations', permission: ROUTE_PERMISSIONS.reconciliations, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
+    { icon: Headphones, label: t('sidebar.support'), path: '/support/tickets', permission: ROUTE_PERMISSIONS.support, roles: ['SUPER_ADMIN', 'SUPPORT_STAFF'] },
+    { icon: Bell, label: t('sidebar.notifications'), path: '/notifications', permission: ROUTE_PERMISSIONS.notifications, roles: ['SUPER_ADMIN'] },
+    { icon: Star, label: t('sidebar.reviews'), path: '/reviews', permission: ROUTE_PERMISSIONS.reviews, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: History, label: t('sidebar.audit_logs'), path: '/audit-logs', permission: ROUTE_PERMISSIONS.audit, roles: ['SUPER_ADMIN'] },
+    { icon: KeyRound, label: t('sidebar.roles'), path: '/roles', permission: ROUTE_PERMISSIONS.roles, roles: ['SUPER_ADMIN'] },
+    { icon: Settings, label: t('sidebar.settings'), path: '/settings', permission: ROUTE_PERMISSIONS.settings, roles: ['SUPER_ADMIN'] },
   ];
 
-  const filteredItems = navItems.filter(item => 
-    item.roles.includes('ANY') || (user && item.roles.includes(user.role))
-  );
+  const filteredItems = navItems.filter((item) => {
+    if (item.roles?.includes('ANY')) return true;
+    return canRoute({ permission: item.permission, roles: item.roles });
+  });
 
   const handleLogout = () => {
     logout();

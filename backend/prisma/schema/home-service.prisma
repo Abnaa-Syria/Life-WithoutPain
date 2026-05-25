@@ -16,6 +16,8 @@ model HomeServiceRequest {
   notes                     String?                  @db.Text
   preferredDate             DateTime                 @db.Date
   requiresInsuranceApproval Boolean                  @default(false)
+  insuranceStatus           InsurancePaymentStatus   @default(NOT_REQUIRED)
+  approvedInsuranceCaseId   Int?
   status                    HomeServiceRequestStatus @default(PENDING)
   assignedDoctorId          Int?
   appointmentId             Int?                     @unique
@@ -23,11 +25,12 @@ model HomeServiceRequest {
   createdAt                 DateTime                 @default(now())
   updatedAt                 DateTime                 @updatedAt
 
-  patient        PatientProfile  @relation("PatientHomeServiceRequests", fields: [patientId], references: [id])
-  service        Service         @relation("ServiceHomeServiceRequests", fields: [serviceId], references: [id])
-  assignedDoctor DoctorProfile?  @relation("DoctorHomeServiceRequests", fields: [assignedDoctorId], references: [id])
-  appointment    Appointment?    @relation("HomeServiceAppointment", fields: [appointmentId], references: [id])
-  payments       Payment[]       @relation("HomeServicePayments")
+  patient        PatientProfile   @relation("PatientHomeServiceRequests", fields: [patientId], references: [id])
+  service        Service          @relation("ServiceHomeServiceRequests", fields: [serviceId], references: [id])
+  assignedDoctor DoctorProfile?   @relation("DoctorHomeServiceRequests", fields: [assignedDoctorId], references: [id])
+  appointment    Appointment?     @relation("HomeServiceAppointment", fields: [appointmentId], references: [id])
+  payments       Payment[]        @relation("HomeServicePayments")
+  insuranceCase  InsuranceCase?   @relation("HomeServiceInsuranceCases")
 
   @@index([patientId])
   @@index([serviceId])

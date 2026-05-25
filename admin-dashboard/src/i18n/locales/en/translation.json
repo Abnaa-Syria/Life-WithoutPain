@@ -36,13 +36,6 @@
       "yes_delete": "Yes, delete it",
       "no_cancel": "Cancel"
     },
-    "messages": {
-      "saved": "Saved successfully",
-      "deleted": "Deleted successfully",
-      "error": "Something went wrong",
-      "loading_data": "Loading data...",
-      "status_updated": "Status updated successfully"
-    },
     "roles": {
       "SUPER_ADMIN": "Super Admin",
       "MEDICAL_ADMIN": "Medical Admin",
@@ -94,7 +87,25 @@
       "string": "String",
       "number": "Number",
       "boolean": "Boolean"
-    }
+    },
+    "role": "Role",
+    "confirm_action": "Confirm",
+    "confirm_delete": "Delete this file?",
+    "date": "Date",
+    "id": "ID",
+    "error": "An error occurred",
+    "system": "System",
+    "linked": "Linked",
+    "not_linked": "Not linked",
+    "submit": "Submit",
+    "mark_paid": "Mark as paid",
+    "no_data_desc": "There is nothing to show here yet.",
+    "upload": "Upload",
+    "upload_desc": "Drag and drop files here, or click to browse",
+    "upload_subdesc": "PNG, JPG or PDF up to 10MB",
+    "drop_here": "Drop files here",
+    "suspended": "Suspended",
+    "banned": "Banned"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -124,7 +135,28 @@
     "reconciliations": "Reconciliations",
     "notifications": "Notifications",
     "lab_tests": "Lab Tests",
-    "payouts": "Payouts"
+    "payouts": "Payouts",
+    "roles": "Roles & Permissions"
+  },
+  "rbac": {
+    "no_access": "You do not have permission to manage roles",
+    "create_role": "Create Role",
+    "role_created": "Role created successfully",
+    "role_name": "Role key",
+    "display_name": "Display name",
+    "type": "Type",
+    "system_role": "System",
+    "custom_role": "Custom",
+    "permissions_count": "Permissions",
+    "edit_permissions": "Edit permissions",
+    "cannot_delete_system": "System roles cannot be deleted",
+    "create_role_hint": "Custom roles can receive permissions here. Assigning users requires the role to exist in the UserRole enum (database migration).",
+    "invalid_name": "Use UPPER_SNAKE_CASE (letters, numbers, underscores)",
+    "custom_role_assign_hint": "This custom role is not assignable to users until it is added to the UserRole enum in the backend.",
+    "super_admin_locked": "All permissions",
+    "super_admin_permissions_note": "Super Admin always has every permission and cannot be edited.",
+    "save_permissions": "Save permissions",
+    "permissions_saved": "Role permissions updated"
   },
   "login": {
     "subtitle": "Enter your credentials to access the admin panel",
@@ -137,7 +169,70 @@
   },
   "validation": {
     "identifier_required": "Email or phone number is required",
-    "password_required": "Password is required"
+    "password_required": "Password is required",
+    "email_required": "Email is required",
+    "invalid_email": "Invalid email address"
+  },
+  "audit": {
+    "user": "User",
+    "action": "Action",
+    "module": "Module",
+    "details": "Details",
+    "date": "Date & Time",
+    "subtitle": "System-wide activity and changes log",
+    "search_placeholder": "Search by entity type...",
+    "actor": "Actor Information",
+    "metadata": "Event Metadata",
+    "entity_type": "Entity Type",
+    "entity_id": "Entity ID",
+    "payload": "Data Changes"
+  },
+  "claims": {
+    "id": "Claim ID",
+    "provider": "Provider",
+    "amount": "Amount",
+    "patient": "Patient",
+    "date": "Submitted At"
+  },
+  "confirm": {
+    "delete_patient_title": "Delete patient?",
+    "delete_patient_text": "Are you sure you want to delete {{name}}? This cannot be undone."
+  },
+  "users": {
+    "full_name": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "role": "Role",
+    "password": "Password",
+    "add": "Add User",
+    "edit": "Edit User",
+    "stats": {
+      "total_staff": "System users (staff)"
+    },
+    "verified": "Verified",
+    "preferences": "Preferences",
+    "language": "Language",
+    "theme": "Theme",
+    "account_info": "Account Information",
+    "security": "Security & Activity",
+    "last_login": "Last Login"
+  },
+  "payments": {
+    "transaction_id": "Transaction ID",
+    "amount": "Amount",
+    "method": "Method",
+    "user": "User",
+    "date": "Date"
+  },
+  "specialities": {
+    "add": "Add Speciality",
+    "edit": "Edit Speciality",
+    "name_ar": "Name (AR)",
+    "name_en": "Name (EN)",
+    "description_ar": "Description (AR)",
+    "description_en": "Description (EN)",
+    "icon": "Icon",
+    "doctors_count": "Doctors"
   },
   "messages": {
     "login_success": "Welcome back!",
@@ -146,7 +241,9 @@
     "deleted": "Deleted successfully",
     "error": "An error occurred",
     "loading_data": "Loading data...",
-    "status_updated": "Status updated successfully"
+    "status_updated": "Status updated successfully",
+    "approved": "Approved successfully",
+    "rejected": "Rejected successfully"
   },
   "medical_master_data": {
     "title": "Medical Master Data",
@@ -207,7 +304,25 @@
       "cancelled_today": "Cancelled Today",
       "pending_confirmation": "Pending Confirmation",
       "approved_doctors": "Approved Doctors",
-      "average_rating": "Average Rating"
+      "average_rating": "Average Rating",
+      "total_payments": "Total Payments",
+      "total_revenue": "Total Revenue",
+      "completed_payments": "Completed Payments",
+      "failed_payments": "Failed Payments",
+      "pending_support": "Pending Support",
+      "resolved_today": "Resolved Today",
+      "high_priority": "High Priority",
+      "under_review": "Under Review",
+      "approved_today": "Approved Today",
+      "pending_insurance_policies": "Policies Pending Verification",
+      "escalated_cases": "Escalated Cases",
+      "total_claims": "Total Claims",
+      "pending_claims": "Pending Claims",
+      "submitted_claims": "Submitted Claims",
+      "paid_claims": "Paid Claims",
+      "new_this_month": "New This Month",
+      "active_cases": "Active Cases",
+      "insurance_linked": "Insurance Linked"
     }
   },
   "appointments": {
@@ -230,6 +345,10 @@
     }
   },
   "patients": {
+    "name": "Name",
+    "edit_patient": "Edit Patient Profile",
+    "insurance": "Insurance",
+    "search_placeholder": "Search by name or email...",
     "personal_info": "Personal Information",
     "full_name": "Full Name",
     "email": "Email",
@@ -247,6 +366,7 @@
     "insurance_info": "Insurance Information",
     "family_members": "Family Members",
     "report_attachments": "Medical Report Attachments",
+    "tab_insurance": "Insurance",
     "tab_diseases": "Diseases",
     "tab_medications": "Medications",
     "tab_allergies": "Allergies",
@@ -273,7 +393,9 @@
     "edit_doctor": "Edit Doctor Profile",
     "publicly_bookable": "Publicly Bookable",
     "fee": "Fee",
-    "license_number": "Medical License No."
+    "license_number": "Medical License No.",
+    "approved_success": "Doctor approved successfully",
+    "rejected_success": "Doctor rejected successfully"
   },
   "services": {
     "name": "Service Name",
@@ -297,7 +419,35 @@
     "api_mode": "Integration Mode",
     "add_provider": "Add Provider",
     "edit_provider": "Edit Provider",
-    "provider_details": "Provider Details"
+    "provider_details": "Provider Details",
+    "name": "Provider Name",
+    "patient": "Patient",
+    "date": "Date",
+    "edit_case": "Update Insurance Case",
+    "request_source": "Source",
+    "source_appointment": "Appointment",
+    "source_home_service": "Home service",
+    "requested_amount": "Requested amount",
+    "approved_amount": "Approved amount",
+    "amounts": "Requested / Approved",
+    "requests": "Insurance requests",
+    "member_id": "Member ID",
+    "primary": "Primary policy",
+    "policy_used": "Policy used for request",
+    "linked_appointment": "Linked appointment",
+    "linked_home_service": "Linked home service",
+    "visit_address": "Visit address",
+    "preferred_date": "Preferred date",
+    "service": "Service",
+    "doctor": "Doctor",
+    "decision_panel": "Review & decision",
+    "update_price": "Update approved price",
+    "request_info": "Request more info",
+    "card_image": "Insurance card",
+    "quick_approve_note": "Approved from list view",
+    "quick_reject_note": "Rejected from list view",
+    "rejected_default": "Rejected by insurance agent",
+    "review_pending": "Review pending insurance requests"
   },
   "support": {
     "tabs": {
@@ -330,7 +480,10 @@
     "no_messages": "No messages yet",
     "reply_placeholder": "Type your reply to the user...",
     "send_reply": "Send Reply",
-    "attachments": "Attachments"
+    "attachments": "Attachments",
+    "resolved_at": "Resolved At",
+    "admin_notes": "Admin Response",
+    "update_case": "Update Support Case"
   },
   "status": {
     "open": "Open",
@@ -349,7 +502,15 @@
     "paid": "Paid",
     "failed": "Failed",
     "matched": "Matched",
-    "discrepancy": "Discrepancy"
+    "discrepancy": "Discrepancy",
+    "escalated": "Escalated",
+    "submitted": "Submitted",
+    "under_review": "Under Review",
+    "rescheduled": "Rescheduled",
+    "refunded": "Refunded",
+    "more_info_requested": "More info requested",
+    "draft": "Draft",
+    "scheduled": "Scheduled"
   },
   "payouts": {
     "title": "Doctor Payouts",

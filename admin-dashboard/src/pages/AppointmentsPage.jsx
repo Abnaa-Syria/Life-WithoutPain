@@ -114,7 +114,7 @@ export default function AppointmentsPage() {
         <button 
           onClick={() => updateStatusMutation.mutate({ id: appointment.id, status: 'CONFIRMED' })} 
           className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-          title={t('common.confirm')}
+          title={t('common.confirm_action')}
         >
           <CheckCircle size={16} />
         </button>

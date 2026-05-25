@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 const prisma = require('../config/database');
+const { getEffectivePermissions } = require('../modules/rbac/permission.service');
 
 async function authenticateSocketToken(token) {
   if (!token) {
@@ -30,7 +31,8 @@ async function authenticateSocketToken(token) {
     throw new Error('Account is not active');
   }
 
-  return user;
+  const permissions = await getEffectivePermissions(user.id, user.role);
+  return { ...user, permissions };
 }
 
 module.exports = { authenticateSocketToken };

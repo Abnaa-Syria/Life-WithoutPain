@@ -1,9 +1,17 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import {
+  hasPermission,
+  hasAnyPermission,
+  hasAllPermissions,
+  canAccess,
+} from '../auth/permissions';
 
 const AuthContext = createContext(null);
+
+const ADMIN_ROLES = ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -13,14 +21,23 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const refreshProfile = useCallback(async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      setUser(null);
+      return null;
+    }
+    const res = await api.get('/auth/me');
+    const profile = res.data.data;
+    setUser(profile);
+    localStorage.setItem('user', JSON.stringify(profile));
+    return profile;
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    if (token && !user) {
-      api.get('/auth/me')
-        .then((res) => {
-          setUser(res.data.data);
-          localStorage.setItem('user', JSON.stringify(res.data.data));
-        })
+    if (token) {
+      refreshProfile()
         .catch(() => {
           localStorage.clear();
           setUser(null);
@@ -29,23 +46,46 @@ export function AuthProvider({ children }) {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [refreshProfile]);
+
+  const permissions = user?.permissions ?? [];
+
+  const can = useCallback(
+    (permission) => hasPermission(permissions, permission),
+    [permissions],
+  );
+
+  const canAny = useCallback(
+    (...keys) => hasAnyPermission(permissions, keys),
+    [permissions],
+  );
+
+  const canAll = useCallback(
+    (...keys) => hasAllPermissions(permissions, keys),
+    [permissions],
+  );
+
+  const canRoute = useCallback(
+    (opts) => canAccess({ permissions, role: user?.role }, opts),
+    [permissions, user?.role],
+  );
 
   const login = async (email, password) => {
     try {
       const res = await api.post('/auth/login', { identifier: email, password });
-      const { user: userData, accessToken, refreshToken } = res.data.data;
+      const { accessToken, refreshToken } = res.data.data;
 
-      const adminRoles = ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'];
-      if (!adminRoles.includes(userData.role)) {
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+
+      const profile = await refreshProfile();
+      if (!ADMIN_ROLES.includes(profile?.role)) {
+        localStorage.clear();
+        setUser(null);
         toast.error('غير مصرح بالدخول');
         return;
       }
 
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
       toast.success('تم تسجيل الدخول بنجاح');
       navigate('/');
     } catch (error) {
@@ -66,7 +106,20 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        loading,
+        isAuthenticated: !!user,
+        permissions,
+        can,
+        canAny,
+        canAll,
+        canRoute,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -148,39 +148,44 @@ export default function SupportTicketDetailsPage() {
             <DetailItem label={t('support.category')} value={ticket.category} />
           </DetailsSection>
 
-          <DetailsSection title={t('support.assignment')} icon={Headphones}>
-            <label className="label">{t('support.assignee')}</label>
-            <select
-              className="input"
-              value={ticket.assignedAdminId || ''}
-              onChange={(e) => e.target.value && assignMutation.mutate(Number(e.target.value))}
-            >
-              <option value="">{t('support.unassigned') || 'Unassigned'}</option>
-              {supportStaff.map((u) => (
-                <option key={u.id} value={u.id}>{u.fullName}</option>
-              ))}
-            </select>
+          <DetailsSection title={t('support.assignment')} icon={Headphones} layout="stack">
+            <div className="space-y-2">
+              <label className="label">{t('support.assignee')}</label>
+              <select
+                className="input"
+                value={ticket.assignedAdminId || ''}
+                onChange={(e) => e.target.value && assignMutation.mutate(Number(e.target.value))}
+              >
+                <option value="">{t('support.unassigned') || 'Unassigned'}</option>
+                {supportStaff.map((u) => (
+                  <option key={u.id} value={u.id}>{u.fullName}</option>
+                ))}
+              </select>
+            </div>
           </DetailsSection>
 
-          <DetailsSection title={t('common.status')} icon={Clock}>
-            <select
-              className="input"
-              value={ticket.status}
-              onChange={(e) => statusMutation.mutate(e.target.value)}
-            >
-              <option value="OPEN">{t('status.open')}</option>
-              <option value="IN_PROGRESS">{t('status.in_progress') || 'In Progress'}</option>
-              <option value="RESOLVED">{t('status.resolved')}</option>
-              <option value="CLOSED">{t('status.closed')}</option>
-            </select>
+          <DetailsSection title={t('common.status')} icon={Clock} layout="stack">
+            <div className="space-y-2">
+              <label className="label">{t('common.status')}</label>
+              <select
+                className="input"
+                value={ticket.status}
+                onChange={(e) => statusMutation.mutate(e.target.value)}
+              >
+                <option value="OPEN">{t('status.open')}</option>
+                <option value="IN_PROGRESS">{t('status.in_progress') || 'In Progress'}</option>
+                <option value="RESOLVED">{t('status.resolved')}</option>
+                <option value="CLOSED">{t('status.closed')}</option>
+              </select>
+            </div>
             <DetailItem label={t('common.created_at')} value={new Date(ticket.createdAt).toLocaleString()} />
           </DetailsSection>
         </div>
 
         <div className="lg:col-span-2 space-y-6">
           {ticket.attachments?.length > 0 && (
-            <Card className="p-4">
-              <p className="text-sm font-semibold mb-2">{t('support.attachments') || 'Attachments'}</p>
+            <Card bodyClassName="space-y-2">
+              <p className="text-sm font-semibold">{t('support.attachments') || 'Attachments'}</p>
               <ul className="space-y-1 text-sm">
                 {ticket.attachments.map((a) => (
                   <li key={a.id}>
@@ -193,8 +198,13 @@ export default function SupportTicketDetailsPage() {
             </Card>
           )}
 
-          <DetailsSection title={t('support.conversation')} icon={MessageSquare} className="!p-0">
-            <div className="flex flex-col gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 min-h-[320px] max-h-[480px] overflow-y-auto">
+          <DetailsSection
+            title={t('support.conversation')}
+            icon={MessageSquare}
+            contentClassName="!p-0"
+            layout="stack"
+          >
+            <div className="flex flex-col gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 min-h-[320px] max-h-[480px] overflow-y-auto w-full">
               {ticket.messages?.length > 0 ? (
                 ticket.messages.map((msg) => {
                   const isAdmin = ['SUPER_ADMIN', 'SUPPORT_STAFF', 'MEDICAL_ADMIN'].includes(msg.senderRole);
@@ -236,7 +246,7 @@ export default function SupportTicketDetailsPage() {
           </DetailsSection>
 
           {ticket.status !== 'CLOSED' && (
-            <Card className="p-4 space-y-3">
+            <Card bodyClassName="space-y-3">
               <textarea
                 className="input min-h-[100px] py-3"
                 placeholder={t('support.reply_placeholder') || 'Type your reply...'}

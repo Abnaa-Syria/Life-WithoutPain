@@ -21,6 +21,7 @@ const DOCTOR_APP_SUBMODULES = [
 const PATIENT_APP_SUBMODULES = [
   { key: 'auth', name: 'Auth', description: 'Patient mobile authentication' },
   { key: 'insurances', name: 'Insurances', description: 'Patient insurance policies' },
+  { key: 'insurance-requests', name: 'Insurance Requests', description: 'Insurance pre-authorization requests and status' },
   { key: 'family-members', name: 'Family Members', description: 'Family members for booking' },
   { key: 'services', name: 'Services', description: 'Healthcare services catalog' },
   { key: 'appointments', name: 'Appointments', description: 'Book and manage clinic or remote appointments' },

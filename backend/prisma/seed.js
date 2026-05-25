@@ -1,5 +1,13 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const { ROLES } = require('../src/constants');
+const {
+  seedRbac,
+  seedStaffUsers,
+  seedDemoUserPermissionOverrides,
+  verifySeededStaffRbac,
+  assertRoleExists,
+} = require('./seed-rbac');
 
 const prisma = new PrismaClient();
 
@@ -12,6 +20,7 @@ function phone(n) {
 }
 
 async function upsertUser({ fullName, email, phoneNumber, role, passwordHash, isVerified = true, status = 'ACTIVE' }) {
+  await assertRoleExists(prisma, role);
   return prisma.user.upsert({
     where: { email },
     update: { fullName, phone: phoneNumber, role, status, isVerified, passwordHash },
@@ -42,46 +51,25 @@ async function ensureDoctorProfile(user, data) {
 }
 
 async function main() {
-  console.log('Seeding database (full dashboard coverage)...');
+  console.log('Seeding database (full dashboard coverage + RBAC)...');
+
+  // RBAC must exist before any user is created (User.role ↔ Role.name)
+  await seedRbac(prisma);
 
   const passwordHash = await bcrypt.hash('Password123', 12);
 
   // ─────────────────────────────────────────────────────────────
-  // 1) Core staff accounts (for dashboard)
+  // 1) Core staff accounts (dashboard) — tied to RBAC roles
   // ─────────────────────────────────────────────────────────────
-  const superAdmin = await upsertUser({
-    fullName: 'مدير النظام',
-    email: 'admin@hayabilaalam.com',
-    phoneNumber: phone(1),
-    role: 'SUPER_ADMIN',
-    passwordHash,
-  });
-  const medicalAdmin = await upsertUser({
-    fullName: 'المدير الطبي',
-    email: 'medical@hayabilaalam.com',
-    phoneNumber: phone(2),
-    role: 'MEDICAL_ADMIN',
-    passwordHash,
-  });
-  const insuranceStaff = await upsertUser({
-    fullName: 'موظف التأمين',
-    email: 'insurance@hayabilaalam.com',
-    phoneNumber: phone(3),
-    role: 'INSURANCE_STAFF',
-    passwordHash,
-  });
-  const supportStaff = await upsertUser({
-    fullName: 'موظف الدعم',
-    email: 'support@hayabilaalam.com',
-    phoneNumber: phone(4),
-    role: 'SUPPORT_STAFF',
-    passwordHash,
-  });
-  const accountant = await upsertUser({
-    fullName: 'المحاسب',
-    email: 'accountant@hayabilaalam.com',
-    phoneNumber: phone(5),
-    role: 'ACCOUNTANT',
+  const {
+    superAdmin,
+    medicalAdmin,
+    insuranceStaff,
+    supportStaff,
+    accountant,
+  } = await seedStaffUsers(prisma, {
+    upsertUser,
+    phoneFn: phone,
     passwordHash,
   });
 
@@ -147,7 +135,7 @@ async function main() {
       fullName: d.fullName,
       email: d.email,
       phoneNumber: phone(doctorPhoneSeed++),
-      role: 'DOCTOR',
+      role: ROLES.DOCTOR,
       passwordHash,
       isVerified: true,
     });
@@ -226,7 +214,7 @@ async function main() {
       fullName: p.fullName,
       email: p.email,
       phoneNumber: phone(patientPhoneSeed++),
-      role: 'PATIENT',
+      role: ROLES.PATIENT,
       passwordHash,
       isVerified: true,
     });
@@ -507,6 +495,152 @@ async function main() {
           requestedAmount: approvedAppointment.amount,
           approvedAmount: approvedAppointment.amount,
           decisionNotes: 'Seeded approval',
+          decidedBy: insuranceStaff.id,
+          decidedAt: now(),
+        },
+      });
+    }
+
+    const patientPolicy = await prisma.patientInsurance.findFirst({
+      where: { patientId: patient.id, isPrimary: true },
+    });
+
+    const rejectedAppt = appointmentRecords.find((a) => a.insuranceStatus === 'PENDING_VERIFICATION');
+    if (rejectedAppt && patientPolicy) {
+      const rejectedCase = await prisma.insuranceCase.create({
+        data: {
+          patientId: patient.id,
+          appointmentId: rejectedAppt.id,
+          patientInsuranceId: patientPolicy.id,
+          providerId: provider.id,
+          caseType: 'PRE_AUTHORIZATION',
+          requestType: 'CONSULTATION',
+          status: 'REJECTED',
+          requestedAmount: rejectedAppt.amount,
+          resolvedAt: now(),
+          notes: 'Seeded rejected insurance request',
+        },
+      });
+      await prisma.insuranceApproval.create({
+        data: {
+          insuranceCaseId: rejectedCase.id,
+          requestedProcedure: 'Consultation',
+          approvalStatus: 'REJECTED',
+          requestedAmount: rejectedAppt.amount,
+          decisionNotes: 'Not covered',
+          decidedBy: insuranceStaff.id,
+          decidedAt: now(),
+        },
+      });
+    }
+
+    const infoCasePatient = patients[1];
+    const infoPolicy = infoCasePatient
+      ? await prisma.patientInsurance.findFirst({ where: { patientId: infoCasePatient.id, isPrimary: true } })
+      : null;
+    if (infoCasePatient && infoPolicy) {
+      await prisma.insuranceCase.create({
+        data: {
+          patientId: infoCasePatient.id,
+          providerId: infoPolicy.providerId,
+          patientInsuranceId: infoPolicy.id,
+          caseType: 'INQUIRY',
+          requestType: 'CONSULTATION',
+          status: 'MORE_INFO_REQUESTED',
+          requestedAmount: 200,
+          notes: 'Seeded — awaiting patient documents',
+        },
+      });
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 7b) Home service requests + insurance cases
+  // ─────────────────────────────────────────────────────────────
+  const homeService = await prisma.service.findFirst({ where: { type: 'HOME' } });
+  if (homeService) {
+    const homePatient = patients[0];
+    const homePolicy = await prisma.patientInsurance.findFirst({
+      where: { patientId: homePatient.id, isPrimary: true },
+    });
+    const homeProvider = insuranceProviders[0];
+
+    const pendingHome = await prisma.homeServiceRequest.create({
+      data: {
+        patientId: homePatient.id,
+        serviceId: homeService.id,
+        visitAddress: '123 Seed Street, Riyadh',
+        preferredDate: toDateOnly(daysFromNow(5)),
+        requiresInsuranceApproval: true,
+        insuranceStatus: 'PENDING_VERIFICATION',
+        status: 'PENDING',
+        createdBy: homePatient.userId,
+      },
+    });
+
+    if (homePolicy) {
+      const homeCase = await prisma.insuranceCase.create({
+        data: {
+          patientId: homePatient.id,
+          homeServiceRequestId: pendingHome.id,
+          patientInsuranceId: homePolicy.id,
+          providerId: homeProvider.id,
+          caseType: 'PRE_AUTHORIZATION',
+          requestType: 'PROCEDURE',
+          status: 'UNDER_REVIEW',
+          requestedAmount: 350,
+          notes: 'Seeded home visit insurance request',
+        },
+      });
+      await prisma.insuranceApproval.create({
+        data: {
+          insuranceCaseId: homeCase.id,
+          requestedProcedure: homeService.nameEn,
+          approvalStatus: 'PENDING',
+          requestedAmount: 350,
+        },
+      });
+    }
+
+    const approvedHome = await prisma.homeServiceRequest.create({
+      data: {
+        patientId: homePatient.id,
+        serviceId: homeService.id,
+        visitAddress: '456 Approved Ave, Riyadh',
+        preferredDate: toDateOnly(daysFromNow(10)),
+        requiresInsuranceApproval: true,
+        insuranceStatus: 'APPROVED',
+        status: 'SCHEDULED',
+        createdBy: homePatient.userId,
+      },
+    });
+
+    if (homePolicy) {
+      const approvedHomeCase = await prisma.insuranceCase.create({
+        data: {
+          patientId: homePatient.id,
+          homeServiceRequestId: approvedHome.id,
+          patientInsuranceId: homePolicy.id,
+          providerId: homeProvider.id,
+          caseType: 'PRE_AUTHORIZATION',
+          requestType: 'PROCEDURE',
+          status: 'APPROVED',
+          requestedAmount: 400,
+          resolvedAt: now(),
+          autoApproved: false,
+        },
+      });
+      await prisma.homeServiceRequest.update({
+        where: { id: approvedHome.id },
+        data: { approvedInsuranceCaseId: approvedHomeCase.id },
+      });
+      await prisma.insuranceApproval.create({
+        data: {
+          insuranceCaseId: approvedHomeCase.id,
+          requestedProcedure: homeService.nameEn,
+          approvalStatus: 'APPROVED',
+          requestedAmount: 400,
+          approvedAmount: 320,
           decidedBy: insuranceStaff.id,
           decidedAt: now(),
         },
@@ -855,14 +989,18 @@ async function main() {
     skipDuplicates: true,
   });
 
-  console.log('Seed completed successfully (full coverage).');
-  console.log('\nTest Accounts (Dashboard login - use email):');
+  const staffUsers = { superAdmin, medicalAdmin, insuranceStaff, supportStaff, accountant };
+  await seedDemoUserPermissionOverrides(prisma, staffUsers);
+  await verifySeededStaffRbac(prisma, staffUsers);
+
+  console.log('\nSeed completed successfully (full coverage + RBAC).');
+  console.log('\nTest Accounts (Dashboard login - use email, permissions from DB):');
   console.log('────────────────────────────────────────────────');
   console.log('Super Admin:     admin@hayabilaalam.com / Password123');
   console.log('Medical Admin:   medical@hayabilaalam.com / Password123');
-  console.log('Insurance Staff: insurance@hayabilaalam.com / Password123');
+  console.log('Insurance Staff: insurance@hayabilaalam.com / Password123 (+ demo: support.tickets.list)');
   console.log('Support Staff:   support@hayabilaalam.com / Password123');
-  console.log('Accountant:      accountant@hayabilaalam.com / Password123');
+  console.log('Accountant:      accountant@hayabilaalam.com / Password123 (+ demo: patients.list)');
   console.log('\nMobile/App accounts (phone or 966… without +, password Password123):');
   console.log('────────────────────────────────────────────────');
   for (const u of doctorsUsers) {

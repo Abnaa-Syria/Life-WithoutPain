@@ -104,8 +104,9 @@ model PatientInsurance {
   createdAt          DateTime                    @default(now())
   updatedAt          DateTime                    @updatedAt
 
-  patient  PatientProfile    @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  provider InsuranceProvider @relation(fields: [providerId], references: [id])
+  patient         PatientProfile  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  provider        InsuranceProvider @relation(fields: [providerId], references: [id])
+  insuranceCases  InsuranceCase[] @relation("CasePatientInsurance")
 
   @@index([patientId])
   @@index([providerId])
@@ -113,29 +114,36 @@ model PatientInsurance {
 }
 
 model InsuranceCase {
-  id                Int                 @id @default(autoincrement())
-  patientId         Int
-  appointmentId     Int?
-  providerId        Int
-  caseType          InsuranceCaseType
-  requestType       InsuranceCaseRequestType
-  status            InsuranceCaseStatus @default(OPEN)
-  autoApproved      Boolean             @default(false)
-  externalReference String?             @db.VarChar(255)
-  submittedAt       DateTime            @default(now())
-  resolvedAt        DateTime?
-  notes             String?             @db.Text
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  id                    Int                 @id @default(autoincrement())
+  patientId             Int
+  appointmentId         Int?
+  homeServiceRequestId  Int?                @unique
+  patientInsuranceId    Int?
+  providerId            Int
+  caseType              InsuranceCaseType
+  requestType           InsuranceCaseRequestType
+  status                InsuranceCaseStatus @default(OPEN)
+  requestedAmount       Decimal?            @db.Decimal(10, 2)
+  autoApproved          Boolean             @default(false)
+  externalReference     String?             @db.VarChar(255)
+  submittedAt           DateTime            @default(now())
+  resolvedAt            DateTime?
+  notes                 String?             @db.Text
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
 
-  patient     PatientProfile    @relation("PatientInsuranceCases", fields: [patientId], references: [id])
-  appointment Appointment?      @relation("AppointmentInsuranceCases", fields: [appointmentId], references: [id])
-  provider    InsuranceProvider @relation("ProviderInsuranceCases", fields: [providerId], references: [id])
-  approvals   InsuranceApproval[]
-  supportCases SupportCase[]    @relation("InsuranceSupportCases")
+  patient            PatientProfile      @relation("PatientInsuranceCases", fields: [patientId], references: [id])
+  appointment        Appointment?        @relation("AppointmentInsuranceCases", fields: [appointmentId], references: [id])
+  homeServiceRequest HomeServiceRequest? @relation("HomeServiceInsuranceCases", fields: [homeServiceRequestId], references: [id])
+  patientInsurance   PatientInsurance?     @relation("CasePatientInsurance", fields: [patientInsuranceId], references: [id])
+  provider           InsuranceProvider   @relation("ProviderInsuranceCases", fields: [providerId], references: [id])
+  approvals          InsuranceApproval[]
+  supportCases       SupportCase[]       @relation("InsuranceSupportCases")
 
   @@index([patientId])
   @@index([appointmentId])
+  @@index([homeServiceRequestId])
+  @@index([patientInsuranceId])
   @@index([providerId])
   @@index([status])
   @@map("insurance_cases")

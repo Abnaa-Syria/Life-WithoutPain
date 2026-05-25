@@ -47,7 +47,9 @@ export default function UserDetailsPage() {
             <div className="w-full pt-6 border-t border-[var(--border-color)] space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="text-[var(--text-muted)]">{t('common.status')}</span>
-                <Badge variant={user.status === 'ACTIVE' ? 'success' : 'secondary'}>{user.status}</Badge>
+                <Badge variant={user.status === 'ACTIVE' ? 'success' : 'secondary'}>
+                  {t(`common.${user.status?.toLowerCase()}`, { defaultValue: user.status })}
+                </Badge>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-[var(--text-muted)]">{t('users.role')}</span>

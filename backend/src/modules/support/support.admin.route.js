@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const controller = require('./support.admin.controller');
-const { authenticate, authorize } = require('../../middlewares/auth');
+const { authenticate } = require('../../middlewares/auth');
+const { guard, SUPPORT, SUPER } = require('../admin/admin.permissions');
 const { validate } = require('../../middlewares/validate');
 const { uploadMultiple } = require('../../middlewares/upload');
-const { ROLES } = require('../../constants');
 const {
   ticketIdParamSchema,
   listTicketsQuerySchema,
@@ -13,19 +13,18 @@ const {
   ticketMessageSchema,
 } = require('./supportTicket.validator');
 
-const SUPPORT_ADMIN = [ROLES.SUPER_ADMIN, ROLES.SUPPORT_STAFF];
+router.use(authenticate);
 
-router.use(authenticate, authorize(...SUPPORT_ADMIN));
+router.get('/info', guard('support.tickets.info', ...SUPER), controller.getInfo);
+router.patch('/info', guard('support.tickets.info', ...SUPER), validate(updateSupportInfoSchema), controller.updateInfo);
 
-router.get('/info', controller.getInfo);
-router.patch('/info', validate(updateSupportInfoSchema), controller.updateInfo);
-
-router.get('/tickets', validate(listTicketsQuerySchema, 'query'), controller.listTickets);
-router.get('/tickets/:id', validate(ticketIdParamSchema, 'params'), controller.getTicket);
-router.patch('/tickets/:id/status', validate(ticketIdParamSchema, 'params'), validate(adminUpdateStatusSchema), controller.updateStatus);
-router.patch('/tickets/:id/assign', validate(ticketIdParamSchema, 'params'), validate(adminAssignSchema), controller.assignTicket);
+router.get('/tickets', guard('support.tickets.list', ...SUPPORT), validate(listTicketsQuerySchema, 'query'), controller.listTickets);
+router.get('/tickets/:id', guard('support.tickets.read', ...SUPPORT), validate(ticketIdParamSchema, 'params'), controller.getTicket);
+router.patch('/tickets/:id/status', guard('support.tickets.manage', ...SUPPORT), validate(ticketIdParamSchema, 'params'), validate(adminUpdateStatusSchema), controller.updateStatus);
+router.patch('/tickets/:id/assign', guard('support.tickets.manage', ...SUPPORT), validate(ticketIdParamSchema, 'params'), validate(adminAssignSchema), controller.assignTicket);
 router.post(
   '/tickets/:id/messages',
+  guard('support.tickets.manage', ...SUPPORT),
   validate(ticketIdParamSchema, 'params'),
   uploadMultiple('files', 5),
   validate(ticketMessageSchema),
