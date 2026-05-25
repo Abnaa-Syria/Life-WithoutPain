@@ -1,25 +1,14 @@
 const { eventEmitter, EVENTS } = require('../eventEmitter');
 const NotificationService = require('../../notifications/NotificationService');
-const prisma = require('../../../config/database');
+const { getStaffUserIdsForNotificationType } = require('../../notifications/notificationRecipients');
 const logger = require('../../../config/logger');
-const { ROLES } = require('../../../constants');
-
-async function getStaffUserIds() {
-  const users = await prisma.user.findMany({
-    where: {
-      role: { in: [ROLES.SUPPORT_STAFF, ROLES.SUPER_ADMIN] },
-      status: 'ACTIVE',
-      deletedAt: null,
-    },
-    select: { id: true },
-  });
-  return users.map((u) => u.id);
-}
 
 function initSupportListeners() {
   eventEmitter.on(EVENTS.SUPPORT.TICKET_CREATED, async (ticket) => {
     try {
-      const staffIds = await getStaffUserIds();
+      const staffIds = await getStaffUserIdsForNotificationType('SUPPORT');
+      if (!staffIds.length) return;
+
       const notifications = staffIds.map((userId) => ({
         userId,
         titleAr: 'تذكرة دعم جديدة',

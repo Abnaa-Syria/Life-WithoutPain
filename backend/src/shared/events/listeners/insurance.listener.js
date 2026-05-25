@@ -1,20 +1,8 @@
 const { eventEmitter, EVENTS } = require('../eventEmitter');
 const NotificationService = require('../../notifications/NotificationService');
+const { getStaffUserIdsForNotificationType } = require('../../notifications/notificationRecipients');
 const prisma = require('../../../config/database');
 const logger = require('../../../config/logger');
-const { ROLES } = require('../../../constants');
-
-async function getInsuranceStaffUserIds() {
-  const users = await prisma.user.findMany({
-    where: {
-      role: { in: [ROLES.INSURANCE_STAFF, ROLES.SUPER_ADMIN] },
-      status: 'ACTIVE',
-      deletedAt: null,
-    },
-    select: { id: true },
-  });
-  return users.map((u) => u.id);
-}
 
 function formatAmount(amount) {
   if (amount == null) return '';
@@ -48,7 +36,7 @@ function initInsuranceListeners() {
         });
       }
 
-      const staffIds = await getInsuranceStaffUserIds();
+      const staffIds = await getStaffUserIdsForNotificationType('INSURANCE');
       if (staffIds.length) {
         await NotificationService.createBulk(
           staffIds.map((userId) => ({

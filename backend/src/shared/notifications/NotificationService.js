@@ -1,10 +1,14 @@
 const prisma = require('../../config/database');
 const logger = require('../../config/logger');
+const {
+  emitNotificationCreated,
+  emitNotificationsCreated,
+} = require('../../socket/notification.emit');
 
 class NotificationService {
   static async create({ userId, titleAr, titleEn, bodyAr, bodyEn, type, relatedEntityType, relatedEntityId }) {
     try {
-      return await prisma.notification.create({
+      const notification = await prisma.notification.create({
         data: {
           userId,
           titleAr,
@@ -16,6 +20,8 @@ class NotificationService {
           relatedEntityId: relatedEntityId || null,
         },
       });
+      emitNotificationCreated(notification);
+      return notification;
     } catch (error) {
       logger.error({ msg: 'Failed to create notification', error: error.message });
       return null;
@@ -23,8 +29,26 @@ class NotificationService {
   }
 
   static async createBulk(notifications) {
+    if (!notifications?.length) return { count: 0 };
     try {
-      return await prisma.notification.createMany({ data: notifications });
+      const created = await prisma.$transaction(
+        notifications.map((n) =>
+          prisma.notification.create({
+            data: {
+              userId: n.userId,
+              titleAr: n.titleAr,
+              titleEn: n.titleEn,
+              bodyAr: n.bodyAr,
+              bodyEn: n.bodyEn,
+              type: n.type,
+              relatedEntityType: n.relatedEntityType || null,
+              relatedEntityId: n.relatedEntityId || null,
+            },
+          }),
+        ),
+      );
+      emitNotificationsCreated(created);
+      return { count: created.length };
     } catch (error) {
       logger.error({ msg: 'Failed to create bulk notifications', error: error.message });
       return null;

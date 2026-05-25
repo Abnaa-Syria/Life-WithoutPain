@@ -25,11 +25,13 @@ cp .env.example .env
 # 3. Generate Prisma Client
 npm run db:generate
 
-# 4. Run database migrations
-npm run db:migrate
+# 4. Sync schema + seed (first-time / dev)
+npm run db:setup
 
-# 5. Seed the database
-npm run db:seed
+# Or step by step:
+# npm run db:push      # sync tables from Prisma schema (no migration history)
+# npm run db:migrate   # apply migrations from prisma/schema/migrations
+# npm run db:seed
 
 # 6. Start development server
 npm run dev

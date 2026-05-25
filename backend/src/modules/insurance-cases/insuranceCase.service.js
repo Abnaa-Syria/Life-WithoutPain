@@ -31,7 +31,7 @@ class InsuranceCaseService {
           patient: { include: { user: { select: { fullName: true } } } },
           provider: true,
           appointment: { select: { id: true, amount: true, appointmentDate: true } },
-          homeServiceRequest: { include: { service: { select: { nameEn: true, nameAr: true, price: true } } } },
+          homeServiceRequest: { include: { service: { select: { nameEn: true, nameAr: true } } } },
           approvals: { orderBy: { createdAt: 'desc' }, take: 1 },
         },
       }),

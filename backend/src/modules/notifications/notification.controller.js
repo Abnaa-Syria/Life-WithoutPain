@@ -4,7 +4,11 @@ const { asyncHandler } = require('../../utils/helpers');
 
 class NotificationController {
   static list = asyncHandler(async (req, res) => {
-    const { data, total, page, limit } = await NotificationService.list(req.user.id, req.query);
+    const { data, total, page, limit } = await NotificationService.list(
+      req.user.id,
+      req.query,
+      req.user.permissions,
+    );
     return paginatedResponse(res, { data, total, page, limit });
   });
 
@@ -14,8 +18,13 @@ class NotificationController {
   });
 
   static markAllRead = asyncHandler(async (req, res) => {
-    await NotificationService.markAllRead(req.user.id);
+    await NotificationService.markAllRead(req.user.id, req.user.permissions);
     return successResponse(res, { data: null, message: 'All notifications marked as read' });
+  });
+
+  static unreadCount = asyncHandler(async (req, res) => {
+    const count = await NotificationService.unreadCount(req.user.id, req.user.permissions);
+    return successResponse(res, { data: { count } });
   });
 }
 
