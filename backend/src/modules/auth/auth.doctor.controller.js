@@ -41,4 +41,9 @@ const deleteAccount = asyncHandler(async (req, res) => {
   return successResponse(res, { data: result, message: 'Account deleted successfully' });
 });
 
-module.exports = { register, verifyOtp, login, getMe, deleteAccount };
+const logout = asyncHandler(async (req, res) => {
+  const result = await AuthService.logout(req.user.id, req.body.refreshToken);
+  return successResponse(res, { data: result, message: 'Logged out successfully' });
+});
+
+module.exports = { register, verifyOtp, login, getMe, deleteAccount, logout };

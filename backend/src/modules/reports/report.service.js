@@ -30,12 +30,19 @@ class ReportService {
         include: {
           patient: { include: { user: { select: { fullName: true } } } },
           doctor: { include: { user: { select: { fullName: true } } } },
+          prescription: { select: { id: true } },
           attachments: true,
         },
       }),
       MedicalReportRepository.count({ where }),
     ]);
-    return { data, total, page, limit };
+    
+    const formattedData = data.map(report => ({
+      ...report,
+      prescriptionNumber: report.prescription ? `RX-${report.prescription.id}` : null,
+    }));
+    
+    return { data: formattedData, total, page, limit };
   }
 
   static async getById(id) {
@@ -45,11 +52,16 @@ class ReportService {
         patient: { include: { user: { select: { fullName: true } } } },
         doctor: { include: { user: { select: { fullName: true } }, speciality: true } },
         appointment: true,
+        prescription: { select: { id: true } },
         attachments: true,
       },
     });
     if (!data) throw new NotFoundError('Report not found');
-    return data;
+    
+    return {
+      ...data,
+      prescriptionNumber: data.prescription ? `RX-${data.prescription.id}` : null,
+    };
   }
 
   static async update(id, body) {
@@ -75,20 +87,31 @@ class ReportService {
 
   static async createForDoctor(userId, body) {
     const { doctorId } = await resolveDoctorProfile(userId);
-    const { doctorId: _omit, tests, clinicalExamination, ...rest } = body;
+    const { doctorId: _omit, tests, clinicalExamination, attachments, ...rest } = body;
 
-    return this.create({
+    const reportData = {
       patientId: rest.patientId,
       appointmentId: rest.appointmentId,
       doctorId,
+      prescriptionId: rest.prescriptionId,
       visitReason: rest.visitReason,
       symptoms: rest.symptoms,
-      clinicalFindings: clinicalExamination || rest.clinicalFindings,
-      clinicalExam: tests || rest.clinicalExam,
+      clinicalFindings: rest.clinicalFindings,
+      clinicalExam: clinicalExamination || rest.clinicalExam,
+      resultSummary: rest.resultSummary,
+      resultsList: rest.resultsList,
       nextAppointmentDate: rest.nextAppointmentDate ? new Date(rest.nextAppointmentDate) : undefined,
       diagnosis: rest.diagnosis || rest.visitReason,
       summary: rest.summary,
-    });
+    };
+
+    if (attachments && Array.isArray(attachments)) {
+      reportData.attachments = {
+        create: attachments.map(url => ({ fileUrl: url, type: 'DOCUMENT' }))
+      };
+    }
+
+    return this.create(reportData);
   }
 
   static async getPdfForDoctor(userId, id) {

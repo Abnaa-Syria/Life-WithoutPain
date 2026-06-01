@@ -13,17 +13,28 @@
  *             properties:
  *               patientId: { type: integer }
  *               appointmentId: { type: integer }
+ *               prescriptionId: { type: integer, nullable: true }
  *               visitReason: { type: string }
- *               symptoms: { type: string }
- *               clinicalExamination: { type: string }
- *               tests:
+ *               summary: { type: string }
+ *               clinicalExamination:
  *                 type: array
  *                 items:
  *                   type: object
  *                   properties:
- *                     testType: { type: string }
+ *                     item: { type: string }
  *                     value: { type: string }
+ *               resultSummary: { type: string }
+ *               resultsList:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     testName: { type: string }
+ *                     result: { type: string }
  *               nextAppointmentDate: { type: string, format: date-time }
+ *               attachments:
+ *                 type: array
+ *                 items: { type: string }
  *     responses:
  *       201:
  *         description: Report created

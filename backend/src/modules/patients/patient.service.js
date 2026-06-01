@@ -225,6 +225,7 @@ class PatientService {
   static async getNotifications(userId, query) {
     const { page, limit, skip } = buildPagination(query);
     const where = { userId };
+    if (query.isRead !== undefined) where.isRead = query.isRead === 'true';
 
     const [data, total] = await Promise.all([
       prisma.notification.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),

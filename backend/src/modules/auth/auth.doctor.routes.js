@@ -13,6 +13,7 @@ const {
 router.post('/register', authLimiter, uploadSingle('licenseAttachment'), validate(registerDoctorMobileSchema), controller.register);
 router.post('/verify-otp', otpLimiter, validate(verifyOtpMobileSchema), controller.verifyOtp);
 router.post('/login', authLimiter, validate(loginDoctorMobileSchema), controller.login);
+router.post('/logout', authenticate, controller.logout);
 
 router.get('/me', authenticate, controller.getMe);
 router.delete('/account', authenticate, controller.deleteAccount);

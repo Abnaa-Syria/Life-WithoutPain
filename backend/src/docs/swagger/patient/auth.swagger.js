@@ -172,6 +172,24 @@
  *       200:
  *         description: Current user
  *
+ * /patient/auth/logout:
+ *   post:
+ *     tags: [Patient App - Auth]
+ *     summary: Patient logout
+ *     description: Logout and revoke refresh token
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken: { type: string }
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *
  */
 
 module.exports = {};

@@ -217,6 +217,7 @@ model Prescription {
   patient     PatientProfile     @relation("PatientPrescriptions", fields: [patientId], references: [id])
   doctor      DoctorProfile      @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
   items       PrescriptionItem[]
+  reports     MedicalReport[]
 
   @@index([appointmentId])
   @@index([patientId])
@@ -244,6 +245,7 @@ model MedicalReport {
   appointmentId    Int
   patientId        Int
   doctorId         Int
+  prescriptionId   Int?
   visitReason      String   @db.Text
   diagnosis        String   @db.Text
   summary          String?  @db.Text
@@ -251,6 +253,8 @@ model MedicalReport {
   clinicalFindings String?  @db.Text
   vitals           Json?
   clinicalExam     Json?
+  resultSummary    String?  @db.Text
+  resultsList      Json?
   nextAppointmentDate DateTime?
   recommendations  String?  @db.Text
   pdfUrl           String?  @db.VarChar(500)
@@ -258,11 +262,13 @@ model MedicalReport {
   updatedAt        DateTime @updatedAt
 
   appointment Appointment               @relation(fields: [appointmentId], references: [id])
+  prescription Prescription?            @relation(fields: [prescriptionId], references: [id])
   patient     PatientProfile            @relation("PatientReports", fields: [patientId], references: [id])
   doctor      DoctorProfile             @relation("DoctorReports", fields: [doctorId], references: [id])
   attachments MedicalReportAttachment[]
 
   @@index([appointmentId])
+  @@index([prescriptionId])
   @@index([patientId])
   @@index([doctorId])
   @@map("medical_reports")
