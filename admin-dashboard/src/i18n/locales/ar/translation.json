@@ -410,6 +410,13 @@
     "publicly_bookable": "قابل للحجز العام",
     "fee": "الرسوم",
     "license_number": "رقم الترخيص الطبي",
+    "license_expiry_date": "تاريخ انتهاء الترخيص",
+    "license_expired": "منتهي",
+    "license_valid": "ساري",
+    "medical_license": "الترخيص الطبي",
+    "license_attachment": "مرفق الترخيص",
+    "workplace": "جهة العمل",
+    "preview_license": "معاينة الترخيص الطبي",
     "approved_success": "تم اعتماد الطبيب بنجاح",
     "rejected_success": "تم رفض الطبيب بنجاح"
   },

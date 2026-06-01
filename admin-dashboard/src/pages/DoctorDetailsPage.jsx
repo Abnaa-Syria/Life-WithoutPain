@@ -10,6 +10,7 @@ import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import Badge from '../components/ui/Badge';
 import Avatar from '../components/ui/Avatar';
 import FilePreviewer from '../components/ui/FilePreviewer';
+import MedicalLicensePreview from '../components/doctors/MedicalLicensePreview';
 import Tabs from '../components/ui/Tabs';
 import {
   Stethoscope, FileText, Briefcase, Activity, CheckCircle, Clock,
@@ -116,11 +117,11 @@ export default function DoctorDetailsPage() {
       </div>
 
       <div className="lg:col-span-2 space-y-6">
+        <MedicalLicensePreview doctor={doctor} />
+
         <DetailsSection title={t('doctors.professional_info') || 'Professional Information'} icon={Stethoscope}>
-          <DetailItem label={t('doctors.license_number') || 'Medical License No.'} value={doctor.licenseNumber} />
           <DetailItem label={t('doctors.title')} value={doctor.title} />
           <DetailItem label={t('doctors.speciality')} value={doctor.speciality?.nameAr} />
-          <DetailItem label={t('doctors.city')} value={doctor.city} />
           <DetailItem label={t('doctors.bio')} value={doctor.bio} fullWidth />
         </DetailsSection>
 

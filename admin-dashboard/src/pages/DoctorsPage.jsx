@@ -10,7 +10,8 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import { useTranslation } from 'react-i18next';
-import { Stethoscope, CheckCircle, XCircle, Clock, Star } from 'lucide-react';
+import { Stethoscope, CheckCircle, XCircle, Clock, Star, IdCard } from 'lucide-react';
+import MedicalLicensePreview from '../components/doctors/MedicalLicensePreview';
 import useConfirmDelete from '../hooks/useConfirmDelete';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '../utils/formatCurrency';
@@ -22,6 +23,7 @@ export default function DoctorsPage() {
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [licensePreviewDoctor, setLicensePreviewDoctor] = useState(null);
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [filter, setFilter] = useState('');
 
@@ -111,16 +113,26 @@ export default function DoctorsPage() {
   ];
 
   const renderActions = (doctor) => (
-    doctor.verificationStatus === 'PENDING' && (
-      <div className="flex gap-1 border-r border-[var(--border-color)] mr-2 pr-2 rtl:mr-0 rtl:ml-2 rtl:pr-0 rtl:pl-2 rtl:border-r-0 rtl:border-l">
-        <button onClick={() => approveMutation.mutate(doctor.id)} className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors" title={t('common.approve')}>
-          <CheckCircle size={16} />
-        </button>
-        <button onClick={() => rejectMutation.mutate(doctor.id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title={t('common.reject')}>
-          <XCircle size={16} />
-        </button>
-      </div>
-    )
+    <div className="flex gap-1 border-r border-[var(--border-color)] mr-2 pr-2 rtl:mr-0 rtl:ml-2 rtl:pr-0 rtl:pl-2 rtl:border-r-0 rtl:border-l">
+      <button
+        type="button"
+        onClick={() => setLicensePreviewDoctor(doctor)}
+        className="p-2 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+        title={t('doctors.preview_license')}
+      >
+        <IdCard size={16} />
+      </button>
+      {doctor.verificationStatus === 'PENDING' && (
+        <>
+          <button type="button" onClick={() => approveMutation.mutate(doctor.id)} className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors" title={t('common.approve')}>
+            <CheckCircle size={16} />
+          </button>
+          <button type="button" onClick={() => rejectMutation.mutate(doctor.id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title={t('common.reject')}>
+            <XCircle size={16} />
+          </button>
+        </>
+      )}
+    </div>
   );
 
   return (
@@ -168,6 +180,17 @@ export default function DoctorsPage() {
           renderCustomActions={renderActions}
         />
       </Card>
+
+      <Modal
+        isOpen={Boolean(licensePreviewDoctor)}
+        onClose={() => setLicensePreviewDoctor(null)}
+        title={t('doctors.medical_license')}
+        size="lg"
+      >
+        {licensePreviewDoctor && (
+          <MedicalLicensePreview doctor={licensePreviewDoctor} asSection={false} />
+        )}
+      </Modal>
 
       <Modal
         isOpen={isModalOpen}

@@ -410,6 +410,13 @@
     "publicly_bookable": "Publicly Bookable",
     "fee": "Fee",
     "license_number": "Medical License No.",
+    "license_expiry_date": "License Expiry Date",
+    "license_expired": "Expired",
+    "license_valid": "Valid",
+    "medical_license": "Medical License",
+    "license_attachment": "License Document",
+    "workplace": "Workplace",
+    "preview_license": "Preview medical license",
     "approved_success": "Doctor approved successfully",
     "rejected_success": "Doctor rejected successfully"
   },
