@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
@@ -134,8 +134,8 @@ export default function SupportTicketDetailsPage() {
         subtitle={`${t('support.case')} #${ticket.id}`}
         backPath="/support/tickets"
         badges={[
-          { label: t(`status.${ticket.status?.toLowerCase()}`) || ticket.status, className: 'bg-indigo-100 text-indigo-700' },
-          { label: ticket.priority, className: ticket.priority === 'HIGH' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700' },
+          { label: t(`status.${ticket.status?.toLowerCase()}`) || ticket.status, className: 'bg-primary-100 text-primary-700' },
+          { label: ticket.priority, className: ticket.priority === 'HIGH' ? 'bg-red-100 text-red-700' : 'bg-[var(--surface-secondary)] text-[var(--text-muted)]' },
           ticket.unreadCount > 0 ? { label: `${ticket.unreadCount} ${t('support.unread')}`, className: 'bg-amber-100 text-amber-800' } : null,
         ].filter(Boolean)}
       />
@@ -189,7 +189,7 @@ export default function SupportTicketDetailsPage() {
               <ul className="space-y-1 text-sm">
                 {ticket.attachments.map((a) => (
                   <li key={a.id}>
-                    <a href={`${API_BASE}${a.fileUrl}`} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
+                    <a href={`${API_BASE}${a.fileUrl}`} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline">
                       {a.fileName || a.fileUrl}
                     </a>
                   </li>
@@ -204,7 +204,7 @@ export default function SupportTicketDetailsPage() {
             contentClassName="!p-0"
             layout="stack"
           >
-            <div className="flex flex-col gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 min-h-[320px] max-h-[480px] overflow-y-auto w-full">
+            <div className="flex flex-col gap-4 p-6 bg-[var(--surface-secondary)] min-h-[320px] max-h-[480px] overflow-y-auto w-full">
               {ticket.messages?.length > 0 ? (
                 ticket.messages.map((msg) => {
                   const isAdmin = ['SUPER_ADMIN', 'SUPPORT_STAFF', 'MEDICAL_ADMIN'].includes(msg.senderRole);
@@ -213,7 +213,7 @@ export default function SupportTicketDetailsPage() {
                       <div
                         className={`max-w-[80%] p-4 rounded-2xl shadow-sm border ${
                           isAdmin
-                            ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none'
+                            ? 'bg-primary-500 text-white border-primary-400 rounded-tr-none'
                             : 'bg-[var(--bg-card)] text-[var(--text-primary)] border-[var(--border-color)] rounded-tl-none'
                         }`}
                       >
@@ -227,7 +227,7 @@ export default function SupportTicketDetailsPage() {
                             href={`${API_BASE}${a.fileUrl}`}
                             target="_blank"
                             rel="noreferrer"
-                            className={`block text-xs mt-2 underline ${isAdmin ? 'text-indigo-100' : 'text-indigo-600'}`}
+                            className={`block text-xs mt-2 underline ${isAdmin ? 'text-primary-100' : 'text-primary-600'}`}
                           >
                             {a.fileName || 'Attachment'}
                           </a>

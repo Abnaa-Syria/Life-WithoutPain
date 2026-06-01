@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { disconnectDashboardSocket } from '../services/dashboardSocket';
 import toast from 'react-hot-toast';
 import {
   hasPermission,
@@ -99,6 +100,7 @@ export function AuthProvider({ children }) {
       const refreshToken = localStorage.getItem('refreshToken');
       await api.post('/auth/logout', { refreshToken });
     } catch {} finally {
+      disconnectDashboardSocket();
       localStorage.clear();
       setUser(null);
       navigate('/login');

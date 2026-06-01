@@ -13,17 +13,28 @@ import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import useLanguage from '../hooks/useLanguage';
+import useConfirmDelete from '../hooks/useConfirmDelete';
+import { executeBulkDelete } from '../utils/bulkDelete';
 
 export default function AppointmentsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { isRTL } = useLanguage();
   const qc = useQueryClient();
+  const confirmDelete = useConfirmDelete();
   const [filter, setFilter] = useState('');
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-appointments', filter],
     queryFn: () => api.get('/admin/appointments', { params: { status: filter || undefined } }).then((r) => r.data),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api.delete(`/admin/appointments/${id}`),
+    onSuccess: () => {
+      toast.success(t('messages.deleted'));
+      qc.invalidateQueries(['admin-appointments']);
+    },
   });
 
   const updateStatusMutation = useMutation({
@@ -35,33 +46,47 @@ export default function AppointmentsPage() {
   });
 
   const columns = [
-    { 
-      header: t('appointments.patient') || 'Patient', 
+    {
+      header: t('appointments.patient') || 'Patient',
       accessorKey: 'patient.user.fullName',
       cell: ({ row }) => (
         <div className="flex flex-col">
           <span className="font-semibold">{row.original.patient?.user?.fullName}</span>
           <span className="text-xs text-[var(--text-muted)]">{row.original.patient?.user?.phone}</span>
         </div>
-      )
+      ),
+      meta: {
+        exportValue: (row) => {
+          const name = row.patient?.user?.fullName ?? '—';
+          const phone = row.patient?.user?.phone;
+          return phone ? `${name} (${phone})` : name;
+        },
+      },
     },
-    { 
-      header: t('appointments.doctor') || 'Doctor', 
+    {
+      header: t('appointments.doctor') || 'Doctor',
       accessorKey: 'doctor.user.fullName',
       cell: ({ row }) => (
         <div className="flex flex-col">
           <span className="font-semibold">{row.original.doctor?.user?.fullName}</span>
           <span className="text-xs text-[var(--text-muted)]">{row.original.doctor?.speciality?.nameAr}</span>
         </div>
-      )
+      ),
+      meta: {
+        exportValue: (row) => {
+          const name = row.doctor?.user?.fullName ?? '—';
+          const spec = row.doctor?.speciality?.nameAr;
+          return spec ? `${name} — ${spec}` : name;
+        },
+      },
     },
-    { 
-      header: t('appointments.date') || 'Date & Time', 
+    {
+      header: t('appointments.date') || 'Date & Time',
       accessorKey: 'startTime',
       cell: ({ row }) => {
         const startTime = row.original.startTime;
         if (!startTime) return <span className="text-[var(--text-muted)]">-</span>;
-        
+
         const date = new Date(startTime);
         if (isNaN(date.getTime())) return <span className="text-[var(--text-muted)]">Invalid Date</span>;
 
@@ -70,41 +95,55 @@ export default function AppointmentsPage() {
             <span className="font-medium">
               {format(date, 'dd MMM yyyy', { locale: isRTL ? arSA : undefined })}
             </span>
-            <span className="text-xs text-[var(--text-muted)]">
-              {format(date, 'hh:mm a')}
-            </span>
+            <span className="text-xs text-[var(--text-muted)]">{format(date, 'hh:mm a')}</span>
           </div>
         );
-      }
+      },
+      meta: {
+        exportValue: (row) => {
+          if (!row.startTime) return '—';
+          const date = new Date(row.startTime);
+          if (isNaN(date.getTime())) return '—';
+          return `${format(date, 'dd MMM yyyy', { locale: isRTL ? arSA : undefined })} ${format(date, 'hh:mm a')}`;
+        },
+      },
     },
-    { 
-      header: t('appointments.type') || 'Type', 
+    {
+      header: t('appointments.type') || 'Type',
       accessorKey: 'type',
       cell: ({ row }) => (
         <Badge variant="secondary">
           {t(`appointments.types.${row.original.type?.toLowerCase()}`) || row.original.type}
         </Badge>
-      )
+      ),
+      meta: {
+        exportValue: (row) =>
+          t(`appointments.types.${row.type?.toLowerCase()}`) || row.type,
+      },
     },
-    { 
-      header: t('appointments.fee') || 'Fee', 
+    {
+      header: t('appointments.fee') || 'Fee',
       accessorKey: 'fee',
-      cell: ({ row }) => `${row.original.fee} ر.س`
+      cell: ({ row }) => `${row.original.fee} ر.س`,
+      meta: { exportValue: (row) => `${row.fee ?? '—'} ر.س` },
     },
-    { 
-      header: t('common.status'), 
+    {
+      header: t('common.status'),
       accessorKey: 'status',
       cell: ({ row }) => {
         const status = row.original.status;
-        const variants = { 
-          PENDING: 'warning', 
-          CONFIRMED: 'primary', 
-          COMPLETED: 'success', 
+        const variants = {
+          PENDING: 'warning',
+          CONFIRMED: 'primary',
+          COMPLETED: 'success',
           CANCELLED: 'danger',
-          NO_SHOW: 'secondary'
+          NO_SHOW: 'secondary',
         };
         return <Badge variant={variants[status]}>{t(`status.${status.toLowerCase()}`) || status}</Badge>;
-      }
+      },
+      meta: {
+        exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
+      },
     },
   ];
 
@@ -157,14 +196,24 @@ export default function AppointmentsPage() {
       </div>
 
       <Card>
-        <DataTable 
-          columns={columns} 
-          data={data?.data} 
-          isLoading={isLoading} 
+        <DataTable
+          columns={columns}
+          data={data?.data}
+          isLoading={isLoading}
+          exportFileName="appointments"
+          onBulkDelete={async (items) => {
+            await executeBulkDelete({
+              items,
+              deleteOne: (item) => api.delete(`/admin/appointments/${item.id}`),
+              t,
+              toast,
+              invalidate: () => qc.invalidateQueries(['admin-appointments']),
+            });
+          }}
           onView={(item) => navigate(`/appointments/${item.id}`)}
-          onEdit={(item) => console.log('Edit appointment', item)}
           onDelete={async (item) => {
-            if (await confirmDelete({ text: `Appointment #${item.id}` })) deleteMutation.mutate(item.id);
+            if (await confirmDelete({ text: `Appointment #${item.id}` }))
+              deleteMutation.mutate(item.id);
           }}
           renderCustomActions={renderActions}
           searchPlaceholder={t('appointments.search_placeholder') || 'Search by patient or doctor...'}

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
@@ -39,7 +39,7 @@ const GenericDetailsPage = ({
         title={data[titleField] || `#${id}`}
         subtitle={entityName}
         backPath={backPath}
-        badges={data.status ? [{ label: t(`status.${data.status.toLowerCase()}`) || data.status, className: 'bg-indigo-100 text-indigo-700' }] : []}
+        badges={data.status ? [{ label: t(`status.${data.status.toLowerCase()}`) || data.status, className: 'bg-primary-100 text-primary-700' }] : []}
       />
 
       <div className="space-y-6">

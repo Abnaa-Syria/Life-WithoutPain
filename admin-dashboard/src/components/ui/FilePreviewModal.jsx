@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Download, Maximize2, Minimize2 } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -100,11 +100,11 @@ const FilePreviewModal = ({ isOpen, onClose, files = [], initialIndex = 0 }) => 
             />
           ) : isPdf ? (
             <div className="bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
-              <div className="max-h-[80vh] overflow-auto bg-slate-100 flex justify-center p-4">
+              <div className="max-h-[80vh] overflow-auto bg-[var(--surface-secondary)] flex justify-center p-4">
                 <Document
                   file={fileUrl}
                   onLoadSuccess={onDocumentLoadSuccess}
-                  loading={<div className="p-12 text-slate-500 font-medium italic">Loading PDF...</div>}
+                  loading={<div className="p-12 text-[var(--text-muted)] font-medium italic">Loading PDF...</div>}
                 >
                   <Page 
                     pageNumber={pageNumber} 
@@ -117,12 +117,12 @@ const FilePreviewModal = ({ isOpen, onClose, files = [], initialIndex = 0 }) => 
               
               {/* PDF Controls */}
               {numPages && (
-                <div className="bg-white border-t p-3 flex items-center justify-between text-slate-900">
+                <div className="bg-[var(--bg-card)] border-t border-[var(--divider)] p-3 flex items-center justify-between text-[var(--text-primary)]">
                   <div className="flex items-center gap-4">
                     <button 
                       disabled={pageNumber <= 1}
                       onClick={() => setPageNumber(prev => prev - 1)}
-                      className="p-1 hover:bg-slate-100 rounded disabled:opacity-30"
+                      className="p-1 hover:bg-[var(--surface-secondary)] rounded disabled:opacity-30"
                     >
                       <ChevronLeft size={18} />
                     </button>
@@ -132,26 +132,26 @@ const FilePreviewModal = ({ isOpen, onClose, files = [], initialIndex = 0 }) => 
                     <button 
                       disabled={pageNumber >= numPages}
                       onClick={() => setPageNumber(prev => prev + 1)}
-                      className="p-1 hover:bg-slate-100 rounded disabled:opacity-30"
+                      className="p-1 hover:bg-[var(--surface-secondary)] rounded disabled:opacity-30"
                     >
                       <ChevronRight size={18} />
                     </button>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setScale(s => Math.max(0.5, s - 0.1))} className="px-2 py-1 hover:bg-slate-100 rounded text-xs font-bold">-</button>
+                    <button onClick={() => setScale(s => Math.max(0.5, s - 0.1))} className="px-2 py-1 hover:bg-[var(--surface-secondary)] rounded text-xs font-bold">-</button>
                     <span className="text-xs font-mono w-10 text-center">{Math.round(scale * 100)}%</span>
-                    <button onClick={() => setScale(s => Math.min(2.0, s + 0.1))} className="px-2 py-1 hover:bg-slate-100 rounded text-xs font-bold">+</button>
+                    <button onClick={() => setScale(s => Math.min(2.0, s + 0.1))} className="px-2 py-1 hover:bg-[var(--surface-secondary)] rounded text-xs font-bold">+</button>
                   </div>
                 </div>
               )}
             </div>
           ) : (
             <div className="bg-white p-12 rounded-2xl flex flex-col items-center gap-4">
-              <div className="p-4 bg-indigo-50 text-indigo-600 rounded-full">
+              <div className="p-4 bg-primary-50 text-primary-600 rounded-full">
                 <Maximize2 size={48} />
               </div>
-              <p className="text-slate-600 font-medium">Preview not available for this file type</p>
+              <p className="text-[var(--text-muted)] font-medium">Preview not available for this file type</p>
               <a href={fileUrl} target="_blank" rel="noreferrer" className="btn btn-primary">Download File</a>
             </div>
           )}

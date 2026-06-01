@@ -44,20 +44,36 @@ export default function SupportTicketsTab() {
           <Badge variant="secondary">{row.original.creatorRole}</Badge>
         </div>
       ),
+      meta: {
+        exportValue: (row) => {
+          const role = row.creatorRole
+            ? t(`common.roles.${row.creatorRole}`) || row.creatorRole
+            : '';
+          return role ? `${row.creatorName} (${role})` : row.creatorName;
+        },
+      },
     },
     {
       header: t('support.category') || 'Category',
       accessorKey: 'category',
       cell: ({ row }) => <Badge variant="secondary">{row.original.category}</Badge>,
+      meta: { exportValue: (row) => row.category },
     },
     {
       header: t('support.priority'),
       accessorKey: 'priority',
       cell: ({ row }) => (
-        <Badge variant={row.original.priority === 'HIGH' || row.original.priority === 'URGENT' ? 'danger' : 'secondary'}>
+        <Badge
+          variant={
+            row.original.priority === 'HIGH' || row.original.priority === 'URGENT'
+              ? 'danger'
+              : 'secondary'
+          }
+        >
           {row.original.priority}
         </Badge>
       ),
+      meta: { exportValue: (row) => row.priority },
     },
     {
       header: t('common.status'),
@@ -66,6 +82,9 @@ export default function SupportTicketsTab() {
         const s = row.original.status;
         const variants = { OPEN: 'primary', IN_PROGRESS: 'warning', RESOLVED: 'success', CLOSED: 'secondary' };
         return <Badge variant={variants[s] || 'secondary'}>{t(`status.${s?.toLowerCase()}`) || s}</Badge>;
+      },
+      meta: {
+        exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
       },
     },
     {
@@ -77,11 +96,19 @@ export default function SupportTicketsTab() {
         ) : (
           '—'
         ),
+      meta: {
+        exportValue: (row) => (row.unreadCount > 0 ? String(row.unreadCount) : '—'),
+      },
     },
     {
       header: t('support.date'),
       accessorKey: 'lastActivityAt',
-      cell: ({ row }) => new Date(row.original.lastActivityAt || row.original.createdAt).toLocaleString(),
+      cell: ({ row }) =>
+        new Date(row.original.lastActivityAt || row.original.createdAt).toLocaleString(),
+      meta: {
+        exportValue: (row) =>
+          new Date(row.lastActivityAt || row.createdAt).toLocaleString(),
+      },
     },
   ];
 
@@ -119,6 +146,7 @@ export default function SupportTicketsTab() {
           columns={columns}
           data={data?.data}
           isLoading={isLoading}
+          exportFileName="support-tickets"
           onView={(item) => navigate(`/support/tickets/${item.id}`)}
         />
       </Card>

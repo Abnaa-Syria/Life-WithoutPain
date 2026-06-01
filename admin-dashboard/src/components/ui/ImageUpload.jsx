@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+﻿import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -61,11 +61,11 @@ const ImageUpload = ({ value, onChange, multiple = false, accept = 'image/*' }) 
       <div 
         {...getRootProps()} 
         className={`border-2 border-dashed rounded-2xl p-8 transition-all flex flex-col items-center justify-center cursor-pointer
-          ${isDragActive ? 'border-[var(--primary)] bg-indigo-50/50 dark:bg-indigo-900/10' : 'border-[var(--border-color)] hover:border-[var(--primary)]'}
+          ${isDragActive ? 'border-[var(--primary)] bg-primary-50/80' : 'border-[var(--border-color)] hover:border-[var(--primary)]'}
         `}
       >
         <input {...getInputProps()} />
-        <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-[var(--text-muted)] mb-4">
+        <div className="w-12 h-12 bg-[var(--surface-secondary)] rounded-full flex items-center justify-center text-[var(--text-muted)] mb-4">
           <Upload size={24} />
         </div>
         <p className="text-sm font-medium text-[var(--text-primary)]">

@@ -31,7 +31,7 @@ const AppLayout = () => {
       >
         <Topbar onMenuClick={() => setIsMobileOpen(true)} />
         
-        <div className="flex-1 p-4 md:p-8 animate-in fade-in duration-500">
+        <div className="flex-1 p-5 md:p-8 lg:p-10 animate-in fade-in duration-500">
           <Outlet />
         </div>
       </main>

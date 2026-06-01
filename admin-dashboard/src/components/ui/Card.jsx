@@ -4,10 +4,10 @@ const Card = ({ title, subtitle, children, actions, className = '', bodyClassNam
   return (
     <div className={`card ${className}`}>
       {(title || subtitle || actions) && (
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            {title && <h3 className="text-lg font-semibold text-[var(--text-primary)]">{title}</h3>}
-            {subtitle && <p className="text-sm text-[var(--text-muted)] mt-1">{subtitle}</p>}
+            {title && <h3 className="text-card-title font-medium text-[var(--text-primary)]">{title}</h3>}
+            {subtitle && <p className="text-body text-[var(--text-secondary)] mt-1.5">{subtitle}</p>}
           </div>
           {actions && <div className="flex gap-2">{actions}</div>}
         </div>
@@ -18,4 +18,3 @@ const Card = ({ title, subtitle, children, actions, className = '', bodyClassNam
 };
 
 export default Card;
-

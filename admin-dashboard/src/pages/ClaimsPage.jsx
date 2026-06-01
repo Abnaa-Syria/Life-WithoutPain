@@ -33,7 +33,12 @@ export default function ClaimsPage() {
   const columns = [
     { header: t('claims.id') || 'Claim ID', accessorKey: 'id' },
     { header: t('claims.provider') || 'Provider', accessorKey: 'claimBatch.provider.nameAr' },
-    { header: t('claims.amount') || 'Amount', accessorKey: 'amount', cell: ({ row }) => `${row.original.amount} ر.س` },
+    {
+      header: t('claims.amount') || 'Amount',
+      accessorKey: 'amount',
+      cell: ({ row }) => `${row.original.amount} ر.س`,
+      meta: { exportValue: (row) => `${row.amount ?? '—'} ر.س` },
+    },
     { header: t('claims.patient') || 'Patient', accessorKey: 'appointment.patient.user.fullName' },
     { 
       header: t('common.status'), 
@@ -42,9 +47,21 @@ export default function ClaimsPage() {
         const status = row.original.status;
         const variants = { PENDING: 'warning', SUBMITTED: 'primary', PAID: 'success', REJECTED: 'danger', DISPUTED: 'danger' };
         return <Badge variant={variants[status]}>{t(`status.${status.toLowerCase()}`) || status}</Badge>;
-      }
+      },
+      meta: {
+        exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
+      },
     },
-    { header: t('claims.date') || 'Submitted At', accessorKey: 'createdAt', cell: ({ row }) => row.original.createdAt ? new Date(row.original.createdAt).toLocaleDateString() : '-' },
+    {
+      header: t('claims.date') || 'Submitted At',
+      accessorKey: 'createdAt',
+      cell: ({ row }) =>
+        row.original.createdAt ? new Date(row.original.createdAt).toLocaleDateString() : '-',
+      meta: {
+        exportValue: (row) =>
+          row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—',
+      },
+    },
   ];
 
   const renderActions = (claim) => (
@@ -93,10 +110,11 @@ export default function ClaimsPage() {
       </div>
 
       <Card>
-        <DataTable 
-          columns={columns} 
-          data={data?.data} 
-          isLoading={isLoading} 
+        <DataTable
+          columns={columns}
+          data={data?.data}
+          isLoading={isLoading}
+          exportFileName="claims"
           onView={(item) => navigate(`/claims/${item.id}`)}
           renderCustomActions={renderActions}
         />

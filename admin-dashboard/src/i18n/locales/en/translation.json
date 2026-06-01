@@ -14,6 +14,8 @@
     "all": "All",
     "filter": "Filter",
     "export": "Export",
+    "export_success": "Export downloaded successfully",
+    "clear_selection": "Clear selection",
     "bulk_delete": "Delete Selected",
     "preview": "Preview",
     "name": "Name",
@@ -33,6 +35,7 @@
     "confirm": {
       "delete_title": "Are you sure?",
       "delete_text": "You won't be able to revert this!",
+      "bulk_delete_text": "Delete {{count}} selected item(s)? You won't be able to revert this!",
       "yes_delete": "Yes, delete it",
       "no_cancel": "Cancel"
     },
@@ -165,7 +168,7 @@
     "password": "Password",
     "submit": "Sign In",
     "forgot_password": "Forgot password?",
-    "footer": "Orbex Systems • Advanced Healthcare Admin"
+    "footer": "Advanced Healthcare Admin"
   },
   "validation": {
     "identifier_required": "Email or phone number is required",
@@ -239,6 +242,8 @@
     "login_error": "Invalid credentials",
     "saved": "Saved successfully",
     "deleted": "Deleted successfully",
+    "bulk_deleted": "{{count}} records deleted successfully",
+    "bulk_delete_partial": "{{success}} of {{total}} records deleted; some failed",
     "error": "An error occurred",
     "loading_data": "Loading data...",
     "status_updated": "Status updated successfully",
@@ -528,6 +533,9 @@
     "details": "Reconciliation Details"
   },
   "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet",
+    "mark_all_read": "Mark all as read",
     "manage": "Manage System Notifications",
     "is_read": "Read",
     "send": "Send Notification",

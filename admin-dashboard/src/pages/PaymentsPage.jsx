@@ -22,7 +22,12 @@ export default function PaymentsPage() {
 
   const columns = [
     { header: t('payments.transaction_id') || 'Transaction ID', accessorKey: 'transactionId' },
-    { header: t('payments.amount') || 'Amount', accessorKey: 'amount', cell: ({ row }) => `${row.original.amount} ر.س` },
+    {
+      header: t('payments.amount') || 'Amount',
+      accessorKey: 'amount',
+      cell: ({ row }) => `${row.original.amount} ر.س`,
+      meta: { exportValue: (row) => `${row.amount ?? '—'} ر.س` },
+    },
     { header: t('payments.method') || 'Method', accessorKey: 'method' },
     { header: t('payments.user') || 'User', accessorKey: 'user.fullName' },
     { 
@@ -32,9 +37,19 @@ export default function PaymentsPage() {
         const status = row.original.status;
         const variants = { PENDING: 'warning', COMPLETED: 'success', FAILED: 'danger', REFUNDED: 'secondary' };
         return <Badge variant={variants[status]}>{t(`status.${status.toLowerCase()}`) || status}</Badge>;
-      }
+      },
+      meta: {
+        exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
+      },
     },
-    { header: t('payments.date') || 'Date', accessorKey: 'createdAt', cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString() },
+    {
+      header: t('payments.date') || 'Date',
+      accessorKey: 'createdAt',
+      cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
+      meta: {
+        exportValue: (row) => new Date(row.createdAt).toLocaleDateString(),
+      },
+    },
   ];
 
   return (
@@ -60,10 +75,11 @@ export default function PaymentsPage() {
       </div>
 
       <Card>
-        <DataTable 
-          columns={columns} 
-          data={data?.data} 
-          isLoading={isLoading} 
+        <DataTable
+          columns={columns}
+          data={data?.data}
+          isLoading={isLoading}
+          exportFileName="payments"
           onView={(item) => navigate(`/payments/${item.id}`)}
         />
       </Card>

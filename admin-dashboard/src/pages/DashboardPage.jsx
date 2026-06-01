@@ -52,13 +52,12 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-[var(--text-primary)]">
+    <div className="space-y-10">
+      <div className="highlight-section px-6 py-5">
+        <h1 className="text-page-title">
           {t(`dashboard.greeting_${user?.role}`) || t('sidebar.dashboard')}
         </h1>
-        <p className="text-[var(--text-muted)] mt-1">{t('dashboard.overview')}</p>
+        <p className="text-body text-[var(--text-secondary)] mt-2">{t('dashboard.overview')}</p>
       </div>
 
       {isInsuranceStaff && (
@@ -67,7 +66,7 @@ export default function DashboardPage() {
             label={t('dashboard.stats.open_insurance_cases')}
             value={stats.openInsuranceCases || 0}
             icon={Shield}
-            color="indigo"
+            color="rose"
           />
           <StatCard
             label={t('dashboard.stats.pending_insurance_policies')}
@@ -95,7 +94,7 @@ export default function DashboardPage() {
           label={t('dashboard.stats.total_patients')} 
           value={stats.totalPatients || 0} 
           icon={Heart} 
-          color="indigo"
+          color="rose"
           trend="up"
           trendValue={12}
         />
@@ -146,7 +145,7 @@ export default function DashboardPage() {
           label={t('dashboard.stats.completed_this_month')} 
           value={stats.completedThisMonth || 0} 
           icon={TrendingUp} 
-          color="indigo" 
+          color="rose" 
         />
         <StatCard 
           label={t('dashboard.stats.pending_payouts')} 
@@ -170,13 +169,18 @@ export default function DashboardPage() {
               <AreaChart data={revenueData}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                    <stop offset="0%" stopColor="#D98C9A" stopOpacity={0.35}/>
+                    <stop offset="50%" stopColor="#F4B6C2" stopOpacity={0.15}/>
+                    <stop offset="100%" stopColor="#F4B6C2" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="strokeRevenue" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#D98C9A"/>
+                    <stop offset="100%" stopColor="#F4B6C2"/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={13} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--text-muted)" fontSize={13} tickLine={false} axisLine={false} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: 'var(--bg-card)', 
@@ -185,7 +189,7 @@ export default function DashboardPage() {
                     boxShadow: 'var(--shadow-dropdown)'
                   }} 
                 />
-                <Area type="monotone" dataKey="value" stroke="#6366F1" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                <Area type="monotone" dataKey="value" stroke="url(#strokeRevenue)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorValue)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -195,9 +199,15 @@ export default function DashboardPage() {
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={appointmentData}>
+                <defs>
+                  <linearGradient id="barPink" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#F4B6C2"/>
+                    <stop offset="100%" stopColor="#BFA2DB"/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={13} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--text-muted)" fontSize={13} tickLine={false} axisLine={false} />
                 <Tooltip 
                   cursor={{ fill: 'var(--bg-main)' }}
                   contentStyle={{ 
@@ -207,7 +217,7 @@ export default function DashboardPage() {
                     boxShadow: 'var(--shadow-dropdown)'
                   }} 
                 />
-                <Bar dataKey="value" fill="#6366F1" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="value" fill="url(#barPink)" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

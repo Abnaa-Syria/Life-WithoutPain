@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+﻿import { Routes, Route, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import '../i18n';
 import '../styles/globals.css';
@@ -32,7 +32,7 @@ import AuditLogDetailsPage from '../pages/AuditLogDetailsPage';
 import MedicalMasterDataPage from '../pages/MedicalMasterDataPage';
 import RolesPage from '../pages/RolesPage';
 import RoleDetailsPage from '../pages/RoleDetailsPage';
-import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Bell, Star, Settings, Pill, ClipboardList, Calendar, Paperclip } from 'lucide-react';
+import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Star, Settings, Pill, ClipboardList, Calendar, Paperclip } from 'lucide-react';
 
 const ALL_ADMIN = ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'];
 const ADMIN_MED = ['SUPER_ADMIN', 'MEDICAL_ADMIN'];
@@ -398,8 +398,8 @@ function AppRoutes() {
                     return (
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
                         {v.map((att, idx) => (
-                          <a key={idx} href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-indigo-400 transition-colors group">
-                            <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                          <a key={idx} href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-primary-400 transition-colors group">
+                            <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 group-hover:bg-primary-500 group-hover:text-white transition-colors">
                               <FileText size={20} />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -449,50 +449,6 @@ function AppRoutes() {
                   { label: t('appointments.doctor'), key: "doctor.user.fullName" },
                   { label: t('medical.diagnosis'), key: "diagnosis", fullWidth: true },
                   { label: t('common.notes'), key: "notes", fullWidth: true },
-                ]}
-              ]}
-            />
-          </ProtectedRoute>
-        } />
-
-        {/* Notifications – full CRUD */}
-        <Route path="notifications" element={
-          <ProtectedRoute permission={P.notifications} roles={['SUPER_ADMIN']}>
-            <CrudPage
-              title={t('sidebar.notifications') || "الإشعارات"} subtitle={t('notifications.manage') || "إدارة إشعارات النظام"} endpoint="/admin/notifications" queryKey="admin-notifications"
-              detailPath="/notifications"
-              columns={[
-                { key: 'id', label: '#' },
-                { key: 'titleAr', label: t('common.name_ar') },
-                { key: 'titleEn', label: t('common.name_en') },
-                { key: 'type', label: t('common.type') },
-                { key: 'isRead', label: t('notifications.is_read') || 'مقروء', render: (row) => row.isRead ? t('common.yes') || 'نعم' : t('common.no') || 'لا' },
-                { key: 'date', label: t('common.created_at'), render: (row) => new Date(row.createdAt).toLocaleDateString() },
-              ]}
-              formFields={[
-                { name: 'userId', label: 'معرف المستخدم', type: 'number', required: true },
-                { name: 'titleAr', label: 'العنوان بالعربي', required: true },
-                { name: 'titleEn', label: 'العنوان بالإنجليزي', required: true },
-                { name: 'bodyAr', label: 'المحتوى بالعربي', type: 'textarea', required: true },
-                { name: 'bodyEn', label: 'المحتوى بالإنجليزي', type: 'textarea', required: true },
-                { name: 'type', label: 'النوع', type: 'select', required: true, options: [{ value: 'SYSTEM', label: 'نظام' }, { value: 'APPOINTMENT', label: 'موعد' }, { value: 'PAYMENT', label: 'دفع' }, { value: 'INSURANCE', label: 'تأمين' }, { value: 'VERIFICATION', label: 'تحقق' }] },
-              ]}
-              createLabel="إرسال إشعار" editLabel="تعديل الإشعار"
-            />
-          </ProtectedRoute>
-        } />
-        <Route path="notifications/:id" element={
-          <ProtectedRoute permission={P.notifications} roles={['SUPER_ADMIN']}>
-            <GenericDetailsPage 
-              entityName={t('sidebar.notifications') || "الإشعارات"} endpoint="/admin/notifications" titleField="titleAr"
-              sections={[
-                { title: t('notifications.content') || "محتوى الإشعار", icon: Bell, fields: [
-                  { label: t('common.title_ar') || 'العنوان بالعربي', key: "titleAr" },
-                  { label: t('common.title_en') || 'العنوان بالإنجليزي', key: "titleEn" },
-                  { label: t('common.type'), key: "type" },
-                  { label: t('notifications.is_read') || 'مقروء', key: "isRead", render: (v) => v ? t('common.yes') : t('common.no') },
-                  { label: t('common.body_ar') || 'المحتوى بالعربي', key: "bodyAr", fullWidth: true },
-                  { label: t('common.body_en') || 'المحتوى بالإنجليزي', key: "bodyEn", fullWidth: true },
                 ]}
               ]}
             />

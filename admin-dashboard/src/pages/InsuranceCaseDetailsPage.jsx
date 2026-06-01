@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
@@ -94,7 +94,7 @@ export default function InsuranceCaseDetailsPage() {
         badges={[
           {
             label: t(`status.${icase.status?.toLowerCase()}`) || icase.status,
-            className: 'bg-indigo-100 text-indigo-700',
+            className: 'bg-primary-100 text-primary-700',
           },
         ]}
       />
@@ -167,7 +167,7 @@ export default function InsuranceCaseDetailsPage() {
 
         <DetailsSection title={t('insurance.approvals')} icon={CheckCircle}>
           {icase.approvals?.map((app) => (
-            <div key={app.id} className="col-span-full p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-[var(--border-color)] space-y-2">
+            <div key={app.id} className="col-span-full p-4 bg-[var(--surface-secondary)] rounded-xl border border-[var(--border-color)] space-y-2">
               <div className="flex justify-between">
                 <span className="font-bold">{app.approvalStatus}</span>
                 <span className="text-xs text-[var(--text-muted)]">

@@ -33,6 +33,7 @@
     "recharts": "^3.8.1",
     "socket.io-client": "^4.8.1",
     "sweetalert2": "^11.26.24",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.2"
   },
   "devDependencies": {

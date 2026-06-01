@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
@@ -41,7 +41,7 @@ export default function AppointmentDetailsPage() {
         subtitle={formatDate(appt.startTime, 'PPPPpppp')}
         backPath="/appointments"
         badges={[
-          { label: t(`status.${appt.status?.toLowerCase()}`), className: 'bg-indigo-100 text-indigo-700' }
+          { label: t(`status.${appt.status?.toLowerCase()}`), className: 'bg-primary-100 text-primary-700' }
         ]}
       />
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import useConfirmDelete from '../hooks/useConfirmDelete';
 import toast from 'react-hot-toast';
+import { executeBulkDelete } from '../utils/bulkDelete';
 
 const STAFF_ROLES = [
   { key: 'SUPER_ADMIN', icon: ShieldCheck, color: 'indigo' },
@@ -113,19 +114,27 @@ export default function UsersPage() {
     { header: t('users.full_name') || 'Full Name', accessorKey: 'fullName' },
     { header: t('users.email') || 'Email', accessorKey: 'email' },
     { header: t('users.phone') || 'Phone', accessorKey: 'phone' },
-    { 
-      header: t('users.role') || 'Role', 
+    {
+      header: t('users.role') || 'Role',
       accessorKey: 'role',
-      cell: ({ row }) => <Badge variant="primary">{t(`common.roles.${row.original.role}`) || row.original.role}</Badge>
+      cell: ({ row }) => (
+        <Badge variant="primary">{t(`common.roles.${row.original.role}`) || row.original.role}</Badge>
+      ),
+      meta: {
+        exportValue: (row) => t(`common.roles.${row.role}`) || row.role,
+      },
     },
-    { 
-      header: t('common.status'), 
+    {
+      header: t('common.status'),
       accessorKey: 'isActive',
       cell: ({ row }) => (
         <Badge variant={row.original.isActive ? 'success' : 'secondary'}>
           {row.original.isActive ? t('common.active') : t('common.inactive')}
         </Badge>
-      )
+      ),
+      meta: {
+        exportValue: (row) => (row.isActive ? t('common.active') : t('common.inactive')),
+      },
     },
   ];
 
@@ -146,7 +155,7 @@ export default function UsersPage() {
         <button
           type="button"
           onClick={() => setRoleFilter('')}
-          className={`text-left transition-opacity ${roleFilter === '' ? 'ring-2 ring-indigo-500 rounded-2xl' : 'opacity-90 hover:opacity-100'}`}
+          className={`text-left transition-opacity ${roleFilter === '' ? 'ring-2 ring-primary-500 rounded-2xl' : 'opacity-90 hover:opacity-100'}`}
         >
           <StatCard
             label={t('users.stats.total_staff')}
@@ -160,7 +169,7 @@ export default function UsersPage() {
             key={key}
             type="button"
             onClick={() => setRoleFilter(roleFilter === key ? '' : key)}
-            className={`text-left transition-opacity ${roleFilter === key ? 'ring-2 ring-indigo-500 rounded-2xl' : 'opacity-90 hover:opacity-100'}`}
+            className={`text-left transition-opacity ${roleFilter === key ? 'ring-2 ring-primary-500 rounded-2xl' : 'opacity-90 hover:opacity-100'}`}
           >
             <StatCard
               label={t(`common.roles.${key}`)}
@@ -173,10 +182,23 @@ export default function UsersPage() {
       </div>
 
       <Card>
-        <DataTable 
-          columns={columns} 
-          data={data?.data} 
-          isLoading={isLoading} 
+        <DataTable
+          columns={columns}
+          data={data?.data}
+          isLoading={isLoading}
+          exportFileName="users"
+          onBulkDelete={async (items) => {
+            await executeBulkDelete({
+              items,
+              deleteOne: (item) => api.delete(`/admin/users/${item.id}`),
+              t,
+              toast,
+              invalidate: () => {
+                qc.invalidateQueries(['admin-users']);
+                qc.invalidateQueries(['admin-users-stats']);
+              },
+            });
+          }}
           onEdit={openForm}
           onView={(item) => navigate(`/users/${item.id}`)}
           onDelete={async (item) => {

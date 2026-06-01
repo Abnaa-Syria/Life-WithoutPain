@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Activity, Lock, Mail, Eye, EyeOff, ArrowRight } from 'lucide-react';
@@ -31,27 +31,25 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Decorations */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/2" />
+    <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center p-5 relative overflow-hidden">
+      <div className="absolute top-0 end-0 w-96 h-96 bg-primary-200/40 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 start-0 w-96 h-96 bg-secondary-200/40 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/2" />
 
-      <div className="fixed top-8 right-8 flex gap-4 z-10">
+      <div className="fixed top-8 end-8 flex gap-4 z-10">
         <LanguageSwitcher />
         <ThemeToggle />
       </div>
 
-      <div className="w-full max-w-lg animate-in fade-in zoom-in-95 duration-500">
-        <div className="card shadow-2xl p-8 md:p-12">
-          {/* Logo */}
+      <div className="w-full max-w-lg">
+        <div className="card shadow-[var(--shadow-dropdown)] p-8 md:p-12">
           <div className="flex flex-col items-center mb-10 text-center">
-            <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-600/30 mb-6 transform hover:rotate-12 transition-transform duration-300">
+            <div className="logo-tile w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
               <Activity size={32} className="text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-[var(--text-primary)]">
-              Life<span className="text-indigo-600">Pain</span>
+            <h1 className="text-page-title">
+              Life<span className="text-[var(--primary)]">Pain</span>
             </h1>
-            <p className="text-[var(--text-muted)] mt-2">
+            <p className="text-body text-[var(--text-muted)] mt-2">
               {t('login.subtitle') || 'Enter your credentials to access the admin panel'}
             </p>
           </div>
@@ -60,65 +58,65 @@ export default function LoginPage() {
             <div className="space-y-2">
               <label className="label">{t('login.email') || 'Email Address'}</label>
               <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition-colors group-focus-within:text-indigo-600" size={18} />
+                <Mail className="absolute start-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--primary)]" size={18} />
                 <input
                   {...register('email', { 
                     required: t('validation.email_required') || 'Email is required',
                     pattern: { value: /^\S+@\S+$/i, message: t('validation.invalid_email') || 'Invalid email address' }
                   })}
                   type="email"
-                  className={`input pl-12 h-12 ${errors.email ? 'border-red-500 bg-red-50/10' : ''}`}
+                  className={`input ps-12 ${errors.email ? 'border-[var(--danger)] bg-[var(--danger-bg)]' : ''}`}
                   placeholder="admin@example.com"
                 />
               </div>
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-helper text-[var(--danger)] mt-1">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="label">{t('login.password') || 'Password'}</label>
-                <a href="#" className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 transition-colors">
+                <a href="#" className="text-helper font-medium text-[var(--primary)] hover:text-[var(--primary-hover)] transition-colors">
                   {t('login.forgot_password') || 'Forgot password?'}
                 </a>
               </div>
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition-colors group-focus-within:text-indigo-600" size={18} />
+                <Lock className="absolute start-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--primary)]" size={18} />
                 <input
                   {...register('password', { required: t('validation.password_required') || 'Password is required' })}
                   type={showPassword ? 'text' : 'password'}
-                  className={`input pl-12 pr-12 h-12 ${errors.password ? 'border-red-500 bg-red-50/10' : ''}`}
+                  className={`input ps-12 pe-12 ${errors.password ? 'border-[var(--danger)] bg-[var(--danger-bg)]' : ''}`}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-indigo-600 transition-colors"
+                  className="absolute end-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-helper text-[var(--danger)] mt-1">{errors.password.message}</p>}
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="btn btn-primary w-full h-12 text-base shadow-lg shadow-indigo-600/20 group"
+              className="btn btn-primary w-full group"
             >
               {isLoading ? (
                 <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   {t('login.submit') || 'Sign In'}
-                  <ArrowRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={18} className="ms-1 group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-10 pt-8 border-t border-[var(--border-color)] text-center">
-            <p className="text-sm text-[var(--text-muted)]">
-              {t('login.footer') || 'Orbex Systems • Advanced Healthcare Admin'}
+          <div className="mt-10 pt-8 border-t border-[var(--divider)] text-center">
+            <p className="text-body text-[var(--text-muted)]">
+              {t('login.footer') || 'Advanced Healthcare Admin'}
             </p>
           </div>
         </div>

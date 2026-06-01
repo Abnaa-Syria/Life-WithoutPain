@@ -8,19 +8,19 @@ const PageHeader = ({ title, breadcrumbs = [], action }) => {
   const Icon = isRTL ? ChevronLeft : ChevronRight;
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
       <div>
-        <nav className="flex items-center gap-2 mb-2 text-sm text-[var(--text-muted)]">
+        <nav className="flex items-center gap-2 mb-3 text-body text-[var(--text-muted)]">
           {breadcrumbs.map((crumb, idx) => (
             <React.Fragment key={idx}>
-              <Link to={crumb.path} className="hover:text-[var(--primary)] transition-colors">
+              <Link to={crumb.path} className="hover:text-[var(--primary)] transition-colors font-medium">
                 {crumb.label}
               </Link>
               {idx < breadcrumbs.length - 1 && <Icon size={14} />}
             </React.Fragment>
           ))}
         </nav>
-        <h1 className="text-24 font-bold text-[var(--text-primary)]">{title}</h1>
+        <h1 className="text-page-title">{title}</h1>
       </div>
       {action && <div className="flex shrink-0">{action}</div>}
     </div>

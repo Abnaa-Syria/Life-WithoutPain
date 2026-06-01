@@ -88,6 +88,14 @@ export default function InsuranceCasesPage() {
     { header: t('insurance.provider'), accessorKey: 'provider.nameAr' },
     {
       header: t('insurance.request_source'),
+      meta: {
+        exportValue: (row) =>
+          row.appointmentId
+            ? t('insurance.source_appointment')
+            : row.homeServiceRequestId
+              ? t('insurance.source_home_service')
+              : '—',
+      },
       cell: ({ row }) =>
         row.original.appointmentId
           ? t('insurance.source_appointment')
@@ -112,9 +120,20 @@ export default function InsuranceCasesPage() {
         };
         return <Badge variant={variants[status]}>{t(`status.${status.toLowerCase()}`) || status}</Badge>;
       },
+      meta: {
+        exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
+      },
     },
     {
       header: t('insurance.amounts'),
+      meta: {
+        exportValue: (row) => {
+          const a = row.approvals?.[0];
+          const req = row.requestedAmount ?? a?.requestedAmount;
+          const app = a?.approvedAmount;
+          return `${req ?? '—'} / ${app ?? '—'}`;
+        },
+      },
       cell: ({ row }) => {
         const a = row.original.approvals?.[0];
         const req = row.original.requestedAmount ?? a?.requestedAmount;
@@ -125,7 +144,12 @@ export default function InsuranceCasesPage() {
     {
       header: t('insurance.date'),
       accessorKey: 'submittedAt',
-      cell: ({ row }) => new Date(row.original.submittedAt || row.original.createdAt).toLocaleDateString(),
+      cell: ({ row }) =>
+        new Date(row.original.submittedAt || row.original.createdAt).toLocaleDateString(),
+      meta: {
+        exportValue: (row) =>
+          new Date(row.submittedAt || row.createdAt).toLocaleDateString(),
+      },
     },
   ];
 
@@ -198,6 +222,7 @@ export default function InsuranceCasesPage() {
           columns={columns}
           data={list}
           isLoading={isLoading}
+          exportFileName="insurance-cases"
           onView={(item) => navigate(`/insurance-cases/${item.id}`)}
           onEdit={openEdit}
           renderCustomActions={renderActions}

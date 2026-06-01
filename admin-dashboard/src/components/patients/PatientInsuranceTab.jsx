@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
@@ -53,6 +53,14 @@ export default function PatientInsuranceTab({ patientId }) {
     { header: t('insurance.provider'), accessorKey: 'provider.nameAr' },
     {
       header: t('insurance.request_source'),
+      meta: {
+        exportValue: (row) =>
+          row.appointmentId
+            ? t('insurance.source_appointment')
+            : row.homeServiceRequestId
+              ? t('insurance.source_home_service')
+              : '—',
+      },
       cell: ({ row }) =>
         row.original.appointmentId
           ? t('insurance.source_appointment')
@@ -64,13 +72,27 @@ export default function PatientInsuranceTab({ patientId }) {
       header: t('common.status'),
       accessorKey: 'status',
       cell: ({ row }) => (
-        <Badge variant={row.original.status === 'APPROVED' ? 'success' : row.original.status === 'REJECTED' ? 'danger' : 'warning'}>
+        <Badge
+          variant={
+            row.original.status === 'APPROVED'
+              ? 'success'
+              : row.original.status === 'REJECTED'
+                ? 'danger'
+                : 'warning'
+          }
+        >
           {t(`status.${row.original.status?.toLowerCase()}`) || row.original.status}
         </Badge>
       ),
+      meta: {
+        exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
+      },
     },
     {
       header: t('insurance.approved_amount'),
+      meta: {
+        exportValue: (row) => String(row.approvals?.[0]?.approvedAmount ?? '—'),
+      },
       cell: ({ row }) => row.original.approvals?.[0]?.approvedAmount ?? '—',
     },
   ];
@@ -88,7 +110,7 @@ export default function PatientInsuranceTab({ patientId }) {
           insurances.map((ins) => (
             <div
               key={ins.id}
-              className="col-span-full p-4 rounded-xl border border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-800/30 space-y-3"
+              className="col-span-full p-4 rounded-xl border border-[var(--border-color)] bg-[var(--surface-secondary)] space-y-3"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">{ins.provider?.nameAr || ins.provider?.nameEn}</span>
@@ -132,6 +154,7 @@ export default function PatientInsuranceTab({ patientId }) {
               columns={caseColumns}
               data={cases}
               isLoading={loadingCases}
+              exportFileName="patient-insurance-cases"
               onView={(item) => navigate(`/insurance-cases/${item.id}`)}
             />
           </div>

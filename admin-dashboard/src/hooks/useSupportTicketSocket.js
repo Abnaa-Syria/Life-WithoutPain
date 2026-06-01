@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { getSupportSocket } from '../services/supportSocket';
+import { getDashboardSocket } from '../services/dashboardSocket';
 
 /**
  * Subscribe to real-time support ticket events (messages, status).
@@ -13,7 +13,7 @@ export default function useSupportTicketSocket(ticketId, { onMessage, onStatus }
   useEffect(() => {
     if (!ticketId) return undefined;
 
-    const socket = getSupportSocket();
+    const socket = getDashboardSocket();
     if (!socket) return undefined;
 
     const id = Number(ticketId);

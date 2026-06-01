@@ -14,6 +14,8 @@
     "all": "الكل",
     "filter": "تصفية",
     "export": "تصدير",
+    "export_success": "تم تنزيل التصدير بنجاح",
+    "clear_selection": "إلغاء التحديد",
     "bulk_delete": "حذف المحدد",
     "preview": "معاينة",
     "name": "الاسم",
@@ -33,6 +35,7 @@
     "confirm": {
       "delete_title": "هل أنت متأكد؟",
       "delete_text": "لن تتمكن من التراجع عن هذا الإجراء!",
+      "bulk_delete_text": "حذف {{count}} عنصر/عناصر محددة؟ لن تتمكن من التراجع عن هذا الإجراء!",
       "yes_delete": "نعم، احذف",
       "no_cancel": "إلغاء"
     },
@@ -165,7 +168,7 @@
     "password": "كلمة المرور",
     "submit": "تسجيل الدخول",
     "forgot_password": "نسيت كلمة المرور؟",
-    "footer": "Orbex Systems • لوحة تحكم صحية متقدمة"
+    "footer": "لوحة تحكم صحية متقدمة"
   },
   "validation": {
     "identifier_required": "يرجى إدخال البريد الإلكتروني أو رقم الهاتف",
@@ -239,6 +242,8 @@
     "login_error": "فشل تسجيل الدخول",
     "saved": "تم الحفظ بنجاح",
     "deleted": "تم الحذف بنجاح",
+    "bulk_deleted": "تم حذف {{count}} سجل بنجاح",
+    "bulk_delete_partial": "تم حذف {{success}} من {{total}} سجل؛ فشل البعض",
     "error": "حدث خطأ ما",
     "loading_data": "جاري تحميل البيانات...",
     "status_updated": "تم تحديث الحالة بنجاح",
@@ -528,6 +533,9 @@
     "details": "معلومات التسوية"
   },
   "notifications": {
+    "title": "الإشعارات",
+    "empty": "لا توجد إشعارات",
+    "mark_all_read": "تعيين الكل كمقروء",
     "manage": "إدارة إشعارات النظام",
     "is_read": "مقروء",
     "send": "إرسال إشعار",

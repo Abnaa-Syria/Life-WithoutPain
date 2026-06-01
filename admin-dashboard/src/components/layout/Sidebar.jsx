@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+﻿import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Heart, Stethoscope, Calendar, 
-  Shield, CreditCard, Headphones,   History, Settings, 
-  LogOut, ChevronLeft, ChevronRight, Menu, X, 
-  Activity, Star, Briefcase, FileText, Bell, Database, KeyRound
+  Shield, CreditCard, Headphones, History, Settings, 
+  LogOut, ChevronLeft, ChevronRight, 
+  Activity, Star, Briefcase, FileText, Database, KeyRound
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
@@ -32,7 +32,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
     { icon: CreditCard, label: t('sidebar.payments'), path: '/payments', permission: ROUTE_PERMISSIONS.payments, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
     { icon: History, label: t('sidebar.reconciliations'), path: '/reconciliations', permission: ROUTE_PERMISSIONS.reconciliations, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
     { icon: Headphones, label: t('sidebar.support'), path: '/support/tickets', permission: ROUTE_PERMISSIONS.support, roles: ['SUPER_ADMIN', 'SUPPORT_STAFF'] },
-    { icon: Bell, label: t('sidebar.notifications'), path: '/notifications', permission: ROUTE_PERMISSIONS.notifications, roles: ['SUPER_ADMIN'] },
     { icon: Star, label: t('sidebar.reviews'), path: '/reviews', permission: ROUTE_PERMISSIONS.reviews, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: History, label: t('sidebar.audit_logs'), path: '/audit-logs', permission: ROUTE_PERMISSIONS.audit, roles: ['SUPER_ADMIN'] },
     { icon: KeyRound, label: t('sidebar.roles'), path: '/roles', permission: ROUTE_PERMISSIONS.roles, roles: ['SUPER_ADMIN'] },
@@ -50,58 +49,52 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
   };
 
   const SidebarContent = (
-    <div className="flex flex-col h-full bg-[var(--bg-sidebar)] text-white overflow-hidden">
-      {/* Logo Section */}
-      <div className="flex items-center gap-3 px-6 py-8">
-        <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
-          <Activity size={24} className="text-white" />
+    <div className="sidebar-shell relative flex flex-col h-full bg-[var(--bg-sidebar)] text-[var(--text-primary)] overflow-hidden border-e border-[var(--divider)]">
+      <div className="flex items-center gap-3 px-5 py-7">
+        <div className="logo-tile w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+          <Activity size={22} className="text-[var(--primary-fg)]" />
         </div>
         {!isCollapsed && (
-          <span className="text-xl font-bold tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-2">
-            Life<span className="text-indigo-400">Pain</span>
+          <span className="text-card-title font-semibold tracking-tight whitespace-nowrap">
+            Life<span className="text-[var(--primary)]">Pain</span>
           </span>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-hide">
+      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto scrollbar-hide">
         {filteredItems.map((item, idx) => (
           <NavLink
             key={idx}
             to={item.path}
-            className={({ isActive }) => `
-              flex items-center gap-3 px-3 py-3 rounded-xl transition-all group
-              ${isActive
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
-              ${isCollapsed ? 'justify-center' : ''}
-            `}
+            end={item.path === '/'}
+            className={({ isActive }) =>
+              `nav-link group ${isActive ? 'nav-link--active' : ''} ${isCollapsed ? 'justify-center !px-3' : ''}`
+            }
             title={isCollapsed ? item.label : ''}
           >
-            <item.icon size={22} className={`shrink-0 ${isCollapsed ? '' : ''}`} />
-            {!isCollapsed && (
-              <span className="text-sm font-medium animate-in fade-in slide-in-from-left-2">
-                {item.label}
-              </span>
-            )}
+            <item.icon size={20} className="nav-icon shrink-0 transition-colors" />
+            {!isCollapsed && <span className="truncate">{item.label}</span>}
           </NavLink>
         ))}
       </nav>
 
       {/* User Section */}
-      <div className="p-4 border-t border-slate-800">
-        <div className={`flex items-center gap-3 p-2 rounded-2xl ${isCollapsed ? 'justify-center' : 'bg-slate-800/50'}`}>
+      <div className="p-4 border-t border-[var(--divider)]">
+        <div className={`flex items-center gap-3 p-3 rounded-2xl ${isCollapsed ? 'justify-center' : 'bg-[var(--surface-secondary)]'}`}>
           <Avatar name={user?.fullName} size="sm" />
           {!isCollapsed && (
             <div className="flex-1 min-w-0 overflow-hidden">
-              <p className="text-sm font-semibold truncate">{user?.fullName}</p>
-              <p className="text-xs text-slate-400 truncate">{t(`common.roles.${user?.role}`)}</p>
+              <p className="text-body font-semibold truncate">{user?.fullName}</p>
+              <p className="text-helper text-[var(--text-muted)] truncate">{t(`common.roles.${user?.role}`)}</p>
             </div>
           )}
           {!isCollapsed && (
             <button 
+              type="button"
               onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+              className="p-2 text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger-bg)] rounded-lg transition-colors"
+              aria-label={t('common.logout') || 'Logout'}
             >
               <LogOut size={18} />
             </button>
@@ -109,8 +102,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
         </div>
         {isCollapsed && (
           <button 
+            type="button"
             onClick={handleLogout}
-            className="w-full mt-4 flex justify-center p-3 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-colors"
+            className="w-full mt-3 flex justify-center p-3 text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger-bg)] rounded-xl transition-colors"
+            aria-label={t('common.logout') || 'Logout'}
           >
             <LogOut size={20} />
           </button>
@@ -119,10 +114,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
 
       {/* Collapse Toggle */}
       <button 
+        type="button"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`absolute bottom-24 hidden md:flex items-center justify-center w-8 h-8 bg-slate-800 border border-slate-700 rounded-full text-slate-400 hover:text-white transition-all transform
+        className={`absolute bottom-28 hidden md:flex items-center justify-center w-8 h-8 bg-[var(--surface)] border border-[var(--border-color)] rounded-full text-[var(--text-muted)] hover:text-[var(--primary)] hover:border-[var(--primary)] transition-all
           ${isRTL ? (isCollapsed ? '-left-4' : '-left-4 rotate-180') : (isCollapsed ? '-right-4' : '-right-4 rotate-180')}
         `}
+        aria-label="Toggle sidebar"
       >
         <ChevronLeft size={16} />
       </button>
@@ -131,7 +128,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
 
   return (
     <>
-      {/* Desktop Sidebar */}
       <aside 
         className={`fixed inset-y-0 hidden md:block z-[50] transition-all duration-300 ease-in-out
           ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}
@@ -141,18 +137,18 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
         {SidebarContent}
       </aside>
 
-      {/* Mobile Drawer */}
       <div 
-        className={`fixed inset-0 z-[100] md:hidden bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300
+        className={`fixed inset-0 z-[100] md:hidden bg-[var(--overlay)] backdrop-blur-sm transition-opacity duration-300
           ${isMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
         `}
         onClick={() => setIsMobileOpen(false)}
+        role="presentation"
       >
         <aside 
-          className={`absolute inset-y-0 w-[260px] bg-[var(--bg-sidebar)] transition-transform duration-300 ease-in-out
+          className={`absolute inset-y-0 w-[260px] bg-[var(--bg-sidebar)] transition-transform duration-300 ease-in-out shadow-xl
             ${isRTL ? (isMobileOpen ? 'right-0' : 'translate-x-full') : (isMobileOpen ? 'left-0' : '-translate-x-full')}
           `}
-          onClick={e => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           {SidebarContent}
         </aside>

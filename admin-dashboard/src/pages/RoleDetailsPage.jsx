@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
@@ -83,7 +83,7 @@ export default function RoleDetailsPage() {
   };
 
   if (!canManage) {
-    return <div className="p-8 text-center text-slate-500">{t('rbac.no_access')}</div>;
+    return <div className="p-8 text-center text-[var(--text-muted)]">{t('rbac.no_access')}</div>;
   }
 
   if (roleLoading || permsLoading || selected === null) {
@@ -105,10 +105,10 @@ export default function RoleDetailsPage() {
 
       <Card className="p-6">
         <div className="flex flex-wrap items-center gap-3 mb-6">
-          <Shield className="text-indigo-500" size={28} />
+          <Shield className="text-primary-500" size={28} />
           <div>
             <h2 className="text-xl font-semibold">{role.displayName}</h2>
-            <p className="font-mono text-sm text-slate-500">{role.name}</p>
+            <p className="font-mono text-sm text-[var(--text-muted)]">{role.name}</p>
           </div>
           <Badge variant={role.isSystem ? 'primary' : 'secondary'}>
             {role.isSystem ? t('rbac.system_role') : t('rbac.custom_role')}
@@ -118,7 +118,7 @@ export default function RoleDetailsPage() {
           )}
         </div>
         {role.description && (
-          <p className="text-slate-600 mb-6">{role.description}</p>
+          <p className="text-[var(--text-muted)] mb-6">{role.description}</p>
         )}
         {!role.isSystem && (
           <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
@@ -127,7 +127,7 @@ export default function RoleDetailsPage() {
         )}
 
         {isSuperAdmin ? (
-          <p className="text-slate-500">{t('rbac.super_admin_permissions_note')}</p>
+          <p className="text-[var(--text-muted)]">{t('rbac.super_admin_permissions_note')}</p>
         ) : (
           <>
             <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
@@ -135,8 +135,8 @@ export default function RoleDetailsPage() {
                 const allChecked = perms.every((p) => selected.has(p.id));
                 const someChecked = perms.some((p) => selected.has(p.id));
                 return (
-                  <div key={module} className="border border-slate-200 rounded-xl p-4">
-                    <label className="flex items-center gap-2 font-semibold text-slate-800 mb-3 cursor-pointer">
+                  <div key={module} className="border border-[var(--border-color)] rounded-xl p-4">
+                    <label className="flex items-center gap-2 font-semibold text-[var(--text-primary)] mb-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={allChecked}
@@ -146,7 +146,7 @@ export default function RoleDetailsPage() {
                         onChange={(e) => toggleModule(perms, e.target.checked)}
                       />
                       <span className="capitalize">{module.replace(/\./g, ' / ')}</span>
-                      <span className="text-xs font-normal text-slate-400">
+                      <span className="text-xs font-normal text-[var(--text-muted)]">
                         ({perms.filter((p) => selected.has(p.id)).length}/{perms.length})
                       </span>
                     </label>
@@ -154,7 +154,7 @@ export default function RoleDetailsPage() {
                       {perms.map((p) => (
                         <label
                           key={p.id}
-                          className="flex items-start gap-2 text-sm cursor-pointer hover:bg-slate-50 p-2 rounded"
+                          className="flex items-start gap-2 text-sm cursor-pointer hover:bg-[var(--surface-secondary)] p-2 rounded"
                         >
                           <input
                             type="checkbox"
@@ -162,9 +162,9 @@ export default function RoleDetailsPage() {
                             onChange={() => toggle(p.id)}
                           />
                           <span>
-                            <span className="font-mono text-xs text-slate-600">{p.name}</span>
+                            <span className="font-mono text-xs text-[var(--text-muted)]">{p.name}</span>
                             {p.description && (
-                              <span className="block text-xs text-slate-400">{p.description}</span>
+                              <span className="block text-xs text-[var(--text-muted)]">{p.description}</span>
                             )}
                           </span>
                         </label>

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
@@ -30,7 +30,7 @@ export default function AuditLogDetailsPage() {
         title={`${t('sidebar.audit_logs')} #${log.id}`}
         subtitle={`${log.action} on ${log.entityType}`}
         backPath="/audit-logs"
-        badges={[{ label: log.action, className: 'bg-indigo-100 text-indigo-700' }]}
+        badges={[{ label: log.action, className: 'bg-primary-100 text-primary-700' }]}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -50,7 +50,7 @@ export default function AuditLogDetailsPage() {
         <DetailsSection title={t('audit.details')} icon={Database} className="lg:col-span-2">
           <div className="col-span-full">
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">{t('audit.payload') || 'Data Changes'}</p>
-            <pre className="p-6 bg-slate-900 text-slate-100 rounded-2xl overflow-auto text-xs leading-relaxed border border-slate-800">
+            <pre className="p-6 bg-[#1F2937] text-[#F3F4F6] rounded-2xl overflow-auto text-helper leading-relaxed border border-[var(--divider)]">
               {JSON.stringify(log.details, null, 2)}
             </pre>
           </div>

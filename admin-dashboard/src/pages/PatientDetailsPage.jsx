@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
@@ -111,8 +111,8 @@ export default function PatientDetailsPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {px.items?.map((item) => (
-              <div key={item.id} className="p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-900/20">
-                <p className="font-bold text-indigo-700 dark:text-indigo-400">{item.medicineName}</p>
+              <div key={item.id} className="p-3 bg-primary-50/80 rounded-xl border border-primary-100">
+                <p className="font-bold text-primary-700">{item.medicineName}</p>
                 <p className="text-xs text-[var(--text-muted)]">{item.dosage} • {item.frequency} • {item.duration}</p>
               </div>
             ))}
@@ -170,7 +170,7 @@ export default function PatientDetailsPage() {
         title={patient.user?.fullName}
         subtitle={patient.user?.email}
         backPath="/patients"
-        badges={[{ label: t('sidebar.patients'), className: 'bg-indigo-100 text-indigo-700' }]}
+        badges={[{ label: t('sidebar.patients'), className: 'bg-primary-100 text-primary-700' }]}
       />
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />

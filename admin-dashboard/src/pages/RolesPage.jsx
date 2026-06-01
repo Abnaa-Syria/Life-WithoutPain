@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Plus, KeyRound } from 'lucide-react';
 import useConfirmDelete from '../hooks/useConfirmDelete';
 import toast from 'react-hot-toast';
+import { executeBulkDelete } from '../utils/bulkDelete';
 import { useAuth } from '../hooks/useAuth';
 
 export default function RolesPage() {
@@ -69,17 +70,25 @@ export default function RolesPage() {
           {row.original.isSystem ? t('rbac.system_role') : t('rbac.custom_role')}
         </Badge>
       ),
+      meta: {
+        exportValue: (row) =>
+          row.isSystem ? t('rbac.system_role') : t('rbac.custom_role'),
+      },
     },
     {
       header: t('rbac.permissions_count'),
       accessorKey: '_count',
       cell: ({ row }) => row.original._count?.permissions ?? row.original.permissions?.length ?? 0,
+      meta: {
+        exportValue: (row) =>
+          String(row._count?.permissions ?? row.permissions?.length ?? 0),
+      },
     },
   ];
 
   if (!canManage) {
     return (
-      <div className="p-8 text-center text-slate-500">
+      <div className="p-8 text-center text-[var(--text-muted)]">
         {t('rbac.no_access')}
       </div>
     );
@@ -106,22 +115,35 @@ export default function RolesPage() {
           columns={columns}
           data={data}
           isLoading={isLoading}
-          onView={(item) => navigate(`/roles/${item.id}`)}
-          onDelete={
-            async (item) => {
-              if (item.isSystem) {
-                toast.error(t('rbac.cannot_delete_system'));
-                return;
-              }
-              if (await confirmDelete({ text: item.displayName || item.name })) {
-                deleteMutation.mutate(item.id);
-              }
+          exportFileName="roles"
+          onBulkDelete={async (items) => {
+            const deletable = items.filter((item) => !item.isSystem);
+            if (deletable.length < items.length) {
+              toast.error(t('rbac.cannot_delete_system'));
             }
-          }
+            if (!deletable.length) return;
+            await executeBulkDelete({
+              items: deletable,
+              deleteOne: (item) => api.delete(`/admin/rbac/roles/${item.id}`),
+              t,
+              toast,
+              invalidate: () => qc.invalidateQueries(['rbac-roles']),
+            });
+          }}
+          onView={(item) => navigate(`/roles/${item.id}`)}
+          onDelete={async (item) => {
+            if (item.isSystem) {
+              toast.error(t('rbac.cannot_delete_system'));
+              return;
+            }
+            if (await confirmDelete({ text: item.displayName || item.name })) {
+              deleteMutation.mutate(item.id);
+            }
+          }}
           renderCustomActions={(item) => (
             <button
               type="button"
-              className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              className="p-2 text-[var(--text-muted)] hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
               title={t('rbac.edit_permissions')}
               onClick={() => navigate(`/roles/${item.id}`)}
             >
@@ -136,7 +158,7 @@ export default function RolesPage() {
         onClose={() => setIsModalOpen(false)}
         title={t('rbac.create_role')}
       >
-        <p className="text-sm text-slate-500 mb-4">{t('rbac.create_role_hint')}</p>
+        <p className="text-sm text-[var(--text-muted)] mb-4">{t('rbac.create_role_hint')}</p>
         <form onSubmit={handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
           <div>
             <label className="label">{t('rbac.role_name')}</label>

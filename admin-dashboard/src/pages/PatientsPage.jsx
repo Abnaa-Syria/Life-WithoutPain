@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Users, UserPlus, Heart, Activity } from 'lucide-react';
 import useConfirmDelete from '../hooks/useConfirmDelete';
 import toast from 'react-hot-toast';
+import { executeBulkDelete } from '../utils/bulkDelete';
 
 export default function PatientsPage() {
   const { t } = useTranslation();
@@ -77,20 +78,29 @@ export default function PatientsPage() {
     { header: t('patients.name') || 'Name', accessorKey: 'user.fullName' },
     { header: t('patients.email') || 'Email', accessorKey: 'user.email' },
     { header: t('patients.phone') || 'Phone', accessorKey: 'user.phone' },
-    { 
-      header: t('patients.gender') || 'Gender', 
+    {
+      header: t('patients.gender') || 'Gender',
       accessorKey: 'gender',
-      cell: ({ row }) => t(`common.${row.original.gender?.toLowerCase()}`) || row.original.gender 
+      cell: ({ row }) => t(`common.${row.original.gender?.toLowerCase()}`) || row.original.gender,
+      meta: {
+        exportValue: (row) => t(`common.${row.gender?.toLowerCase()}`) || row.gender,
+      },
     },
     { header: t('patients.city') || 'City', accessorKey: 'city' },
-    { 
-      header: t('patients.insurance') || 'Insurance', 
+    {
+      header: t('patients.insurance') || 'Insurance',
       accessorKey: 'insuranceLinked',
       cell: ({ row }) => (
-        <span className={`badge ${row.original.insuranceLinked ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
+        <span
+          className={`badge ${row.original.insuranceLinked ? 'bg-emerald-100 text-emerald-700' : 'bg-[var(--surface-secondary)] text-[var(--text-muted)]'}`}
+        >
           {row.original.insuranceLinked ? t('common.linked') : t('common.not_linked')}
         </span>
-      )
+      ),
+      meta: {
+        exportValue: (row) =>
+          row.insuranceLinked ? t('common.linked') : t('common.not_linked'),
+      },
     },
   ];
 
@@ -109,10 +119,20 @@ export default function PatientsPage() {
       </div>
 
       <Card>
-        <DataTable 
-          columns={columns} 
-          data={data?.data} 
-          isLoading={isLoading} 
+        <DataTable
+          columns={columns}
+          data={data?.data}
+          isLoading={isLoading}
+          exportFileName="patients"
+          onBulkDelete={async (items) => {
+            await executeBulkDelete({
+              items,
+              deleteOne: (item) => api.delete(`/admin/patients/${item.id}`),
+              t,
+              toast,
+              invalidate: () => qc.invalidateQueries(['admin-patients']),
+            });
+          }}
           onEdit={openEdit}
           onView={(item) => navigate(`/patients/${item.id}`)}
           onDelete={handleDelete}

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
@@ -88,7 +88,7 @@ export default function DoctorDetailsPage() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="lg:col-span-1 space-y-6">
         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-8 flex flex-col items-center text-center shadow-sm">
-          <Avatar name={doctor.user?.fullName} size="xl" className="mb-4 ring-4 ring-indigo-50 dark:ring-indigo-900/20" />
+          <Avatar name={doctor.user?.fullName} size="xl" className="mb-4 ring-4 ring-primary-100" />
           <h2 className="text-xl font-bold text-[var(--text-primary)]">{doctor.user?.fullName}</h2>
           <p className="text-[var(--text-muted)] text-sm mb-6">{doctor.speciality?.nameAr}</p>
 
@@ -127,8 +127,8 @@ export default function DoctorDetailsPage() {
           <div className="space-y-6">
             <DetailsSection title={t('doctors.services') || 'Offered Services'} icon={Briefcase}>
               {doctor.doctorServices?.map((ds, idx) => (
-                <div key={idx} className="p-2 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/20 rounded-xl flex items-center gap-3">
-                  <CheckCircle size={14} className="text-indigo-600" />
+                <div key={idx} className="p-2 bg-primary-50/80 border border-primary-100 rounded-xl flex items-center gap-3">
+                  <CheckCircle size={14} className="text-primary-600" />
                   <span className="text-sm font-medium">{ds.service?.nameAr}</span>
                 </div>
               )) || <div className="col-span-full text-center text-[var(--text-muted)] py-4">{t('common.no_data')}</div>}
@@ -137,7 +137,7 @@ export default function DoctorDetailsPage() {
 
           <div className="space-y-4">
             <h3 className="text-sm font-bold flex items-center gap-2 px-1">
-              <FileText size={16} className="text-indigo-600" />
+              <FileText size={16} className="text-primary-600" />
               {t('doctors.documents') || 'Verification Documents'}
             </h3>
             <FilePreviewer files={documents} height="400px" />
@@ -203,8 +203,8 @@ export default function DoctorDetailsPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {px.items?.map((item) => (
-              <div key={item.id} className="p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-900/20">
-                <p className="font-bold text-indigo-700 dark:text-indigo-400">{item.medicineName}</p>
+              <div key={item.id} className="p-3 bg-primary-50/80 rounded-xl border border-primary-100">
+                <p className="font-bold text-primary-700">{item.medicineName}</p>
                 <p className="text-xs text-[var(--text-muted)]">{item.dosage} • {item.frequency} • {item.duration}</p>
               </div>
             ))}

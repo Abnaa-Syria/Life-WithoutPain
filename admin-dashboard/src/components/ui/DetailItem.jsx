@@ -5,8 +5,8 @@ const DetailItem = ({ label, value, render, fullWidth = false }) => {
 
   return (
     <div className={`${fullWidth ? 'md:col-span-2 lg:col-span-3' : ''}`}>
-      <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">{label}</p>
-      <div className="text-[var(--text-primary)] font-medium">
+      <p className="text-label text-[var(--text-muted)] mb-2">{label}</p>
+      <div className="text-body font-medium text-[var(--text-primary)]">
         {displayValue}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
@@ -32,15 +32,15 @@ export default function UserDetailsPage() {
         subtitle={user.email}
         backPath="/users"
         badges={[
-          { label: t(`common.roles.${user.role}`), className: 'bg-indigo-100 text-indigo-700' },
-          { label: t(`common.${user.status?.toLowerCase()}`), className: user.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }
+          { label: t(`common.roles.${user.role}`), className: 'bg-primary-100 text-primary-700' },
+          { label: t(`common.${user.status?.toLowerCase()}`), className: user.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-[var(--surface-secondary)] text-[var(--text-muted)]' }
         ]}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-8 flex flex-col items-center text-center shadow-sm">
-            <Avatar name={user.fullName} size="xl" className="mb-4 ring-4 ring-indigo-50 dark:ring-indigo-900/20" />
+            <Avatar name={user.fullName} size="xl" className="mb-4 ring-4 ring-primary-100" />
             <h2 className="text-xl font-bold text-[var(--text-primary)]">{user.fullName}</h2>
             <p className="text-[var(--text-muted)] text-sm mb-6">{user.email}</p>
             

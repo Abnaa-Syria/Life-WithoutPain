@@ -1,26 +1,28 @@
-import React from 'react';
+﻿import React from 'react';
 import useLanguage from '../../hooks/useLanguage';
 
 const LanguageSwitcher = () => {
   const { language, setLanguage } = useLanguage();
 
   return (
-    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+    <div className="flex bg-[var(--surface-secondary)] p-1 rounded-xl">
       <button
+        type="button"
         onClick={() => setLanguage('en')}
-        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+        className={`px-3 py-1.5 text-helper font-semibold rounded-lg transition-all ${
           language === 'en' 
-            ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' 
+            ? 'bg-[var(--bg-card)] shadow-sm text-[var(--primary)]' 
             : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
         }`}
       >
         EN
       </button>
       <button
+        type="button"
         onClick={() => setLanguage('ar')}
-        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+        className={`px-3 py-1.5 text-helper font-semibold rounded-lg transition-all ${
           language === 'ar' 
-            ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' 
+            ? 'bg-[var(--bg-card)] shadow-sm text-[var(--primary)]' 
             : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
         }`}
       >

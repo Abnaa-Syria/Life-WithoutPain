@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Stethoscope, CheckCircle, XCircle, Clock, Star } from 'lucide-react';
 import useConfirmDelete from '../hooks/useConfirmDelete';
 import toast from 'react-hot-toast';
+import { executeBulkDelete } from '../utils/bulkDelete';
 
 export default function DoctorsPage() {
   const { t } = useTranslation();
@@ -72,13 +73,14 @@ export default function DoctorsPage() {
     { header: t('doctors.speciality') || 'Speciality', accessorKey: 'speciality.nameAr' },
     { header: t('doctors.license_number') || 'License No.', accessorKey: 'licenseNumber' },
     { header: t('doctors.city') || 'City', accessorKey: 'city' }, 
-    { 
-      header: t('doctors.fee') || 'Fee', 
+    {
+      header: t('doctors.fee') || 'Fee',
       accessorKey: 'consultationFee',
-      cell: ({ row }) => `${row.original.consultationFee} ر.س`
+      cell: ({ row }) => `${row.original.consultationFee} ر.س`,
+      meta: { exportValue: (row) => `${row.consultationFee ?? '—'} ر.س` },
     },
-    { 
-      header: t('doctors.rating') || 'Rating', 
+    {
+      header: t('doctors.rating') || 'Rating',
       accessorKey: 'ratingAverage',
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
@@ -86,16 +88,24 @@ export default function DoctorsPage() {
           <span className="font-semibold">{row.original.ratingAverage?.toFixed(1) || 0}</span>
           <span className="text-xs text-[var(--text-muted)]">({row.original.ratingCount || 0})</span>
         </div>
-      )
+      ),
+      meta: {
+        exportValue: (row) =>
+          `${row.ratingAverage?.toFixed(1) || 0} (${row.ratingCount || 0})`,
+      },
     },
-    { 
-      header: t('common.status'), 
+    {
+      header: t('common.status'),
       accessorKey: 'verificationStatus',
       cell: ({ row }) => {
         const status = row.original.verificationStatus;
         const variants = { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' };
         return <Badge variant={variants[status]}>{t(`status.${status.toLowerCase()}`) || status}</Badge>;
-      }
+      },
+      meta: {
+        exportValue: (row) =>
+          t(`status.${row.verificationStatus?.toLowerCase()}`) || row.verificationStatus,
+      },
     },
   ];
 
@@ -135,10 +145,20 @@ export default function DoctorsPage() {
       </div>
 
       <Card>
-        <DataTable 
-          columns={columns} 
-          data={data?.data} 
-          isLoading={isLoading} 
+        <DataTable
+          columns={columns}
+          data={data?.data}
+          isLoading={isLoading}
+          exportFileName="doctors"
+          onBulkDelete={async (items) => {
+            await executeBulkDelete({
+              items,
+              deleteOne: (item) => api.delete(`/admin/doctors/${item.id}`),
+              t,
+              toast,
+              invalidate: () => qc.invalidateQueries(['admin-doctors']),
+            });
+          }}
           onEdit={openEdit}
           onView={(item) => navigate(`/doctors/${item.id}`)}
           onDelete={async (doc) => {
@@ -179,14 +199,14 @@ export default function DoctorsPage() {
               <label className="label">{t('doctors.bio') || 'Biography'}</label>
               <textarea {...register('bio')} className="input h-24 py-3" />
             </div>
-            <div className="flex gap-6 md:col-span-2 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl">
+            <div className="flex gap-6 md:col-span-2 bg-[var(--surface-secondary)] p-4 rounded-xl">
               <label className="flex items-center gap-2 cursor-pointer group">
-                <input type="checkbox" {...register('isPubliclyBookable')} className="w-4 h-4 rounded border-[var(--border-color)] text-indigo-600 focus:ring-indigo-500" />
-                <span className="text-sm font-medium text-[var(--text-primary)] group-hover:text-indigo-600 transition-colors">{t('doctors.publicly_bookable') || 'Publicly Bookable'}</span>
+                <input type="checkbox" {...register('isPubliclyBookable')} className="w-4 h-4 rounded border-[var(--border-color)] text-primary-600 focus:ring-primary-400" />
+                <span className="text-sm font-medium text-[var(--text-primary)] group-hover:text-primary-600 transition-colors">{t('doctors.publicly_bookable') || 'Publicly Bookable'}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer group">
-                <input type="checkbox" {...register('isAvailable')} className="w-4 h-4 rounded border-[var(--border-color)] text-indigo-600 focus:ring-indigo-500" />
-                <span className="text-sm font-medium text-[var(--text-primary)] group-hover:text-indigo-600 transition-colors">{t('doctors.available') || 'Currently Available'}</span>
+                <input type="checkbox" {...register('isAvailable')} className="w-4 h-4 rounded border-[var(--border-color)] text-primary-600 focus:ring-primary-400" />
+                <span className="text-sm font-medium text-[var(--text-primary)] group-hover:text-primary-600 transition-colors">{t('doctors.available') || 'Currently Available'}</span>
               </label>
             </div>
           </div>

@@ -49,20 +49,33 @@ export default function SupportCasesPage() {
   const columns = [
     { header: t('support.subject') || 'Subject', accessorKey: 'subject' },
     { header: t('support.user') || 'User', accessorKey: 'user.fullName' },
-    { header: t('support.priority') || 'Priority', accessorKey: 'priority', cell: ({ row }) => <Badge variant={row.original.priority === 'HIGH' ? 'danger' : 'secondary'}>{row.original.priority}</Badge> },
-    { 
-      header: t('common.status'), 
+    {
+      header: t('support.priority') || 'Priority',
+      accessorKey: 'priority',
+      cell: ({ row }) => (
+        <Badge variant={row.original.priority === 'HIGH' ? 'danger' : 'secondary'}>
+          {row.original.priority}
+        </Badge>
+      ),
+      meta: { exportValue: (row) => row.priority },
+    },
+    {
+      header: t('common.status'),
       accessorKey: 'status',
       cell: ({ row }) => {
         const status = row.original.status;
         const variants = { OPEN: 'primary', PENDING: 'warning', RESOLVED: 'success', CLOSED: 'secondary' };
         return <Badge variant={variants[status]}>{t(`status.${status.toLowerCase()}`) || status}</Badge>;
-      }
+      },
+      meta: {
+        exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
+      },
     },
-    { 
-      header: t('support.date') || 'Created At', 
+    {
+      header: t('support.date') || 'Created At',
       accessorKey: 'createdAt',
-      cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString()
+      cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
+      meta: { exportValue: (row) => new Date(row.createdAt).toLocaleDateString() },
     },
   ];
 
@@ -89,10 +102,11 @@ export default function SupportCasesPage() {
       </div>
 
       <Card>
-        <DataTable 
-          columns={columns} 
-          data={data?.data} 
-          isLoading={isLoading} 
+        <DataTable
+          columns={columns}
+          data={data?.data}
+          isLoading={isLoading}
+          exportFileName="support-cases"
           onView={(item) => navigate(`/support-cases/${item.id}`)}
           onEdit={openEdit}
         />

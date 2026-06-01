@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Plus, Edit, Trash2, Activity } from 'lucide-react';
 import useConfirmDelete from '../hooks/useConfirmDelete';
 import toast from 'react-hot-toast';
+import { executeBulkDelete } from '../utils/bulkDelete';
 
 export default function SpecialitiesPage() {
   const { t } = useTranslation();
@@ -64,25 +65,27 @@ export default function SpecialitiesPage() {
   };
 
   const columns = [
-    { 
-      header: t('specialities.icon') || 'Icon', 
+    {
+      header: t('specialities.icon') || 'Icon',
       accessorKey: 'iconUrl',
       cell: ({ row }) => (
-        <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center overflow-hidden">
+        <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center overflow-hidden">
           {row.original.iconUrl ? (
             <img src={row.original.iconUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <Activity size={20} className="text-indigo-600" />
+            <Activity size={20} className="text-primary-600" />
           )}
         </div>
-      )
+      ),
+      meta: { exportValue: (row) => row.iconUrl || '—' },
     },
     { header: t('specialities.name_ar') || 'Name (AR)', accessorKey: 'nameAr' },
     { header: t('specialities.name_en') || 'Name (EN)', accessorKey: 'nameEn' },
-    { 
-      header: t('specialities.doctors_count') || 'Doctors', 
+    {
+      header: t('specialities.doctors_count') || 'Doctors',
       accessorKey: '_count.doctors',
-      cell: ({ row }) => row.original._count?.doctors || 0
+      cell: ({ row }) => row.original._count?.doctors || 0,
+      meta: { exportValue: (row) => String(row._count?.doctors || 0) },
     },
   ];
 
@@ -100,10 +103,20 @@ export default function SpecialitiesPage() {
       />
 
       <Card>
-        <DataTable 
-          columns={columns} 
-          data={data?.data} 
-          isLoading={isLoading} 
+        <DataTable
+          columns={columns}
+          data={data?.data}
+          isLoading={isLoading}
+          exportFileName="specialities"
+          onBulkDelete={async (items) => {
+            await executeBulkDelete({
+              items,
+              deleteOne: (item) => api.delete(`/admin/specialities/${item.id}`),
+              t,
+              toast,
+              invalidate: () => qc.invalidateQueries(['admin-specialities']),
+            });
+          }}
           onEdit={openForm}
           onView={(item) => navigate(`/specialities/${item.id}`)}
           onDelete={async (item) => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import useConfirmDelete from '../../hooks/useConfirmDelete';
 import toast from 'react-hot-toast';
+import { executeBulkDelete } from '../../utils/bulkDelete';
 
 export default function CrudPage({
   title,
@@ -88,13 +89,30 @@ export default function CrudPage({
     saveMutation.mutate(payload);
   };
 
-  const columns = columnsDef.map(col => ({
+  const exportSlug =
+    (typeof key === 'string' ? key : endpoint).replace(/^\//, '').split('/').filter(Boolean).pop() ||
+    'export';
+
+  const columns = columnsDef.map((col) => ({
     header: col.label,
     accessorKey: col.key,
-    cell: col.render 
-      ? ({ row }) => col.render(row.original) 
-      : ({ getValue }) => getValue() ?? '-'
+    meta: col.exportValue ? { exportValue: col.exportValue } : undefined,
+    cell: col.render
+      ? ({ row }) => col.render(row.original)
+      : ({ getValue }) => getValue() ?? '-',
   }));
+
+  const handleBulkDelete = canDelete
+    ? async (items) => {
+        await executeBulkDelete({
+          items,
+          deleteOne: (item) => api.delete(`${endpoint}/${item.id}`),
+          t,
+          toast,
+          invalidate: () => qc.invalidateQueries([key]),
+        });
+      }
+    : undefined;
 
   const breadcrumbs = breadcrumbsProp ?? [
     { label: t('sidebar.dashboard'), path: '/' },
@@ -129,15 +147,22 @@ export default function CrudPage({
       )}
 
       <Card subtitle={subtitle}>
-        <DataTable 
-          columns={columns} 
-          data={data?.data} 
-          isLoading={isLoading} 
+        <DataTable
+          columns={columns}
+          data={data?.data}
+          isLoading={isLoading}
+          exportFileName={exportSlug}
+          onBulkDelete={handleBulkDelete}
           onEdit={canEdit ? openForm : undefined}
           onView={detailPath ? (item) => navigate(`${detailPath}/${item.id}`) : undefined}
-          onDelete={canDelete ? async (item) => {
-            if (await confirmDelete({ text: deleteConfirmMessage })) deleteMutation.mutate(item.id);
-          } : undefined}
+          onDelete={
+            canDelete
+              ? async (item) => {
+                  if (await confirmDelete({ text: deleteConfirmMessage }))
+                    deleteMutation.mutate(item.id);
+                }
+              : undefined
+          }
         />
       </Card>
 
@@ -170,12 +195,12 @@ export default function CrudPage({
                     placeholder={f.placeholder}
                   />
                 ) : f.type === 'boolean' ? (
-                  <label className="flex items-center gap-2 cursor-pointer bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl">
+                  <label className="flex items-center gap-2 cursor-pointer bg-[var(--surface-secondary)] p-3 rounded-xl">
                     <input
                       type="checkbox"
                       checked={!!form[f.name]}
                       onChange={(e) => setForm({ ...form, [f.name]: e.target.checked })}
-                      className="w-4 h-4 rounded border-[var(--border-color)] text-indigo-600"
+                      className="w-4 h-4 rounded border-[var(--border-color)] text-primary-600"
                     />
                     <span className="text-sm font-medium">{f.label}</span>
                   </label>

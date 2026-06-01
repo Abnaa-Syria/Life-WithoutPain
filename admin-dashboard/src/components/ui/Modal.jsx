@@ -1,10 +1,7 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
-  const { t } = useTranslation();
-
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -24,24 +21,25 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--overlay)] backdrop-blur-sm">
       <div 
-        className={`bg-[var(--bg-card)] w-full ${sizeClasses[size]} rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200`}
+        className={`modal-panel bg-[var(--bg-card)] w-full ${sizeClasses[size]} rounded-2xl overflow-hidden flex flex-col max-h-[90vh] border border-[rgba(var(--primary-rgb),0.12)]`}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
-          <h3 className="text-xl font-bold text-[var(--text-primary)]">{title}</h3>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--divider)]">
+          <h3 className="text-section-title">{title}</h3>
           <button 
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2.5 rounded-xl hover:bg-[var(--surface-secondary)] transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           >
             <X size={20} />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto scrollbar-hide flex-1">
+        <div className="p-6 overflow-y-auto scrollbar-hide flex-1 text-body">
           {children}
         </div>
       </div>
-      <div className="fixed inset-0 -z-10" onClick={onClose} />
+      <div className="fixed inset-0 -z-10" onClick={onClose} role="presentation" />
     </div>
   );
 };

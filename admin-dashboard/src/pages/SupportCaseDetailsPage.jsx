@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
@@ -32,8 +32,8 @@ export default function SupportCaseDetailsPage() {
         subtitle={`${t('support.case')} #${scase.id}`}
         backPath="/support-cases"
         badges={[
-          { label: t(`status.${scase.status?.toLowerCase()}`), className: 'bg-indigo-100 text-indigo-700' },
-          { label: scase.priority, className: scase.priority === 'HIGH' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700' }
+          { label: t(`status.${scase.status?.toLowerCase()}`), className: 'bg-primary-100 text-primary-700' },
+          { label: scase.priority, className: scase.priority === 'HIGH' ? 'bg-red-100 text-red-700' : 'bg-[var(--surface-secondary)] text-[var(--text-muted)]' }
         ]}
       />
 
@@ -61,7 +61,7 @@ export default function SupportCaseDetailsPage() {
             contentClassName="!p-0"
             layout="stack"
           >
-            <div className="flex flex-col gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 min-h-[400px] w-full">
+            <div className="flex flex-col gap-4 p-6 bg-[var(--surface-secondary)] min-h-[400px] w-full">
               {scase.messages?.length > 0 ? scase.messages.map((msg, idx) => {
                 const isSystem = msg.sender?.role === 'SYSTEM';
                 const isAdmin = ['SUPER_ADMIN', 'SUPPORT_STAFF'].includes(msg.sender?.role);
@@ -70,7 +70,7 @@ export default function SupportCaseDetailsPage() {
                   <div key={idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'} w-full`}>
                     <div className={`max-w-[80%] p-4 rounded-2xl shadow-sm border ${
                       isAdmin 
-                        ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none' 
+                        ? 'bg-primary-500 text-white border-primary-400 rounded-tr-none' 
                         : 'bg-[var(--bg-card)] text-[var(--text-primary)] border-[var(--border-color)] rounded-tl-none'
                     }`}>
                       {!isAdmin && <p className="text-[10px] font-bold opacity-60 uppercase mb-1">{msg.sender?.fullName}</p>}

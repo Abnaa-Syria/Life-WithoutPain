@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 
 const Avatar = ({ src, name, size = 'md', className = '' }) => {
   const [imgError, setImgError] = useState(false);
   const sizeMap = {
-    sm: 'w-8 h-8 text-xs',
-    md: 'w-10 h-10 text-sm',
-    lg: 'w-12 h-12 text-base',
-    xl: 'w-16 h-16 text-lg',
+    sm: 'w-8 h-8 text-helper',
+    md: 'w-10 h-10 text-body',
+    lg: 'w-12 h-12 text-body',
+    xl: 'w-16 h-16 text-card-title',
   };
 
   const initials = name
@@ -28,7 +28,7 @@ const Avatar = ({ src, name, size = 'md', className = '' }) => {
           onError={() => setImgError(true)}
         />
       ) : (
-        <div className="w-full h-full rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold border border-indigo-200 dark:border-indigo-800">
+        <div className="w-full h-full rounded-xl bg-[var(--bg-sidebar-active)] text-[var(--primary)] flex items-center justify-center font-semibold border border-[rgba(var(--primary-rgb),0.25)]">
           {initials}
         </div>
       )}

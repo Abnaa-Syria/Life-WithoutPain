@@ -20,36 +20,46 @@ export default function AuditLogsPage() {
   });
 
   const columns = [
-    { 
-      header: t('audit.user') || 'User', 
+    {
+      header: t('audit.user') || 'User',
       accessorKey: 'user.fullName',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <User size={14} className="text-[var(--text-muted)]" />
           <span>{row.original.user?.fullName || t('common.system')}</span>
         </div>
-      )
+      ),
+      meta: {
+        exportValue: (row) => row.user?.fullName || t('common.system'),
+      },
     },
-    { 
-      header: t('audit.action') || 'Action', 
+    {
+      header: t('audit.action') || 'Action',
       accessorKey: 'action',
-      cell: ({ row }) => <Badge variant="secondary">{row.original.action}</Badge>
+      cell: ({ row }) => <Badge variant="secondary">{row.original.action}</Badge>,
+      meta: { exportValue: (row) => row.action },
     },
     { header: t('audit.module') || 'Module', accessorKey: 'module' },
-    { 
-      header: t('audit.details') || 'Details', 
+    {
+      header: t('audit.details') || 'Details',
       accessorKey: 'details',
-      cell: ({ row }) => <div className="max-w-xs truncate" title={JSON.stringify(row.original.details)}>{JSON.stringify(row.original.details)}</div>
+      cell: ({ row }) => (
+        <div className="max-w-xs truncate" title={JSON.stringify(row.original.details)}>
+          {JSON.stringify(row.original.details)}
+        </div>
+      ),
+      meta: { exportValue: (row) => JSON.stringify(row.details ?? {}) },
     },
-    { 
-      header: t('audit.date') || 'Date & Time', 
+    {
+      header: t('audit.date') || 'Date & Time',
       accessorKey: 'createdAt',
       cell: ({ row }) => (
         <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
           <Clock size={12} />
           {new Date(row.original.createdAt).toLocaleString()}
         </div>
-      )
+      ),
+      meta: { exportValue: (row) => new Date(row.createdAt).toLocaleString() },
     },
   ];
 
@@ -61,10 +71,11 @@ export default function AuditLogsPage() {
       />
 
       <Card subtitle={t('audit.subtitle') || 'System-wide activity and changes log'}>
-        <DataTable 
-          columns={columns} 
-          data={data?.data} 
-          isLoading={isLoading} 
+        <DataTable
+          columns={columns}
+          data={data?.data}
+          isLoading={isLoading}
+          exportFileName="audit-logs"
           onView={(item) => navigate(`/audit-logs/${item.id}`)}
           searchPlaceholder={t('audit.search_placeholder') || 'Search by entity type...'}
         />

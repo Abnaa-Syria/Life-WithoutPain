@@ -12,8 +12,8 @@ export default function useConfirmDelete() {
       text: text || t('common.confirm.delete_text'),
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#EF4444',
-      cancelButtonColor: '#64748B',
+      confirmButtonColor: '#F87171',
+      cancelButtonColor: '#374151',
       confirmButtonText: confirmButtonText || t('common.confirm.yes_delete'),
       cancelButtonText: cancelButtonText || t('common.cancel'),
       reverseButtons: true, // Swaps cancel/confirm for better UX in RTL/LTR
