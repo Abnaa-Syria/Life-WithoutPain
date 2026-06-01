@@ -17,8 +17,10 @@ const registerDoctorSchema = z.object({
   phone: phoneSchema,
   password: passwordSchema,
   licenceNumber: z.string().min(3).max(100), // رقم الترخيص الطبي
+  licenceExpiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'licenceExpiryDate must be YYYY-MM-DD').optional(),
   specialityId: z.number().int().positive().optional(),
   licenseNumber: z.string().min(3).max(100), // رقم الترخيص الطبي (backup alias)
+  licenseExpiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'licenseExpiryDate must be YYYY-MM-DD'),
   title: z.string().min(2).max(100).optional(),
   workplace: z.string().min(2).max(255).optional(),
   city: z.string().min(2).max(100).optional(),

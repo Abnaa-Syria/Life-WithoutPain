@@ -2,8 +2,10 @@ const router = require('express').Router();
 const controller = require('./appointment.doctor.controller');
 const callSessionDoctorController = require('../call-sessions/callSession.doctor.controller');
 const conversationDoctorController = require('../conversations/conversation.doctor.controller');
+const { validate } = require('../../middlewares/validate');
+const { listAppointmentQuerySchema } = require('./appointment.validator');
 
-router.get('/', controller.list);
+router.get('/', validate(listAppointmentQuerySchema, 'query'), controller.list);
 router.get('/:id', controller.getOne);
 router.patch('/:id/confirm', controller.confirm);
 router.patch('/:id/reject', controller.reject);

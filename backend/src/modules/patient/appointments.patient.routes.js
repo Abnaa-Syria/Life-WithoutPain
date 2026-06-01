@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const controller = require('./appointments.patient.controller');
 const { validate } = require('../../middlewares/validate');
-const { createAppointmentSchema } = require('../appointments/appointment.validator');
+const { createAppointmentSchema, listAppointmentQuerySchema } = require('../appointments/appointment.validator');
 
-router.get('/', controller.list);
+router.get('/', validate(listAppointmentQuerySchema, 'query'), controller.list);
 router.post('/', validate(createAppointmentSchema), controller.create);
 router.get('/:id', controller.getById);
 router.get('/:id/session', controller.getSession);

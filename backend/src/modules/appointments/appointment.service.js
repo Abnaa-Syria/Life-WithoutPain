@@ -63,6 +63,15 @@ class AppointmentService {
       where.status = { notIn: ['CANCELLED', 'COMPLETED'] };
     } else if (filter === 'all') {
       orderBy.appointmentDate = 'desc';
+      orderBy.startTime = 'desc';
+    }
+
+    if (query.startDate || query.endDate) {
+      where.appointmentDate = {};
+      if (query.startDate) where.appointmentDate.gte = new Date(query.startDate);
+      if (query.endDate) where.appointmentDate.lte = new Date(query.endDate);
+    } else if (query.date) {
+      where.appointmentDate = new Date(query.date);
     }
 
     const include = {
@@ -236,11 +245,18 @@ class AppointmentService {
     if (query.status) where.status = query.status;
     if (query.doctorId) where.doctorId = parseInt(query.doctorId);
     if (query.patientId) where.patientId = parseInt(query.patientId);
-    if (query.date) where.appointmentDate = new Date(query.date);
+    
+    if (query.startDate || query.endDate) {
+      where.appointmentDate = {};
+      if (query.startDate) where.appointmentDate.gte = new Date(query.startDate);
+      if (query.endDate) where.appointmentDate.lte = new Date(query.endDate);
+    } else if (query.date) {
+      where.appointmentDate = new Date(query.date);
+    }
 
     const [data, total] = await Promise.all([
       prisma.appointment.findMany({
-        where, skip, take: limit, orderBy: { appointmentDate: 'desc' },
+        where, skip, take: limit, orderBy: { appointmentDate: 'desc', startTime: 'desc' },
         include: {
           patient: { include: { user: { select: { fullName: true, avatarUrl: true } } } },
           doctor: { include: { user: { select: { fullName: true, avatarUrl: true } }, speciality: true } },
@@ -345,14 +361,21 @@ class AppointmentService {
     const where = { doctorId };
     if (query.status) where.status = query.status;
     if (query.type) where.appointmentType = query.type;
-    if (query.date) where.appointmentDate = new Date(query.date);
+    
+    if (query.startDate || query.endDate) {
+      where.appointmentDate = {};
+      if (query.startDate) where.appointmentDate.gte = new Date(query.startDate);
+      if (query.endDate) where.appointmentDate.lte = new Date(query.endDate);
+    } else if (query.date) {
+      where.appointmentDate = new Date(query.date);
+    }
 
     const [data, total] = await Promise.all([
       prisma.appointment.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { appointmentDate: 'desc' },
+        orderBy: { appointmentDate: 'desc', startTime: 'desc' },
         include: {
           patient: { include: { user: { select: { fullName: true, avatarUrl: true } } } },
           service: { select: { nameAr: true, nameEn: true } },

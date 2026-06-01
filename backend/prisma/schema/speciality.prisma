@@ -55,6 +55,8 @@ model DoctorAvailability {
   doctorId            Int
   dayOfWeek           DayOfWeek
   periodType          PeriodType
+  startDate           DateTime?  @db.Date
+  endDate             DateTime?  @db.Date
   startTime           String     @db.VarChar(5)
   endTime             String     @db.VarChar(5)
   slotDurationMinutes Int        @default(30)

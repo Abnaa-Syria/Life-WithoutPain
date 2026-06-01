@@ -20,6 +20,20 @@ const createAppointmentSchema = z.object({
   }
 });
 
+const listAppointmentQuerySchema = z.object({
+  status: z.enum(['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'RESCHEDULED', 'NO_SHOW']).optional(),
+  date: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  page: z.string().optional(),
+  limit: z.string().optional(),
+  filter: z.string().optional(),
+  type: z.string().optional(),
+  doctorId: z.string().optional(),
+  patientId: z.string().optional(),
+});
+
 module.exports = {
   createAppointmentSchema,
+  listAppointmentQuerySchema,
 };

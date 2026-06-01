@@ -72,7 +72,7 @@ class AuthService {
     };
   }
 
-  static async registerDoctor({ fullName, email, phone, password, specialityId, licenceNumber, licenseNumber, licenseUrl, title, workplace, city, preferredLanguage }) {
+  static async registerDoctor({ fullName, email, phone, password, specialityId, licenceNumber, licenseNumber, licenceExpiryDate, licenseExpiryDate, licenseUrl, title, workplace, city, preferredLanguage }) {
     const normalizedPhone = normalizePhone(phone);
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { phone: normalizedPhone }], deletedAt: null },
@@ -88,8 +88,15 @@ class AuthService {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
+    const expiryRaw = licenceExpiryDate || licenseExpiryDate;
+    const parsedExpiry = expiryRaw ? new Date(`${expiryRaw}T00:00:00.000Z`) : null;
+    if (parsedExpiry && Number.isNaN(parsedExpiry.getTime())) {
+      throw new ValidationError('Invalid medical license expiry date');
+    }
+
     const profileCreate = {
       licenseNumber: finalLicenseNumber,
+      licenseExpiryDate: parsedExpiry,
       title: title || null,
       workplace: workplace || null,
       city: city || null,
@@ -530,7 +537,7 @@ class AuthService {
     return { message: 'Logged out successfully' };
   }
 
-  static async registerDoctorMobile({ name, mobileNumber, password, specializationId, medicalLicenseNumber, workPlace, city, licenseUrl }) {
+  static async registerDoctorMobile({ name, mobileNumber, password, specializationId, medicalLicenseNumber, medicalLicenseExpiryDate, workPlace, city, licenseUrl }) {
     const phone = normalizePhone(mobileNumber);
     const email = `${phone.replace(/\D/g, '')}@doctor.app`;
 
@@ -541,6 +548,7 @@ class AuthService {
       password,
       specialityId: specializationId,
       licenseNumber: medicalLicenseNumber,
+      licenseExpiryDate: medicalLicenseExpiryDate,
       licenseUrl,
       workplace: workPlace,
       city,
@@ -629,6 +637,27 @@ class AuthService {
     const { getEffectivePermissions } = require('../rbac/permission.service');
     const permissions = await getEffectivePermissions(userId, user.role);
     return { ...user, permissions };
+  }
+
+  static async deleteAccount(userId) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError('User not found');
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: {
+          status: 'INACTIVE',
+          deletedAt: new Date(),
+        },
+      }),
+      prisma.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+
+    return { message: 'Account deleted successfully' };
   }
 }
 

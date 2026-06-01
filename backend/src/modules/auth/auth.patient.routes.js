@@ -26,6 +26,7 @@ router.post('/reset-password', validate(resetPasswordSchema), controller.resetPa
 router.use(authenticate, authorize(ROLES.PATIENT));
 router.post('/logout', controller.logout);
 router.get('/me', controller.getMe);
+router.delete('/account', controller.deleteAccount);
 router.post('/change-password', validate(changePasswordSchema), controller.changePassword);
 
 module.exports = router;

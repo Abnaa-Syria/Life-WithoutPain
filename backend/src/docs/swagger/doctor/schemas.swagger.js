@@ -9,6 +9,7 @@
  *         name: { type: string }
  *         specializationId: { type: integer }
  *         medicalLicenseNumber: { type: string }
+ *         medicalLicenseExpiryDate: { type: string, format: date, example: '2027-12-31' }
  *         workPlace: { type: string }
  *         city: { type: string }
  *         mobileNumber: { type: string }

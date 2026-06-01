@@ -9,6 +9,16 @@ class SettingController {
     return successResponse(res, { data });
   });
 
+  static getPrivacyPolicy = asyncHandler(async (req, res) => {
+    const data = await SettingService.getByKey('PRIVACY_POLICY');
+    return successResponse(res, { data });
+  });
+
+  static getTermsConditions = asyncHandler(async (req, res) => {
+    const data = await SettingService.getByKey('TERMS_CONDITIONS');
+    return successResponse(res, { data });
+  });
+
   static create = asyncHandler(async (req, res) => {
     const data = await SettingService.create(req.body);
     return createdResponse(res, { data });

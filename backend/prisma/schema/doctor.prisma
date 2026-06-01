@@ -9,6 +9,7 @@ model DoctorProfile {
   bioAr              String?            @db.Text
   yearsOfExperience  Int?
   licenseNumber      String            @db.VarChar(100)
+  licenseExpiryDate  DateTime?          @db.Date
   workplace          String?            @db.VarChar(255)
   city               String?            @db.VarChar(100)
   clinicAddress      String?            @db.Text

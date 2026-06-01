@@ -148,6 +148,7 @@ async function main() {
       bioAr: 'طبيب بخبرة عالية',
       yearsOfExperience: d.years,
       licenseNumber: d.licenseNumber,
+      licenseExpiryDate: new Date('2028-06-01'),
       workplace: 'مجمع طبي',
       city: d.city,
       consultationFee: d.fee,

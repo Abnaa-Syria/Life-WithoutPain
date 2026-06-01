@@ -18,7 +18,14 @@ class DoctorAdminController {
         skip, 
         take: limit, 
         orderBy: { createdAt: 'desc' }, 
-        include: { user: { select: { id: true, fullName: true, email: true, phone: true, status: true } }, speciality: true } 
+        include: {
+          user: { select: { id: true, fullName: true, email: true, phone: true, status: true } },
+          speciality: true,
+          verificationDocuments: {
+            where: { fileType: 'LICENSE' },
+            select: { id: true, fileUrl: true, fileType: true, reviewStatus: true, createdAt: true },
+          },
+        },
       }),
       DoctorRepository.count({ where }),
     ]);

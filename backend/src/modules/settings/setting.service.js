@@ -6,6 +6,15 @@ class SettingService {
     return SystemSettingRepository.findMany({ where, orderBy: { key: 'asc' } });
   }
 
+  static async getByKey(key) {
+    const setting = await SystemSettingRepository.findFirst({ where: { key } });
+    if (!setting) {
+      const { NotFoundError } = require('../../shared/errors/AppError');
+      throw new NotFoundError('Setting not found');
+    }
+    return setting;
+  }
+
   static async create(data) {
     return SystemSettingRepository.create({ data });
   }

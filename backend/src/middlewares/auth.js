@@ -7,11 +7,17 @@ const { getEffectivePermissions } = require('../modules/rbac/permission.service'
 const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
+    // Debug logging
+    // console.log('Auth Header:', authHeader);
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new UnauthorizedError('Access token is required');
     }
 
     const token = authHeader.split(' ')[1];
+    // Debug logging
+    // console.log('Token:', token);
+
     const decoded = jwt.verify(token, config.jwt.accessSecret);
 
     const user = await prisma.user.findFirst({

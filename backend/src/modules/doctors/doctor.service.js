@@ -171,26 +171,32 @@ class DoctorService {
     const slots = [];
 
     for (const dayOfWeek of days) {
-      if (payload.morningStart && payload.morningEnd) {
+      if (payload.type === 'morning' || (!payload.type && payload.morningStart && payload.morningEnd)) {
         slots.push({
           doctorId: profile.id,
           dayOfWeek,
           periodType: 'MORNING',
-          startTime: payload.morningStart,
-          endTime: payload.morningEnd,
+          startDate: payload.startDate ? new Date(payload.startDate) : null,
+          endDate: payload.endDate ? new Date(payload.endDate) : null,
+          startTime: payload.type === 'morning' ? payload.startTime : payload.morningStart,
+          endTime: payload.type === 'morning' ? payload.endTime : payload.morningEnd,
           slotDurationMinutes: payload.examinationDuration || 30,
           breakDurationMinutes: payload.breakDuration || 10,
+          isActive: payload.isActive !== undefined ? payload.isActive : true,
         });
       }
-      if (payload.nightStart && payload.nightEnd) {
+      if (payload.type === 'night' || (!payload.type && payload.nightStart && payload.nightEnd)) {
         slots.push({
           doctorId: profile.id,
           dayOfWeek,
           periodType: 'EVENING',
-          startTime: payload.nightStart,
-          endTime: payload.nightEnd,
+          startDate: payload.startDate ? new Date(payload.startDate) : null,
+          endDate: payload.endDate ? new Date(payload.endDate) : null,
+          startTime: payload.type === 'night' ? payload.startTime : payload.nightStart,
+          endTime: payload.type === 'night' ? payload.endTime : payload.nightEnd,
           slotDurationMinutes: payload.examinationDuration || 30,
           breakDurationMinutes: payload.breakDuration || 10,
+          isActive: payload.isActive !== undefined ? payload.isActive : true,
         });
       }
     }

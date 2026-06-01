@@ -10,6 +10,7 @@ const register = asyncHandler(async (req, res) => {
     password: req.body.password,
     specializationId: req.body.specializationId,
     medicalLicenseNumber: req.body.medicalLicenseNumber,
+    medicalLicenseExpiryDate: req.body.medicalLicenseExpiryDate,
     workPlace: req.body.workPlace,
     city: req.body.city,
     licenseUrl,
@@ -30,4 +31,14 @@ const login = asyncHandler(async (req, res) => {
   return successResponse(res, { data, message: 'Login successful' });
 });
 
-module.exports = { register, verifyOtp, login };
+const getMe = asyncHandler(async (req, res) => {
+  const result = await AuthService.getProfile(req.user.id);
+  return successResponse(res, { data: result, message: 'Profile fetched successfully' });
+});
+
+const deleteAccount = asyncHandler(async (req, res) => {
+  const result = await AuthService.deleteAccount(req.user.id);
+  return successResponse(res, { data: result, message: 'Account deleted successfully' });
+});
+
+module.exports = { register, verifyOtp, login, getMe, deleteAccount };

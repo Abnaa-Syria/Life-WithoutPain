@@ -52,6 +52,11 @@ const getMe = asyncHandler(async (req, res) => {
   return successResponse(res, { data: result, message: 'Profile fetched successfully' });
 });
 
+const deleteAccount = asyncHandler(async (req, res) => {
+  const result = await AuthService.deleteAccount(req.user.id);
+  return successResponse(res, { data: result, message: 'Account deleted successfully' });
+});
+
 module.exports = {
   register,
   login,
@@ -63,4 +68,5 @@ module.exports = {
   changePassword,
   logout,
   getMe,
+  deleteAccount,
 };
