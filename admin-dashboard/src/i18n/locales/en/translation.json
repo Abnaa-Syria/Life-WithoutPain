@@ -114,6 +114,7 @@
     "dashboard": "Dashboard",
     "patients": "Patients",
     "doctors": "Doctors",
+    "doctor_verification": "Doctor Verification",
     "appointments": "Appointments",
     "specialities": "Specialities",
     "insurance_cases": "Insurance Cases",
@@ -137,7 +138,8 @@
     "settings": "Settings",
     "reconciliations": "Reconciliations",
     "notifications": "Notifications",
-    "lab_tests": "Lab Tests",
+    "lab_tests": "Laboratory Tests",
+    "prescriptions": "Prescriptions",
     "payouts": "Payouts",
     "roles": "Roles & Permissions"
   },

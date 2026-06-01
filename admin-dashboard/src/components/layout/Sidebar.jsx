@@ -4,7 +4,8 @@ import {
   LayoutDashboard, Users, Heart, Stethoscope, Calendar, 
   Shield, CreditCard, Headphones, History, Settings, 
   LogOut, ChevronLeft, ChevronRight, 
-  Activity, Star, Briefcase, FileText, Database, KeyRound
+  Activity, Star, Briefcase, FileText, Database, KeyRound,
+  UserCheck, FlaskConical, Building2, Wallet, Pill, Bell, ClipboardList,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
@@ -23,16 +24,23 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
     { icon: Users, label: t('sidebar.users'), path: '/users', permission: ROUTE_PERMISSIONS.users, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Heart, label: t('sidebar.patients'), path: '/patients', permission: ROUTE_PERMISSIONS.patients, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'SUPPORT_STAFF'] },
     { icon: Stethoscope, label: t('sidebar.doctors'), path: '/doctors', permission: ROUTE_PERMISSIONS.doctors, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: UserCheck, label: t('sidebar.doctor_verification'), path: '/doctor-verification', permission: ROUTE_PERMISSIONS.doctors, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Activity, label: t('sidebar.specialities'), path: '/specialities', permission: ROUTE_PERMISSIONS.specialities, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Briefcase, label: t('sidebar.services'), path: '/services', permission: ROUTE_PERMISSIONS.services, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Database, label: t('sidebar.medical_master_data'), path: '/medical-master-data', permission: ROUTE_PERMISSIONS.medicalMaster, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Calendar, label: t('sidebar.appointments'), path: '/appointments', permission: ROUTE_PERMISSIONS.appointments, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: FlaskConical, label: t('sidebar.lab_tests'), path: '/lab-tests', permission: ROUTE_PERMISSIONS.labTests, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: ClipboardList, label: t('sidebar.reports'), path: '/reports', permission: ROUTE_PERMISSIONS.reports, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Pill, label: t('sidebar.prescriptions'), path: '/prescriptions', permission: ROUTE_PERMISSIONS.prescriptions, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Building2, label: t('sidebar.insurance_providers'), path: '/insurance-providers', permission: ROUTE_PERMISSIONS.insuranceProviders, roles: ['SUPER_ADMIN'] },
     { icon: Shield, label: t('sidebar.insurance_cases'), path: '/insurance-cases', permission: ROUTE_PERMISSIONS.insurance, roles: ['SUPER_ADMIN', 'INSURANCE_STAFF', 'MEDICAL_ADMIN'] },
+    { icon: Headphones, label: t('sidebar.support'), path: '/support/tickets', permission: ROUTE_PERMISSIONS.support, roles: ['SUPER_ADMIN', 'SUPPORT_STAFF'] },
     { icon: FileText, label: t('sidebar.claims'), path: '/claims', permission: ROUTE_PERMISSIONS.claims, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
     { icon: CreditCard, label: t('sidebar.payments'), path: '/payments', permission: ROUTE_PERMISSIONS.payments, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
+    { icon: Wallet, label: t('sidebar.payouts'), path: '/doctor-payouts', permission: ROUTE_PERMISSIONS.payouts, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
     { icon: History, label: t('sidebar.reconciliations'), path: '/reconciliations', permission: ROUTE_PERMISSIONS.reconciliations, roles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
-    { icon: Headphones, label: t('sidebar.support'), path: '/support/tickets', permission: ROUTE_PERMISSIONS.support, roles: ['SUPER_ADMIN', 'SUPPORT_STAFF'] },
     { icon: Star, label: t('sidebar.reviews'), path: '/reviews', permission: ROUTE_PERMISSIONS.reviews, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
+    { icon: Bell, label: t('sidebar.notifications'), path: '/notifications', permission: ROUTE_PERMISSIONS.notifications, roles: ['SUPER_ADMIN'] },
     { icon: History, label: t('sidebar.audit_logs'), path: '/audit-logs', permission: ROUTE_PERMISSIONS.audit, roles: ['SUPER_ADMIN'] },
     { icon: KeyRound, label: t('sidebar.roles'), path: '/roles', permission: ROUTE_PERMISSIONS.roles, roles: ['SUPER_ADMIN'] },
     { icon: Settings, label: t('sidebar.settings'), path: '/settings', permission: ROUTE_PERMISSIONS.settings, roles: ['SUPER_ADMIN'] },
@@ -63,9 +71,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto scrollbar-hide">
-        {filteredItems.map((item, idx) => (
+        {filteredItems.map((item) => (
           <NavLink
-            key={idx}
+            key={item.path}
             to={item.path}
             end={item.path === '/'}
             className={({ isActive }) =>

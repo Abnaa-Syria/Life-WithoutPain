@@ -114,6 +114,7 @@
     "dashboard": "لوحة التحكم",
     "patients": "المرضى",
     "doctors": "الأطباء",
+    "doctor_verification": "التحقق من الأطباء",
     "appointments": "المواعيد",
     "specialities": "التخصصات",
     "insurance_cases": "حالات التأمين",
@@ -137,7 +138,8 @@
     "settings": "الإعدادات",
     "reconciliations": "المطابقات المالية",
     "notifications": "الإشعارات",
-    "lab_tests": "فحوصات المختبر",
+    "lab_tests": "الفحوصات المخبرية",
+    "prescriptions": "الوصفات الطبية",
     "payouts": "المستحقات",
     "roles": "الأدوار والصلاحيات"
   },

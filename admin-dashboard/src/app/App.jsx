@@ -32,7 +32,7 @@ import AuditLogDetailsPage from '../pages/AuditLogDetailsPage';
 import MedicalMasterDataPage from '../pages/MedicalMasterDataPage';
 import RolesPage from '../pages/RolesPage';
 import RoleDetailsPage from '../pages/RoleDetailsPage';
-import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Star, Settings, Pill, ClipboardList, Calendar, Paperclip } from 'lucide-react';
+import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Star, Settings, Pill, ClipboardList, Calendar, Paperclip, Bell } from 'lucide-react';
 
 const ALL_ADMIN = ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'];
 const ADMIN_MED = ['SUPER_ADMIN', 'MEDICAL_ADMIN'];
@@ -135,7 +135,7 @@ function AppRoutes() {
 
         {/* Insurance Providers – full CRUD */}
         <Route path="insurance-providers" element={
-          <ProtectedRoute permission={P.insurance} roles={ADMIN_INS}>
+          <ProtectedRoute permission={P.insuranceProviders} roles={['SUPER_ADMIN']}>
             <CrudPage
               title="شركات التأمين" subtitle="إدارة شركات التأمين" endpoint="/admin/insurance-providers" queryKey="admin-insurance-providers"
               detailPath="/insurance-providers"
@@ -158,7 +158,7 @@ function AppRoutes() {
             />
           </ProtectedRoute>
         } />
-        <Route path="insurance-providers/:id" element={<ProtectedRoute permission={P.insurance} roles={ADMIN_INS}><GenericDetailsPage title="تفاصيل شركة التأمين" endpoint="/admin/insurance-providers" fields={[{ label: "وضع التكامل", key: "apiMode" }, { label: "الحالة", key: "isActive", render: (v) => v ? "نشط" : "غير نشط" }]} /></ProtectedRoute>} />
+        <Route path="insurance-providers/:id" element={<ProtectedRoute permission={P.insuranceProviders} roles={['SUPER_ADMIN']}><GenericDetailsPage title="تفاصيل شركة التأمين" endpoint="/admin/insurance-providers" fields={[{ label: "وضع التكامل", key: "apiMode" }, { label: "الحالة", key: "isActive", render: (v) => v ? "نشط" : "غير نشط" }]} /></ProtectedRoute>} />
 
         <Route path="insurance-cases" element={<ProtectedRoute permission={P.insurance} roles={ADMIN_INS}><InsuranceCasesPage /></ProtectedRoute>} />
         <Route path="insurance-cases/:id" element={<ProtectedRoute permission={P.insurance} roles={ADMIN_INS}><InsuranceCaseDetailsPage /></ProtectedRoute>} />
@@ -171,9 +171,9 @@ function AppRoutes() {
 
         {/* Lab Tests – view/edit/delete */}
         <Route path="lab-tests" element={
-          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.labTests} roles={ADMIN_MED}>
             <CrudPage
-              title={t('sidebar.medical_tests')} subtitle={t('medical.manage_tests') || "متابعة طلبات الفحوصات"} endpoint="/admin/lab-tests" queryKey="admin-lab-tests"
+              title={t('sidebar.lab_tests')} subtitle={t('medical.manage_tests') || "متابعة طلبات الفحوصات"} endpoint="/admin/lab-tests" queryKey="admin-lab-tests"
               canCreate={false} detailPath="/lab-tests"
               columns={[
                 { key: 'id', label: '#' },
@@ -192,9 +192,9 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="lab-tests/:id" element={
-          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.labTests} roles={ADMIN_MED}>
             <GenericDetailsPage 
-              entityName={t('sidebar.medical_tests')} endpoint="/admin/lab-tests" titleField="title"
+              entityName={t('sidebar.lab_tests')} endpoint="/admin/lab-tests" titleField="title"
               sections={[
                 { title: t('medical.test_info') || "معلومات الفحص", icon: Activity, fields: [
                   { label: t('common.title') || "العنوان", key: "title" },
@@ -246,7 +246,7 @@ function AppRoutes() {
 
         {/* Doctor Payouts – full CRUD */}
         <Route path="doctor-payouts" element={
-          <ProtectedRoute permission={P.claims} roles={ADMIN_ACC}>
+          <ProtectedRoute permission={P.payouts} roles={ADMIN_ACC}>
             <CrudPage
               title={t('payouts.title') || "مستحقات الأطباء"} subtitle={t('payouts.subtitle') || "إدارة عمولات ومستحقات الأطباء"} endpoint="/admin/doctor-payouts" queryKey="admin-doctor-payouts"
               detailPath="/doctor-payouts"
@@ -270,7 +270,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="doctor-payouts/:id" element={
-          <ProtectedRoute permission={P.claims} roles={ADMIN_ACC}>
+          <ProtectedRoute permission={P.payouts} roles={ADMIN_ACC}>
             <GenericDetailsPage 
               entityName="مستحقات الأطباء" endpoint="/admin/doctor-payouts" titleField="id"
               sections={[
@@ -331,7 +331,7 @@ function AppRoutes() {
 
         {/* Reports – view/edit/delete */}
         <Route path="reports" element={
-          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.reports} roles={ADMIN_MED}>
             <CrudPage
               title={t('medical.reports')} subtitle={t('medical.all_reports') || "جميع التقارير الطبية"} endpoint="/admin/reports" queryKey="admin-reports"
               canCreate={false} detailPath="/reports"
@@ -354,7 +354,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="reports/:id" element={
-          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.reports} roles={ADMIN_MED}>
             <GenericDetailsPage 
               entityName={t('medical.reports')} endpoint="/admin/reports" titleField="id"
               sections={[
@@ -419,7 +419,7 @@ function AppRoutes() {
 
         {/* Prescriptions – view/edit/delete */}
         <Route path="prescriptions" element={
-          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.prescriptions} roles={ADMIN_MED}>
             <CrudPage
               title={t('medical.prescriptions')} subtitle={t('medical.all_prescriptions') || "جميع الوصفات الطبية"} endpoint="/admin/prescriptions" queryKey="admin-prescriptions"
               canCreate={false} detailPath="/prescriptions"
@@ -440,7 +440,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="prescriptions/:id" element={
-          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.prescriptions} roles={ADMIN_MED}>
             <GenericDetailsPage 
               entityName={t('medical.prescriptions')} endpoint="/admin/prescriptions" titleField="id"
               sections={[
@@ -455,9 +455,53 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
+        {/* Notifications – admin CRUD */}
+        <Route path="notifications" element={
+          <ProtectedRoute permission={P.notifications} roles={['SUPER_ADMIN']}>
+            <CrudPage
+              title={t('sidebar.notifications')} subtitle={t('notifications.manage')} endpoint="/admin/notifications" queryKey="admin-notifications"
+              detailPath="/notifications"
+              columns={[
+                { key: 'id', label: '#' },
+                { key: 'titleAr', label: t('common.title_ar') || 'العنوان (عربي)' },
+                { key: 'titleEn', label: t('common.title_en') || 'العنوان (إنجليزي)' },
+                { key: 'type', label: t('common.type') },
+                { key: 'isRead', label: t('notifications.is_read'), render: (row) => row.isRead ? t('common.yes') : t('common.no') },
+                { key: 'date', label: t('common.created_at'), render: (row) => new Date(row.createdAt).toLocaleDateString() },
+              ]}
+              formFields={[
+                { name: 'userId', label: t('notifications.user_id') || 'معرف المستخدم', type: 'number', required: true },
+                { name: 'titleAr', label: t('common.title_ar'), required: true },
+                { name: 'titleEn', label: t('common.title_en'), required: true },
+                { name: 'bodyAr', label: t('common.body_ar') || 'المحتوى بالعربي', type: 'textarea', required: true },
+                { name: 'bodyEn', label: t('common.body_en') || 'المحتوى بالإنجليزي', type: 'textarea', required: true },
+                { name: 'type', label: t('common.type'), type: 'select', required: true, options: [{ value: 'SYSTEM', label: t('notifications.types.system') }, { value: 'APPOINTMENT', label: t('notifications.types.appointment') }, { value: 'PAYMENT', label: t('notifications.types.payment') }, { value: 'INSURANCE', label: t('notifications.types.insurance') }, { value: 'VERIFICATION', label: t('notifications.types.verification') }] },
+              ]}
+              createLabel={t('notifications.send')} editLabel={t('common.edit')}
+            />
+          </ProtectedRoute>
+        } />
+        <Route path="notifications/:id" element={
+          <ProtectedRoute permission={P.notifications} roles={['SUPER_ADMIN']}>
+            <GenericDetailsPage
+              entityName={t('sidebar.notifications')} endpoint="/admin/notifications" titleField="titleAr"
+              sections={[
+                { title: t('notifications.content'), icon: Bell, fields: [
+                  { label: t('common.title_ar'), key: 'titleAr' },
+                  { label: t('common.title_en'), key: 'titleEn' },
+                  { label: t('common.type'), key: 'type' },
+                  { label: t('notifications.is_read'), key: 'isRead', render: (v) => v ? t('common.yes') : t('common.no') },
+                  { label: t('common.body_ar') || 'المحتوى بالعربي', key: 'bodyAr', fullWidth: true },
+                  { label: t('common.body_en') || 'المحتوى بالإنجليزي', key: 'bodyEn', fullWidth: true },
+                ]},
+              ]}
+            />
+          </ProtectedRoute>
+        } />
+
         {/* Reviews – view/edit/delete */}
         <Route path="reviews" element={
-          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.reviews} roles={ADMIN_MED}>
             <CrudPage
               title={t('sidebar.reviews') || "التقييمات"} subtitle={t('reviews.subtitle') || "تقييمات المرضى للأطباء"} endpoint="/admin/reviews" queryKey="admin-reviews"
               canCreate={false} detailPath="/reviews"
@@ -479,7 +523,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="reviews/:id" element={
-          <ProtectedRoute permission={P.services} roles={ADMIN_MED}>
+          <ProtectedRoute permission={P.reviews} roles={ADMIN_MED}>
             <GenericDetailsPage 
               entityName={t('sidebar.reviews') || "التقييمات"} endpoint="/admin/reviews" titleField="id"
               sections={[
