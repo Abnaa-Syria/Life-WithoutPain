@@ -4,6 +4,7 @@ const { buildPagination } = require('../../utils/pagination');
 const { resolveDoctorProfile, assertDoctorOwnsPrescription } = require('../../shared/utils/doctorAppContext');
 const PdfGenerator = require('../../shared/pdf/PdfGenerator');
 const QRCode = require('qrcode');
+const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 
 class PrescriptionService {
   static async create(body) {
@@ -24,7 +25,16 @@ class PrescriptionService {
     });
 
     const pdfUrl = await PdfGenerator.generatePrescription(prescription);
-    return PrescriptionRepository.update({ where: { id: prescription.id }, data: { pdfUrl }, include: { items: true } });
+    const saved = await PrescriptionRepository.update({
+      where: { id: prescription.id },
+      data: { pdfUrl },
+      include: {
+        items: true,
+        patient: { select: { userId: true } },
+      },
+    });
+    eventEmitter.emit(EVENTS.PRESCRIPTION.CREATED, saved);
+    return saved;
   }
 
   static async list(query) {

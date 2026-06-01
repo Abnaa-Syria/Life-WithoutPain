@@ -255,7 +255,7 @@ class SupportTicketService {
     if (isStaffRole(senderRole)) {
       eventEmitter.emit(EVENTS.SUPPORT.MESSAGE_RECEIVED, payload);
     } else {
-      eventEmitter.emit(EVENTS.SUPPORT.TICKET_CREATED, ticket);
+      eventEmitter.emit(EVENTS.SUPPORT.USER_REPLIED, payload);
     }
 
     emitSupportMessage(ticketId, fullMessage);

@@ -4,7 +4,12 @@ const { asyncHandler } = require('../../utils/helpers');
 const { mapNotification } = require('../../shared/utils/doctorAppMappers');
 
 const list = asyncHandler(async (req, res) => {
-  const { data, total, page, limit } = await NotificationService.list(req.user.id, req.query);
+  const { data, total, page, limit } = await NotificationService.list(
+    req.user.id,
+    req.query,
+    req.user.permissions,
+    req.user.role,
+  );
   return paginatedResponse(res, {
     data: data.map(mapNotification),
     total,

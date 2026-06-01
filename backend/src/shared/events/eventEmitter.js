@@ -26,13 +26,35 @@ const EVENTS = {
     CASE_CREATED: 'insurance.case_created',
     CASE_UPDATED: 'insurance.case_updated',
   },
-  NOTIFICATION: {
-    SEND: 'notification.send',
-  },
   SUPPORT: {
     TICKET_CREATED: 'support.ticket.created',
     MESSAGE_RECEIVED: 'support.message.received',
     STATUS_CHANGED: 'support.status.changed',
+    USER_REPLIED: 'support.user.replied',
+  },
+  PAYMENT: {
+    COMPLETED: 'payment.completed',
+    FAILED: 'payment.failed',
+  },
+  VERIFICATION: {
+    DOCTOR_SUBMITTED: 'verification.doctor_submitted',
+    DOCTOR_APPROVED: 'verification.doctor_approved',
+    DOCTOR_REJECTED: 'verification.doctor_rejected',
+  },
+  CHAT: {
+    MESSAGE_SENT: 'chat.message_sent',
+  },
+  LAB_RESULT: {
+    CREATED: 'lab_result.created',
+  },
+  PRESCRIPTION: {
+    CREATED: 'prescription.created',
+  },
+  REPORT: {
+    CREATED: 'report.created',
+  },
+  REVIEW: {
+    CREATED: 'review.created',
   },
 };
 

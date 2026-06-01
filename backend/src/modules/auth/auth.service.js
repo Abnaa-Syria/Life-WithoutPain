@@ -8,6 +8,7 @@ const { ConflictError, UnauthorizedError, ForbiddenError, BadRequestError, NotFo
 const { createAuditLog } = require('../../middlewares/auditLog');
 const { normalizePhone } = require('../../shared/utils/phone');
 const { ROLES, ADMIN_ROLES } = require('../../constants');
+const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 const { mapPatientLoginResponseDto } = require('./dto/patient-login-response.dto');
 
 class AuthService {
@@ -51,6 +52,15 @@ class AuthService {
     });
 
     await otpProvider.send(normalizedPhone, otpCode);
+
+    eventEmitter.emit(EVENTS.USER.REGISTERED, {
+      id: user.id,
+      fullName: user.fullName,
+      role: user.role,
+      email: user.email,
+      phone: user.phone,
+      source: 'SELF_REGISTER',
+    });
 
     return {
       id: user.id,
@@ -125,6 +135,20 @@ class AuthService {
     });
 
     await otpProvider.send(normalizedPhone, otpCode);
+
+    eventEmitter.emit(EVENTS.USER.REGISTERED, {
+      id: user.id,
+      fullName: user.fullName,
+      role: user.role,
+      email: user.email,
+      phone: user.phone,
+      source: 'SELF_REGISTER',
+    });
+
+    eventEmitter.emit(EVENTS.VERIFICATION.DOCTOR_SUBMITTED, {
+      doctorProfile: user.doctorProfile,
+      user: { id: user.id, fullName: user.fullName },
+    });
 
     return {
       id: user.id,

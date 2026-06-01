@@ -15,6 +15,18 @@ export function getNotificationLink(notification) {
       return `/claims`;
     case 'DoctorProfile':
       return `/doctors/${id}`;
+    case 'User':
+      return `/users/${id}`;
+    case 'Conversation':
+      return null;
+    case 'Review':
+      return `/reviews`;
+    case 'LabTestRequest':
+      return `/lab-tests`;
+    case 'Prescription':
+      return `/prescriptions`;
+    case 'MedicalReport':
+      return `/reports`;
     default:
       return null;
   }

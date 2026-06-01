@@ -10,6 +10,7 @@ import Badge from '../components/ui/Badge';
 import { useTranslation } from 'react-i18next';
 import { FileText, Clock, CheckCircle, XCircle, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../utils/formatCurrency';
 
 export default function ClaimsPage() {
   const { t } = useTranslation();
@@ -31,15 +32,15 @@ export default function ClaimsPage() {
   });
 
   const columns = [
-    { header: t('claims.id') || 'Claim ID', accessorKey: 'id' },
-    { header: t('claims.provider') || 'Provider', accessorKey: 'claimBatch.provider.nameAr' },
+    { header: t('claims.id'), accessorKey: 'id' },
+    { header: t('claims.provider'), accessorKey: 'claimBatch.provider.nameAr' },
     {
-      header: t('claims.amount') || 'Amount',
+      header: t('claims.amount'),
       accessorKey: 'amount',
-      cell: ({ row }) => `${row.original.amount} ر.س`,
-      meta: { exportValue: (row) => `${row.amount ?? '—'} ر.س` },
+      cell: ({ row }) => formatCurrency(row.original.amount, t),
+      meta: { exportValue: (row) => formatCurrency(row.amount, t) },
     },
-    { header: t('claims.patient') || 'Patient', accessorKey: 'appointment.patient.user.fullName' },
+    { header: t('claims.patient'), accessorKey: 'appointment.patient.user.fullName' },
     { 
       header: t('common.status'), 
       accessorKey: 'status',

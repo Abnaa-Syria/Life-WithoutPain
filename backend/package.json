@@ -17,6 +17,7 @@
     "db:reset": "npx prisma migrate reset --schema=prisma/schema",
     "test:rbac": "node tests/rbac/permission.service.test.js && node tests/rbac/authorization.matrix.test.js",
     "test:insurance": "node tests/insurance/insuranceRequest.orchestrator.test.js",
+    "test:notifications": "node tests/notifications/notification.permissions.test.js && node tests/notifications/user.listener.test.js",
     "lint": "eslint src/",
     "swagger:generate": "node src/docs/generate.js"
   },

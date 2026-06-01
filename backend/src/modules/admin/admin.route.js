@@ -109,6 +109,15 @@ router.post('/users', guard('users.create', ...SUPER), asyncHandler(async (req, 
   const { password, ...rest } = req.body;
   const data = await prisma.user.create({ data: { ...rest, passwordHash, isVerified: true }, select: { id: true, fullName: true, email: true, phone: true, role: true, status: true } });
   createAuditLog({ actorId: req.user.id, entityType: 'User', entityId: data.id, action: 'CREATE', newValues: { role: rest.role }, req });
+  const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
+  eventEmitter.emit(EVENTS.USER.REGISTERED, {
+    id: data.id,
+    fullName: data.fullName,
+    role: data.role,
+    email: data.email,
+    phone: data.phone,
+    source: 'ADMIN_CREATE',
+  });
   return createdResponse(res, { data });
 }));
 router.put('/users/:id', guard('users.update', ...SUPER), asyncHandler(async (req, res) => {

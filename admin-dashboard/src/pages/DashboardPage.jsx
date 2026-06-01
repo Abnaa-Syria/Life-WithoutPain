@@ -15,6 +15,7 @@ import {
 import StatCard from '../components/ui/StatCard';
 import Card from '../components/ui/Card';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
+import { formatCurrency } from '../utils/formatCurrency';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -135,7 +136,7 @@ export default function DashboardPage() {
         />
         <StatCard 
           label={t('dashboard.stats.monthly_revenue')} 
-          value={`${stats.monthlyRevenue || 0} ر.س`} 
+          value={formatCurrency(stats.monthlyRevenue || 0, t)} 
           icon={CreditCard} 
           color="green" 
           trend="up"
@@ -149,7 +150,7 @@ export default function DashboardPage() {
         />
         <StatCard 
           label={t('dashboard.stats.pending_payouts')} 
-          value={`${stats.pendingPayouts || 0} ر.س`} 
+          value={formatCurrency(stats.pendingPayouts || 0, t)} 
           icon={Wallet} 
           color="red" 
         />

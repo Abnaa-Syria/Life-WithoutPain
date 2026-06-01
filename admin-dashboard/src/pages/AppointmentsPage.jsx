@@ -9,6 +9,7 @@ import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import { useTranslation } from 'react-i18next';
 import { Calendar, Clock, CheckCircle, XCircle, MoreVertical } from 'lucide-react';
+import { formatCurrency } from '../utils/formatCurrency';
 import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -124,8 +125,8 @@ export default function AppointmentsPage() {
     {
       header: t('appointments.fee') || 'Fee',
       accessorKey: 'fee',
-      cell: ({ row }) => `${row.original.fee} ر.س`,
-      meta: { exportValue: (row) => `${row.fee ?? '—'} ر.س` },
+      cell: ({ row }) => formatCurrency(row.original.fee, t),
+      meta: { exportValue: (row) => formatCurrency(row.fee, t) },
     },
     {
       header: t('common.status'),

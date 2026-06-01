@@ -4,6 +4,7 @@ const PatientRepository = require('../patients/patient.repository');
 const DoctorRepository = require('../doctors/doctor.repository');
 const { BadRequestError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
+const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 
 class ReviewService {
   static async create(userId, body) {
@@ -34,6 +35,8 @@ class ReviewService {
       where: { id: body.doctorId },
       data: { ratingAverage: stats._avg.rating || 0, ratingCount: stats._count },
     });
+
+    eventEmitter.emit(EVENTS.REVIEW.CREATED, review);
 
     return review;
   }

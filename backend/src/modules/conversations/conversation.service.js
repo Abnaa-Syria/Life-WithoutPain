@@ -5,6 +5,7 @@ const PatientRepository = require('../patients/patient.repository');
 const { NotFoundError, ForbiddenError } = require('../../shared/errors/AppError');
 const { resolveDoctorProfile, assertDoctorOwnsAppointment } = require('../../shared/utils/doctorAppContext');
 const { buildPagination } = require('../../utils/pagination');
+const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 
 class ConversationService {
   static async list(userId, query) {
@@ -68,6 +69,15 @@ class ConversationService {
   }
 
   static async sendMessage(conversationId, senderId, body) {
+    const conversation = await ConversationRepository.findUnique({
+      where: { id: parseInt(conversationId) },
+      include: {
+        patient: { select: { userId: true } },
+        doctor: { select: { userId: true } },
+      },
+    });
+    if (!conversation) throw new NotFoundError('Conversation not found');
+
     const msg = await MessageRepository.create({
       data: {
         conversationId: parseInt(conversationId),
@@ -76,9 +86,25 @@ class ConversationService {
         content: body.content,
         attachmentUrl: body.attachmentUrl || null,
       },
-      include: { sender: { select: { fullName: true, avatarUrl: true } } },
+      include: { sender: { select: { fullName: true, avatarUrl: true, role: true } } },
     });
     await ConversationRepository.update({ where: { id: parseInt(conversationId) }, data: { updatedAt: new Date() } });
+
+    let recipientUserId = null;
+    if (conversation.patient?.userId === senderId) {
+      recipientUserId = conversation.doctor?.userId;
+    } else if (conversation.doctor?.userId === senderId) {
+      recipientUserId = conversation.patient?.userId;
+    }
+
+    if (recipientUserId && recipientUserId !== senderId) {
+      eventEmitter.emit(EVENTS.CHAT.MESSAGE_SENT, {
+        conversation,
+        message: msg,
+        recipientUserId,
+      });
+    }
+
     return msg;
   }
 

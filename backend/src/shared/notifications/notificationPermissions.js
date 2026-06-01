@@ -13,6 +13,7 @@ const NOTIFICATION_TYPE_PERMISSIONS = {
   REPORT: 'reports.admin.list',
   REVIEW: 'reviews.moderate',
   VERIFICATION: 'doctors.list',
+  USER: 'users.list',
 };
 
 function permissionForNotificationType(type) {

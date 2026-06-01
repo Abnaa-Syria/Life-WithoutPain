@@ -5,6 +5,7 @@ const HomeServiceService = require('../home-services/home-service.service');
 const { BadRequestError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
 const paymentProvider = require('../../shared/payments');
+const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 
 class PaymentService {
   static async initiateForPatient(userId, body) {
@@ -58,19 +59,31 @@ class PaymentService {
     const result = await paymentProvider.handleWebhook(body);
 
     if (result.transactionReference) {
+      const paymentStatus = result.status === 'PAID' ? 'PAID' : 'FAILED';
       await PaymentRepository.model.updateMany({
         where: { transactionReference: result.transactionReference },
         data: {
-          status: result.status === 'PAID' ? 'PAID' : 'FAILED',
+          status: paymentStatus,
           paidAt: result.status === 'PAID' ? new Date() : null,
           rawPayload: body,
         },
       });
 
-      if (result.status === 'PAID') {
-        const payment = await PaymentRepository.findFirst({ where: { transactionReference: result.transactionReference } });
-        if (payment?.appointmentId) {
-          await AppointmentRepository.update({ where: { id: payment.appointmentId }, data: { paymentStatus: 'PAID' } });
+      const payment = await PaymentRepository.findFirst({
+        where: { transactionReference: result.transactionReference },
+      });
+
+      if (payment) {
+        if (result.status === 'PAID') {
+          eventEmitter.emit(EVENTS.PAYMENT.COMPLETED, { paymentId: payment.id });
+          if (payment.appointmentId) {
+            await AppointmentRepository.update({
+              where: { id: payment.appointmentId },
+              data: { paymentStatus: 'PAID' },
+            });
+          }
+        } else {
+          eventEmitter.emit(EVENTS.PAYMENT.FAILED, { paymentId: payment.id });
         }
       }
     }

@@ -21,10 +21,9 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(data.email, data.password);
-      toast.success(t('messages.login_success') || 'Welcome back!');
       navigate('/');
     } catch (error) {
-      toast.error(error.response?.data?.message || t('messages.login_error') || 'Invalid credentials');
+      toast.error(error.response?.data?.message || t('messages.login_error'));
     } finally {
       setIsLoading(false);
     }
@@ -50,19 +49,19 @@ export default function LoginPage() {
               Life<span className="text-[var(--primary)]">Pain</span>
             </h1>
             <p className="text-body text-[var(--text-muted)] mt-2">
-              {t('login.subtitle') || 'Enter your credentials to access the admin panel'}
+              {t('login.subtitle')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <label className="label">{t('login.email') || 'Email Address'}</label>
+              <label className="label">{t('login.identifier')}</label>
               <div className="relative group">
                 <Mail className="absolute start-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--primary)]" size={18} />
                 <input
                   {...register('email', { 
-                    required: t('validation.email_required') || 'Email is required',
-                    pattern: { value: /^\S+@\S+$/i, message: t('validation.invalid_email') || 'Invalid email address' }
+                    required: t('validation.identifier_required'),
+                    pattern: { value: /^\S+@\S+$/i, message: t('validation.invalid_email') }
                   })}
                   type="email"
                   className={`input ps-12 ${errors.email ? 'border-[var(--danger)] bg-[var(--danger-bg)]' : ''}`}
@@ -74,15 +73,15 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="label">{t('login.password') || 'Password'}</label>
+                <label className="label">{t('login.password')}</label>
                 <a href="#" className="text-helper font-medium text-[var(--primary)] hover:text-[var(--primary-hover)] transition-colors">
-                  {t('login.forgot_password') || 'Forgot password?'}
+                  {t('login.forgot_password')}
                 </a>
               </div>
               <div className="relative group">
                 <Lock className="absolute start-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--primary)]" size={18} />
                 <input
-                  {...register('password', { required: t('validation.password_required') || 'Password is required' })}
+                  {...register('password', { required: t('validation.password_required') })}
                   type={showPassword ? 'text' : 'password'}
                   className={`input ps-12 pe-12 ${errors.password ? 'border-[var(--danger)] bg-[var(--danger-bg)]' : ''}`}
                   placeholder="••••••••"
@@ -107,7 +106,7 @@ export default function LoginPage() {
                 <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  {t('login.submit') || 'Sign In'}
+                  {t('login.submit')}
                   <ArrowRight size={18} className="ms-1 group-hover:translate-x-0.5 transition-transform rtl:rotate-180" />
                 </>
               )}
@@ -116,7 +115,7 @@ export default function LoginPage() {
 
           <div className="mt-10 pt-8 border-t border-[var(--divider)] text-center">
             <p className="text-body text-[var(--text-muted)]">
-              {t('login.footer') || 'Advanced Healthcare Admin'}
+              {t('login.footer')}
             </p>
           </div>
         </div>

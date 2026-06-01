@@ -16,6 +16,7 @@ import {
   UserCheck, UserX, Pill, ClipboardList, Calendar,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '../utils/formatCurrency';
 
 export default function DoctorDetailsPage() {
   const { t } = useTranslation();
@@ -109,8 +110,8 @@ export default function DoctorDetailsPage() {
         </div>
 
         <DetailsSection title={t('doctors.fees') || 'Service Fees'} icon={Activity}>
-          <DetailItem label={t('doctors.consultation_fee')} value={`${doctor.consultationFee} ر.س`} />
-          <DetailItem label={t('doctors.follow_up_fee')} value={`${doctor.followUpFee} ر.س`} />
+          <DetailItem label={t('doctors.consultation_fee')} value={formatCurrency(doctor.consultationFee, t)} />
+          <DetailItem label={t('doctors.follow_up_fee')} value={formatCurrency(doctor.followUpFee, t)} />
         </DetailsSection>
       </div>
 
@@ -168,7 +169,7 @@ export default function DoctorDetailsPage() {
             </div>
           </div>
           <p className="text-sm text-[var(--text-muted)]">
-            {appt.service?.nameAr || appt.service?.nameEn} • {appt.amount} ر.س
+            {appt.service?.nameAr || appt.service?.nameEn} • {formatCurrency(appt.amount, t)}
           </p>
         </Link>
       )) : (

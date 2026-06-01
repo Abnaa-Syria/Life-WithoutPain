@@ -2,6 +2,7 @@ const LabTestRepository = require('./labTest.repository');
 const LabResultRepository = require('./labResult.repository');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
+const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 
 class LabTestService {
   static async create(body) {
@@ -59,6 +60,11 @@ class LabTestService {
       data: { labTestRequestId: parseInt(labTestRequestId), uploadedBy, fileUrl, notes },
     });
     await LabTestRepository.update({ where: { id: parseInt(labTestRequestId) }, data: { status: 'COMPLETED' } });
+    const labTest = await LabTestRepository.findUnique({
+      where: { id: parseInt(labTestRequestId) },
+      include: { patient: { select: { userId: true } } },
+    });
+    eventEmitter.emit(EVENTS.LAB_RESULT.CREATED, { labTest, result });
     return result;
   }
 

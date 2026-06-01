@@ -3,12 +3,19 @@ const { NotFoundError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
 const { resolveDoctorProfile, assertDoctorOwnsReport } = require('../../shared/utils/doctorAppContext');
 const PdfGenerator = require('../../shared/pdf/PdfGenerator');
+const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 
 class ReportService {
   static async create(body) {
     const report = await MedicalReportRepository.create({ data: body });
     const pdfUrl = await PdfGenerator.generateReport(report);
-    return MedicalReportRepository.update({ where: { id: report.id }, data: { pdfUrl } });
+    const saved = await MedicalReportRepository.update({
+      where: { id: report.id },
+      data: { pdfUrl },
+      include: { patient: { select: { userId: true } } },
+    });
+    eventEmitter.emit(EVENTS.REPORT.CREATED, saved);
+    return saved;
   }
 
   static async list(query) {

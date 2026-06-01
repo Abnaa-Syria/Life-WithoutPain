@@ -1,6 +1,7 @@
 {
   "common": {
     "search": "بحث...",
+    "search_action": "بحث",
     "add_new": "إضافة جديد",
     "edit": "تعديل",
     "delete": "حذف",
@@ -108,7 +109,11 @@
     "upload_subdesc": "PNG أو JPG أو PDF حتى 10 ميجابايت",
     "drop_here": "أفلت الملفات هنا",
     "suspended": "موقوف",
-    "banned": "محظور"
+    "banned": "محظور",
+    "back": "رجوع",
+    "logout": "تسجيل الخروج",
+    "currency_sar": "{{amount}} ر.س",
+    "menu": "القائمة"
   },
   "sidebar": {
     "dashboard": "لوحة التحكم",
@@ -197,7 +202,8 @@
     "provider": "شركة التأمين",
     "amount": "المبلغ",
     "patient": "المريض",
-    "date": "تاريخ التقديم"
+    "date": "تاريخ التقديم",
+    "info": "معلومات المطالبة"
   },
   "confirm": {
     "delete_patient_title": "حذف المريض؟",
@@ -227,7 +233,9 @@
     "amount": "المبلغ",
     "method": "طريقة الدفع",
     "user": "المستخدم",
-    "date": "التاريخ"
+    "date": "التاريخ",
+    "info": "معلومات الدفع",
+    "details": "تفاصيل الدفع"
   },
   "specialities": {
     "add": "إضافة تخصص",
@@ -250,7 +258,8 @@
     "loading_data": "جاري تحميل البيانات...",
     "status_updated": "تم تحديث الحالة بنجاح",
     "approved": "تمت الموافقة بنجاح",
-    "rejected": "تم الرفض بنجاح"
+    "rejected": "تم الرفض بنجاح",
+    "unauthorized": "غير مصرح لك بالدخول إلى لوحة التحكم"
   },
   "medical_master_data": {
     "title": "البيانات الطبية المرجعية",
@@ -454,7 +463,12 @@
     "quick_approve_note": "موافقة من قائمة الطلبات",
     "quick_reject_note": "رفض من قائمة الطلبات",
     "rejected_default": "مرفوض من موظف التأمين",
-    "review_pending": "مراجعة طلبات التأمين المعلقة"
+    "review_pending": "مراجعة طلبات التأمين المعلقة",
+    "api_modes": {
+      "MANUAL": "يدوي",
+      "API": "تلقائي",
+      "HYBRID": "مختلط"
+    }
   },
   "support": {
     "tabs": {
@@ -542,12 +556,20 @@
     "is_read": "مقروء",
     "send": "إرسال إشعار",
     "content": "محتوى الإشعار",
+    "user_id": "معرف المستخدم",
     "types": {
       "system": "نظام",
       "appointment": "موعد",
       "payment": "دفع",
       "insurance": "تأمين",
-      "verification": "تحقق"
+      "verification": "تحقق",
+      "user": "مستخدم جديد",
+      "support": "دعم",
+      "chat": "محادثة",
+      "lab_result": "نتيجة مختبر",
+      "prescription": "وصفة",
+      "report": "تقرير",
+      "review": "تقييم"
     }
   },
   "reviews": {

@@ -1,9 +1,12 @@
 ﻿import { useState } from 'react';
 import { ChevronRight, ChevronLeft, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import EmptyState from '../ui/EmptyState';
 
-export default function DataTable({ columns, data, loading, pagination, onPageChange, onSearch, searchPlaceholder = 'بحث...', actions }) {
+export default function DataTable({ columns, data, loading, pagination, onPageChange, onSearch, searchPlaceholder, actions }) {
+  const { t } = useTranslation();
+  const resolvedSearchPlaceholder = searchPlaceholder ?? t('common.search');
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleSearch = (e) => {
@@ -25,11 +28,11 @@ export default function DataTable({ columns, data, loading, pagination, onPageCh
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder={searchPlaceholder}
+                  placeholder={resolvedSearchPlaceholder}
                   className="input-field pr-10 w-64"
                 />
               </div>
-              <button type="submit" className="btn-primary text-sm">بحث</button>
+              <button type="submit" className="btn-primary text-sm">{t('common.search_action')}</button>
             </form>
           )}
           {actions && <div className="flex gap-2">{actions}</div>}
@@ -66,7 +69,11 @@ export default function DataTable({ columns, data, loading, pagination, onPageCh
           {pagination && (
             <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700">
               <p className="text-sm text-gray-500">
-                عرض {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} من {pagination.total}
+                {t('common.pagination_info', {
+                  start: ((pagination.page - 1) * pagination.limit) + 1,
+                  end: Math.min(pagination.page * pagination.limit, pagination.total),
+                  total: pagination.total,
+                })}
               </p>
               <div className="flex gap-2">
                 <button

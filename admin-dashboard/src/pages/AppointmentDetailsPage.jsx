@@ -11,6 +11,7 @@ import Badge from '../components/ui/Badge';
 import FilePreviewer from '../components/ui/FilePreviewer';
 import { Calendar, User, Stethoscope, Briefcase, FileText, Activity, Paperclip } from 'lucide-react';
 import { format } from 'date-fns';
+import { formatCurrency } from '../utils/formatCurrency';
 
 export default function AppointmentDetailsPage() {
   const { t } = useTranslation();
@@ -63,7 +64,7 @@ export default function AppointmentDetailsPage() {
             <DetailItem label={t('appointments.date')} value={formatDate(appt.startTime, 'yyyy-MM-dd')} />
             <DetailItem label={t('appointments.time')} value={`${formatDate(appt.startTime, 'HH:mm')} - ${formatDate(appt.endTime, 'HH:mm')}`} />
             <DetailItem label={t('appointments.type')} value={appt.type} />
-            <DetailItem label={t('appointments.fee')} value={`${appt.fee} ر.س`} />
+            <DetailItem label={t('appointments.fee')} value={formatCurrency(appt.fee, t)} />
             <DetailItem label={t('appointments.cancellation_reason')} value={appt.cancellationReason || 'N/A'} fullWidth />
           </DetailsSection>
         </div>

@@ -56,30 +56,33 @@ class DoctorAdminController {
   });
 
   static approve = asyncHandler(async (req, res) => {
-    const data = await DoctorRepository.update({ 
-      where: { id: parseInt(req.params.id) }, 
-      data: { verificationStatus: 'APPROVED', isPubliclyBookable: true } 
+    const data = await DoctorRepository.update({
+      where: { id: parseInt(req.params.id) },
+      data: { verificationStatus: 'APPROVED', isPubliclyBookable: true },
     });
-    
-    // Send notification (Event driven)
+
     const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
-    eventEmitter.emit(EVENTS.NOTIFICATION.SEND, {
+    eventEmitter.emit(EVENTS.VERIFICATION.DOCTOR_APPROVED, {
+      doctorProfile: { id: data.id },
       userId: data.userId,
-      titleAr: 'تم قبول حسابك',
-      titleEn: 'Account Approved',
-      bodyAr: 'تم التحقق من حسابك بنجاح.',
-      bodyEn: 'Your account has been verified.',
-      type: 'VERIFICATION'
     });
-    
+
     return successResponse(res, { data, message: 'Doctor approved' });
   });
 
   static reject = asyncHandler(async (req, res) => {
-    const data = await DoctorRepository.update({ 
-      where: { id: parseInt(req.params.id) }, 
-      data: { verificationStatus: 'REJECTED', isPubliclyBookable: false } 
+    const data = await DoctorRepository.update({
+      where: { id: parseInt(req.params.id) },
+      data: { verificationStatus: 'REJECTED', isPubliclyBookable: false },
     });
+
+    const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
+    eventEmitter.emit(EVENTS.VERIFICATION.DOCTOR_REJECTED, {
+      doctorProfile: { id: data.id },
+      userId: data.userId,
+      reason: req.body?.reason || req.body?.reviewNotes || null,
+    });
+
     return successResponse(res, { data, message: 'Doctor rejected' });
   });
 

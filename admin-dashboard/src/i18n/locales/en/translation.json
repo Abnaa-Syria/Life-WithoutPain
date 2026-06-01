@@ -1,6 +1,7 @@
 {
   "common": {
     "search": "Search...",
+    "search_action": "Search",
     "add_new": "Add New",
     "edit": "Edit",
     "delete": "Delete",
@@ -108,7 +109,11 @@
     "upload_subdesc": "PNG, JPG or PDF up to 10MB",
     "drop_here": "Drop files here",
     "suspended": "Suspended",
-    "banned": "Banned"
+    "banned": "Banned",
+    "back": "Back",
+    "logout": "Log out",
+    "currency_sar": "{{amount}} SAR",
+    "menu": "Menu"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -197,7 +202,8 @@
     "provider": "Provider",
     "amount": "Amount",
     "patient": "Patient",
-    "date": "Submitted At"
+    "date": "Submitted At",
+    "info": "Claim Information"
   },
   "confirm": {
     "delete_patient_title": "Delete patient?",
@@ -227,7 +233,9 @@
     "amount": "Amount",
     "method": "Method",
     "user": "User",
-    "date": "Date"
+    "date": "Date",
+    "info": "Payment Information",
+    "details": "Payment Details"
   },
   "specialities": {
     "add": "Add Speciality",
@@ -250,7 +258,8 @@
     "loading_data": "Loading data...",
     "status_updated": "Status updated successfully",
     "approved": "Approved successfully",
-    "rejected": "Rejected successfully"
+    "rejected": "Rejected successfully",
+    "unauthorized": "You are not authorized to access the admin panel"
   },
   "medical_master_data": {
     "title": "Medical Master Data",
@@ -454,7 +463,12 @@
     "quick_approve_note": "Approved from list view",
     "quick_reject_note": "Rejected from list view",
     "rejected_default": "Rejected by insurance agent",
-    "review_pending": "Review pending insurance requests"
+    "review_pending": "Review pending insurance requests",
+    "api_modes": {
+      "MANUAL": "Manual",
+      "API": "Automatic",
+      "HYBRID": "Hybrid"
+    }
   },
   "support": {
     "tabs": {
@@ -542,12 +556,20 @@
     "is_read": "Read",
     "send": "Send Notification",
     "content": "Notification Content",
+    "user_id": "User ID",
     "types": {
       "system": "System",
       "appointment": "Appointment",
       "payment": "Payment",
       "insurance": "Insurance",
-      "verification": "Verification"
+      "verification": "Verification",
+      "user": "New user",
+      "support": "Support",
+      "chat": "Chat",
+      "lab_result": "Lab result",
+      "prescription": "Prescription",
+      "report": "Report",
+      "review": "Review"
     }
   },
   "reviews": {

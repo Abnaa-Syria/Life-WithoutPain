@@ -102,7 +102,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
               type="button"
               onClick={handleLogout}
               className="p-2 text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger-bg)] rounded-lg transition-colors"
-              aria-label={t('common.logout') || 'Logout'}
+              aria-label={t('common.logout')}
             >
               <LogOut size={18} />
             </button>
@@ -113,7 +113,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
             type="button"
             onClick={handleLogout}
             className="w-full mt-3 flex justify-center p-3 text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger-bg)] rounded-xl transition-colors"
-            aria-label={t('common.logout') || 'Logout'}
+            aria-label={t('common.logout')}
           >
             <LogOut size={20} />
           </button>

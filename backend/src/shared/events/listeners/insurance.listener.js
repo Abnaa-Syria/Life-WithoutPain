@@ -81,6 +81,22 @@ function initInsuranceListeners() {
         relatedEntityId: insuranceCase.id,
       });
 
+      const staffIds = await getStaffUserIdsForNotificationType('INSURANCE');
+      if (staffIds.length) {
+        await NotificationService.createBulk(
+          staffIds.map((userId) => ({
+            userId,
+            titleAr: 'تحديث طلب تأمين',
+            titleEn: 'Insurance case updated',
+            bodyAr: `طلب تأمين #${insuranceCase.id} — الحالة: ${status}`,
+            bodyEn: `Insurance request #${insuranceCase.id} — status: ${status}`,
+            type: 'INSURANCE',
+            relatedEntityType: 'InsuranceCase',
+            relatedEntityId: insuranceCase.id,
+          })),
+        );
+      }
+
       logger.info(`Insurance CASE_UPDATED notification for case ${insuranceCase.id}`);
     } catch (error) {
       logger.error(`Insurance CASE_UPDATED listener failed: ${error.message}`);

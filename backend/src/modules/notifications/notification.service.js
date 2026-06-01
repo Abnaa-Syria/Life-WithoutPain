@@ -1,15 +1,26 @@
 const NotificationRepository = require('./notification.repository');
 const { buildPagination } = require('../../utils/pagination');
 const { getAllowedNotificationTypes } = require('../../shared/notifications/notificationPermissions');
+const { STAFF_ROLES } = require('../../constants');
+
+function resolveAllowedTypes(role, permissions) {
+  if (!STAFF_ROLES.includes(role)) return null;
+  return getAllowedNotificationTypes(permissions);
+}
+
+function buildWhere(userId, allowedTypes, extra = {}) {
+  const where = { userId, ...extra };
+  if (allowedTypes) {
+    where.type = { in: allowedTypes };
+  }
+  return where;
+}
 
 class NotificationService {
-  static async list(userId, query, permissions = []) {
+  static async list(userId, query, permissions = [], role = null) {
     const { page, limit, skip } = buildPagination(query);
-    const allowedTypes = getAllowedNotificationTypes(permissions);
-    const where = {
-      userId,
-      type: { in: allowedTypes },
-    };
+    const allowedTypes = resolveAllowedTypes(role, permissions);
+    const where = buildWhere(userId, allowedTypes);
     if (query.isRead !== undefined) where.isRead = query.isRead === 'true';
 
     const [data, total] = await Promise.all([
@@ -26,18 +37,18 @@ class NotificationService {
     });
   }
 
-  static async markAllRead(userId, permissions = []) {
-    const allowedTypes = getAllowedNotificationTypes(permissions);
+  static async markAllRead(userId, permissions = [], role = null) {
+    const allowedTypes = resolveAllowedTypes(role, permissions);
     return NotificationRepository.model.updateMany({
-      where: { userId, isRead: false, type: { in: allowedTypes } },
+      where: buildWhere(userId, allowedTypes, { isRead: false }),
       data: { isRead: true, readAt: new Date() },
     });
   }
 
-  static async unreadCount(userId, permissions = []) {
-    const allowedTypes = getAllowedNotificationTypes(permissions);
+  static async unreadCount(userId, permissions = [], role = null) {
+    const allowedTypes = resolveAllowedTypes(role, permissions);
     return NotificationRepository.count({
-      where: { userId, isRead: false, type: { in: allowedTypes } },
+      where: buildWhere(userId, allowedTypes, { isRead: false }),
     });
   }
 }

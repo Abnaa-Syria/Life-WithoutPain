@@ -17,7 +17,7 @@ const Topbar = ({ onMenuClick, title }) => {
         type="button"
         onClick={onMenuClick}
         className="p-2.5 md:hidden text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--surface-secondary)] rounded-xl transition-colors me-2 rtl:me-0 rtl:ms-2"
-        aria-label="Menu"
+        aria-label={t('common.menu')}
       >
         <Menu size={22} />
       </button>

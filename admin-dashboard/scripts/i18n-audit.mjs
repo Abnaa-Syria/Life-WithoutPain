@@ -60,6 +60,6 @@ console.log(missingInEn.length ? missingInEn.join('\n  ') : '(none)');
 console.log('\n=== Keys used in code but missing from AR ===');
 console.log(missingInArUsed.length ? missingInArUsed.join('\n  ') : '(none)');
 
-if (missingInAr.length === 0 && missingInEn.length === 0 && missingInEnUsed.length === 0 && missingInArUsed.length === 0) {
+if (missingInAr.length === 0 && missingInEn.length === 0 && missingInArUsed.length === 0) {
   console.log('\nAll checks passed.');
 }

@@ -46,6 +46,30 @@ function initSupportListeners() {
     }
   });
 
+  eventEmitter.on(EVENTS.SUPPORT.USER_REPLIED, async ({ ticket, message }) => {
+    try {
+      const staffIds = await getStaffUserIdsForNotificationType('SUPPORT');
+      if (!staffIds.length) return;
+
+      const preview = message?.content?.slice(0, 200) || ticket.subject;
+      await NotificationService.createBulk(
+        staffIds.map((userId) => ({
+          userId,
+          titleAr: 'رد جديد على تذكرة دعم',
+          titleEn: 'New reply on support ticket',
+          bodyAr: `#${ticket.id}: ${preview}`,
+          bodyEn: `#${ticket.id}: ${preview}`,
+          type: 'SUPPORT',
+          relatedEntityType: 'SupportTicket',
+          relatedEntityId: ticket.id,
+        })),
+      );
+      logger.info(`Support USER_REPLIED notifications for ticket ${ticket.id}`);
+    } catch (error) {
+      logger.error(`Support USER_REPLIED listener failed: ${error.message}`);
+    }
+  });
+
   eventEmitter.on(EVENTS.SUPPORT.STATUS_CHANGED, async ({ ticket }) => {
     try {
       const creatorId = ticket.createdByUserId;

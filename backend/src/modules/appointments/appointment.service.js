@@ -303,7 +303,27 @@ class AppointmentService {
       updateData.endTime = data.newEndTime || appointment.endTime;
     }
 
-    return prisma.appointment.update({ where: { id: parseInt(id) }, data: updateData });
+    const previousStatus = appointment.status;
+    const updated = await prisma.appointment.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+      include: {
+        doctor: { include: { user: { select: { id: true, fullName: true } } } },
+        patient: { include: { user: { select: { id: true, fullName: true } } } },
+        service: true,
+      },
+    });
+
+    eventEmitter.emit(EVENTS.APPOINTMENT.STATUS_CHANGED, {
+      appointment: updated,
+      previousStatus,
+    });
+
+    if (newStatus === 'CANCELLED') {
+      eventEmitter.emit(EVENTS.APPOINTMENT.CANCELLED, { appointment: updated, previousStatus });
+    }
+
+    return updated;
   }
 
   static async addAttachment(appointmentId, fileData) {

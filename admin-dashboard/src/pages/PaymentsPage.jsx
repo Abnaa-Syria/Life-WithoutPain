@@ -9,6 +9,7 @@ import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import { useTranslation } from 'react-i18next';
 import { CreditCard, CheckCircle, Clock, XCircle, Wallet } from 'lucide-react';
+import { formatCurrency } from '../utils/formatCurrency';
 
 export default function PaymentsPage() {
   const { t } = useTranslation();
@@ -21,15 +22,15 @@ export default function PaymentsPage() {
   });
 
   const columns = [
-    { header: t('payments.transaction_id') || 'Transaction ID', accessorKey: 'transactionId' },
+    { header: t('payments.transaction_id'), accessorKey: 'transactionId' },
     {
-      header: t('payments.amount') || 'Amount',
+      header: t('payments.amount'),
       accessorKey: 'amount',
-      cell: ({ row }) => `${row.original.amount} ر.س`,
-      meta: { exportValue: (row) => `${row.amount ?? '—'} ر.س` },
+      cell: ({ row }) => formatCurrency(row.original.amount, t),
+      meta: { exportValue: (row) => formatCurrency(row.amount, t) },
     },
-    { header: t('payments.method') || 'Method', accessorKey: 'method' },
-    { header: t('payments.user') || 'User', accessorKey: 'user.fullName' },
+    { header: t('payments.method'), accessorKey: 'method' },
+    { header: t('payments.user'), accessorKey: 'user.fullName' },
     { 
       header: t('common.status'), 
       accessorKey: 'status',
@@ -43,7 +44,7 @@ export default function PaymentsPage() {
       },
     },
     {
-      header: t('payments.date') || 'Date',
+      header: t('payments.date'),
       accessorKey: 'createdAt',
       cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
       meta: {
@@ -69,7 +70,7 @@ export default function PaymentsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard label={t('dashboard.stats.total_payments')} value={data?.meta?.totalItems || 0} icon={CreditCard} color="indigo" />
-        <StatCard label={t('dashboard.stats.total_revenue')} value="12,450 ر.س" icon={Wallet} color="green" />
+        <StatCard label={t('dashboard.stats.total_revenue')} value={formatCurrency(12450, t)} icon={Wallet} color="green" />
         <StatCard label={t('dashboard.stats.completed_payments')} value={150} icon={CheckCircle} color="green" />
         <StatCard label={t('dashboard.stats.failed_payments')} value={5} icon={XCircle} color="red" />
       </div>

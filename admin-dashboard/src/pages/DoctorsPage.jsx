@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Stethoscope, CheckCircle, XCircle, Clock, Star } from 'lucide-react';
 import useConfirmDelete from '../hooks/useConfirmDelete';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../utils/formatCurrency';
 import { executeBulkDelete } from '../utils/bulkDelete';
 
 export default function DoctorsPage() {
@@ -76,8 +77,8 @@ export default function DoctorsPage() {
     {
       header: t('doctors.fee') || 'Fee',
       accessorKey: 'consultationFee',
-      cell: ({ row }) => `${row.original.consultationFee} ر.س`,
-      meta: { exportValue: (row) => `${row.consultationFee ?? '—'} ر.س` },
+      cell: ({ row }) => formatCurrency(row.original.consultationFee, t),
+      meta: { exportValue: (row) => formatCurrency(row.consultationFee, t) },
     },
     {
       header: t('doctors.rating') || 'Rating',

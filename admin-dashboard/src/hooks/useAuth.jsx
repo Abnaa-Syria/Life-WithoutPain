@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { disconnectDashboardSocket } from '../services/dashboardSocket';
 import toast from 'react-hot-toast';
@@ -15,6 +16,7 @@ const AuthContext = createContext(null);
 const ADMIN_ROLES = ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'];
 
 export function AuthProvider({ children }) {
+  const { t } = useTranslation();
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem('user');
     return stored ? JSON.parse(stored) : null;
@@ -83,14 +85,14 @@ export function AuthProvider({ children }) {
       if (!ADMIN_ROLES.includes(profile?.role)) {
         localStorage.clear();
         setUser(null);
-        toast.error('غير مصرح بالدخول');
+        toast.error(t('messages.unauthorized'));
         return;
       }
 
-      toast.success('تم تسجيل الدخول بنجاح');
+      toast.success(t('messages.login_success'));
       navigate('/');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'فشل تسجيل الدخول');
+      toast.error(error.response?.data?.message || t('messages.login_error'));
       throw error;
     }
   };
