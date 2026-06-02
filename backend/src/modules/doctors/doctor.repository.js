@@ -32,6 +32,7 @@ class DoctorRepository extends BaseRepository {
           },
         },
         speciality: true,
+        subSpecialities: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
         verificationDocuments: true,
         doctorServices: {
           include: {

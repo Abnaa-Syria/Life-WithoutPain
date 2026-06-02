@@ -321,6 +321,7 @@ async function main() {
   ];
 
   let patientPhoneSeed = 22222222;
+  let patientIdx = 0;
   for (const p of patientBase) {
     const user = await upsertUser({
       fullName: p.fullName,
@@ -333,75 +334,88 @@ async function main() {
     patientsUsers.push(user);
 
     const patientProfile = await ensurePatientProfileWithIdEqualsUserId(user, {
+      identityNumber: p.identityNumber,
       gender: p.gender,
       dateOfBirth: new Date('1990-05-15'),
       bloodType: p.bloodType,
-      height: 170,
-      weight: 75,
+      height: 170 + patientIdx,
+      weight: 75 + patientIdx,
       city: p.city,
-      address: 'عنوان تجريبي',
+      address: `${p.city} — حي النخيل، شارع 12`,
       emergencyContactName: 'قريب',
       emergencyContactPhone: phone(90000000 + user.id),
       insuranceLinked: true,
     });
 
-    let hypertension = await prisma.chronicDisease.findFirst({ where: { nameEn: 'Hypertension' } });
-    if (!hypertension) {
-      hypertension = await prisma.chronicDisease.create({
-        data: { nameAr: 'ارتفاع ضغط الدم', nameEn: 'Hypertension', description: 'Seeded chronic disease' },
-      });
-    }
-    let penicillin = await prisma.allergy.findFirst({ where: { nameEn: 'Penicillin' } });
-    if (!penicillin) {
-      penicillin = await prisma.allergy.create({
-        data: { nameAr: 'بنسلين', nameEn: 'Penicillin', description: 'Seeded allergy' },
-      });
-    }
-    let vitaminD = await prisma.medication.findFirst({ where: { nameEn: 'Vitamin D' } });
-    if (!vitaminD) {
-      vitaminD = await prisma.medication.create({
-        data: { nameAr: 'فيتامين د', nameEn: 'Vitamin D', description: 'Seeded medication' },
-      });
-    }
+    const catalogSet = patientCatalogSets[patientIdx % patientCatalogSets.length];
+    const diseaseIds = catalogSet.diseases.map((name) => chronicDiseaseCatalog[name].id);
+    const medicationIds = catalogSet.medications.map((name) => medicationCatalog[name].id);
+    const allergyIds = catalogSet.allergies.map((name) => allergyCatalog[name].id);
 
-    await prisma.medicalProfile.upsert({
+    const medicalProfile = await prisma.medicalProfile.upsert({
       where: { patientId: patientProfile.id },
       update: {
-        surgeries: 'None',
-        familyHistory: 'Diabetes',
-        notes: 'Seeded medical profile',
-        chronicDiseases: { set: [{ id: hypertension.id }] },
-        allergies: { set: [{ id: penicillin.id }] },
-        medications: { set: [{ id: vitaminD.id }] },
+        surgeries: patientIdx === 0 ? 'Appendectomy (2018)' : 'None',
+        familyHistory: patientIdx === 0 ? 'Diabetes in parents' : 'Hypertension in father',
+        notes: 'Seeded medical profile for dashboard preview',
+        chronicDiseases: { set: diseaseIds.map((id) => ({ id })) },
+        allergies: { set: allergyIds.map((id) => ({ id })) },
+        medications: { set: medicationIds.map((id) => ({ id })) },
       },
       create: {
         patientId: patientProfile.id,
-        surgeries: 'None',
-        familyHistory: 'Diabetes',
-        notes: 'Seeded medical profile',
-        chronicDiseases: { connect: [{ id: hypertension.id }] },
-        allergies: { connect: [{ id: penicillin.id }] },
-        medications: { connect: [{ id: vitaminD.id }] },
+        surgeries: patientIdx === 0 ? 'Appendectomy (2018)' : 'None',
+        familyHistory: patientIdx === 0 ? 'Diabetes in parents' : 'Hypertension in father',
+        notes: 'Seeded medical profile for dashboard preview',
+        chronicDiseases: { connect: diseaseIds.map((id) => ({ id })) },
+        allergies: { connect: allergyIds.map((id) => ({ id })) },
+        medications: { connect: medicationIds.map((id) => ({ id })) },
       },
     });
 
-    // Family members
-    await prisma.familyMember.createMany({
+    await prisma.medicalProfileAttachment.deleteMany({ where: { medicalProfileId: medicalProfile.id } });
+    await prisma.medicalProfileAttachment.createMany({
       data: [
-        { patientId: patientProfile.id, fullName: 'ابن/ابنة 1', relationType: 'CHILD', gender: 'MALE', dateOfBirth: new Date('2015-01-01'), phone: phone(70000000 + user.id) },
-        { patientId: patientProfile.id, fullName: 'والدة', relationType: 'MOTHER', gender: 'FEMALE', dateOfBirth: new Date('1965-01-01'), phone: phone(71000000 + user.id) },
+        { medicalProfileId: medicalProfile.id, fileUrl: '/uploads/sample.pdf', mimeType: 'application/pdf', title: 'تقرير مختبر' },
+        { medicalProfileId: medicalProfile.id, fileUrl: '/uploads/download.jpeg', mimeType: 'image/jpeg', title: 'أشعة سينية' },
       ],
-      skipDuplicates: true,
     });
 
-    // Medical files
+    await prisma.familyMember.deleteMany({ where: { patientId: patientProfile.id } });
+    await prisma.familyMember.createMany({
+      data: [
+        {
+          patientId: patientProfile.id,
+          fullName: patientIdx === 0 ? 'سارة محمد' : 'ابن/ابنة 1',
+          residenceCardNumber: `RC-${patientProfile.id}-001`,
+          relationType: 'CHILD',
+          gender: 'FEMALE',
+          dateOfBirth: new Date('2015-01-01'),
+          phone: phone(70000000 + user.id),
+        },
+        {
+          patientId: patientProfile.id,
+          fullName: 'والدة',
+          residenceCardNumber: `RC-${patientProfile.id}-002`,
+          relationType: 'MOTHER',
+          gender: 'FEMALE',
+          dateOfBirth: new Date('1965-01-01'),
+          phone: phone(71000000 + user.id),
+        },
+      ],
+    });
+
+    await prisma.medicalFile.deleteMany({ where: { patientId: patientProfile.id } });
     await prisma.medicalFile.createMany({
       data: [
         { patientId: patientProfile.id, uploadedBy: user.id, category: 'LAB_RESULT', fileUrl: `/uploads/sample.pdf`, mimeType: 'application/pdf', title: 'نتيجة تحليل', description: 'ملف تجريبي' },
         { patientId: patientProfile.id, uploadedBy: user.id, category: 'INSURANCE_DOCUMENT', fileUrl: `/uploads/download.jpeg`, mimeType: 'image/jpeg', title: 'ملف تأمين', description: 'ملف تجريبي' },
+        { patientId: patientProfile.id, uploadedBy: user.id, category: 'RADIOLOGY', fileUrl: `/uploads/download.jpeg`, mimeType: 'image/jpeg', title: 'أشعة صدر', description: 'ملف أشعة تجريبي' },
+        { patientId: patientProfile.id, uploadedBy: user.id, category: 'MEDICAL_REPORT', fileUrl: `/uploads/sample.pdf`, mimeType: 'application/pdf', title: 'تقرير طبي', description: 'تقرير سابق' },
       ],
-      skipDuplicates: true,
     });
+
+    patientIdx++;
   }
 
   const patients = await prisma.patientProfile.findMany({ include: { user: true } });
@@ -895,6 +909,11 @@ async function main() {
         { type: 'الوزن (Weight)', value: '78 kg' },
         { type: 'الطول (Height)', value: '175 cm' }
       ],
+      resultSummary: 'جميع الفحوصات ضمن المعدلات الطبيعية',
+      resultsList: [
+        { testName: 'HbA1c', value: '5.4%', unit: '%', referenceRange: '< 5.7' },
+        { testName: 'LDL Cholesterol', value: '110', unit: 'mg/dL', referenceRange: '< 130' },
+      ],
       nextAppointmentDate: daysFromNow(90),
       recommendations: 'الاستمرار على ممارسة الرياضة، شرب الماء بكثرة، تقليل الأملاح في الطعام.',
       pdfUrl: `/uploads/sample.pdf`,
@@ -920,9 +939,14 @@ async function main() {
       visitReason: 'ألم حاد في الركبة اليمنى',
       diagnosis: 'التهاب في الأوتار',
       summary: 'ألم ناتج عن إجهاد بدني زائد.',
+      symptoms: 'ألم عند ثني الركبة، تورم خفيف',
       clinicalExam: [
         { type: 'اختبار الحركة', value: 'محدود في الركبة اليمنى' },
         { type: 'مستوى الألم', value: '7/10' }
+      ],
+      resultSummary: 'التهاب في الأوتار بدون تمزق',
+      resultsList: [
+        { testName: 'MRI Knee', value: 'Tendinitis', unit: null, referenceRange: 'Normal' },
       ],
       nextAppointmentDate: daysFromNow(7),
       recommendations: 'وضع كمادات باردة، راحة تامة للقدم، استخدام المسكنات عند الضرورة.',
@@ -948,6 +972,24 @@ async function main() {
       },
     },
     include: { items: true },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      appointmentId: inProgressAppt.id,
+      patientId: patient2.id,
+      doctorId: doctor2.id,
+      diagnosis: 'التهاب في الأوتار',
+      notes: 'راحة تامة وتجنب مجهود الركبة',
+      qrCodeValue: `RX-${inProgressAppt.id}-2`,
+      digitalSealValue: `SEAL-${inProgressAppt.id}-2`,
+      pdfUrl: `/uploads/sample.pdf`,
+      items: {
+        create: [
+          { medicineName: 'Diclofenac', dosage: '50mg', frequency: '2/day', duration: '7 days', instructions: 'After food' },
+        ],
+      },
+    },
   });
 
   // ─────────────────────────────────────────────────────────────

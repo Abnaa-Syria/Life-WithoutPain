@@ -29,7 +29,10 @@ class SpecialityService {
         skip,
         take: limit,
         orderBy: { sortOrder: 'asc' },
-        include: options.includeSubs ? SPECIALITY_INCLUDE_SUBS : undefined,
+        include: {
+          _count: { select: { doctors: true, subSpecialities: true } },
+          ...(options.includeSubs ? SPECIALITY_INCLUDE_SUBS : {}),
+        },
       }),
       SpecialityRepository.count({ where }),
     ]);
