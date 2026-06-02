@@ -7,9 +7,11 @@ import DetailsHeader from '../components/ui/DetailsHeader';
 import DetailsSection from '../components/ui/DetailsSection';
 import DetailItem from '../components/ui/DetailItem';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
-import { User, Activity, Shield, Users, FileText, Pill, ClipboardList, Paperclip, Clock, HeartPulse, AlertTriangle } from 'lucide-react';
+import { User, Activity, Shield, Users, FileText, Pill, ClipboardList, Paperclip, Clock, HeartPulse, AlertTriangle, FlaskConical } from 'lucide-react';
 import Tabs from '../components/ui/Tabs';
 import FilePreviewer from '../components/ui/FilePreviewer';
+import RelatedRecordCard from '../components/ui/RelatedRecordCard';
+import { resolveUploadUrl } from '../utils/uploads';
 import MedicalProfileCatalogTab from '../components/medical/MedicalProfileCatalogTab';
 import MedicalProfileAttachments from '../components/medical/MedicalProfileAttachments';
 import PatientInsuranceTab from '../components/patients/PatientInsuranceTab';
@@ -46,6 +48,7 @@ export default function PatientDetailsPage() {
     { id: 'allergies', label: t('patients.tab_allergies') || 'Allergies', icon: AlertTriangle },
     { id: 'prescriptions', label: t('medical.prescriptions') || 'Prescriptions', icon: Pill },
     { id: 'reports', label: t('medical.reports') || 'Reports', icon: ClipboardList },
+    { id: 'lab_tests', label: t('medical.test_requests') || 'Test requests', icon: FlaskConical },
     { id: 'files', label: t('common.attachments') || 'Attachments', icon: Paperclip },
   ];
 
@@ -95,20 +98,14 @@ export default function PatientDetailsPage() {
   const renderPrescriptions = () => (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {patient.prescriptions?.length > 0 ? patient.prescriptions.map((px) => (
-        <div key={px.id} className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h3 className="font-bold text-lg text-[var(--text-primary)]">{px.diagnosis}</h3>
-              <p className="text-[var(--text-muted)] text-sm flex items-center gap-2">
-                <Clock size={14} /> {new Date(px.createdAt).toLocaleDateString()} • {px.doctor?.user?.fullName}
-              </p>
-            </div>
-            {px.pdfUrl && (
-              <a href={px.pdfUrl} target="_blank" rel="noreferrer" className="btn btn-secondary py-1.5 px-3 text-xs">
-                <FileText size={14} /> PDF
-              </a>
-            )}
-          </div>
+        <RelatedRecordCard
+          key={px.id}
+          title={px.diagnosis}
+          subtitle={`${new Date(px.createdAt).toLocaleDateString()} • ${px.doctor?.user?.fullName}`}
+          detailPath={`/prescriptions/${px.id}`}
+          appointment={px.appointment}
+          appointmentId={px.appointmentId}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {px.items?.map((item) => (
               <div key={item.id} className="p-3 bg-primary-50/80 rounded-xl border border-primary-100">
@@ -117,7 +114,12 @@ export default function PatientDetailsPage() {
               </div>
             ))}
           </div>
-        </div>
+          {px.pdfUrl && (
+            <a href={resolveUploadUrl(px.pdfUrl)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 mt-3 btn btn-secondary py-1.5 px-3 text-xs">
+              <FileText size={14} /> PDF
+            </a>
+          )}
+        </RelatedRecordCard>
       )) : <div className="p-12 text-center bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] text-[var(--text-muted)]">{t('common.no_data')}</div>}
     </div>
   );
@@ -125,20 +127,14 @@ export default function PatientDetailsPage() {
   const renderReports = () => (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {patient.reports?.length > 0 ? patient.reports.map((report) => (
-        <div key={report.id} className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h3 className="font-bold text-lg text-[var(--text-primary)]">{report.visitReason}</h3>
-              <p className="text-[var(--text-muted)] text-sm flex items-center gap-2">
-                <Clock size={14} /> {new Date(report.createdAt).toLocaleDateString()} • {report.doctor?.user?.fullName}
-              </p>
-            </div>
-            {report.pdfUrl && (
-              <a href={report.pdfUrl} target="_blank" rel="noreferrer" className="btn btn-secondary py-1.5 px-3 text-xs">
-                <FileText size={14} /> PDF
-              </a>
-            )}
-          </div>
+        <RelatedRecordCard
+          key={report.id}
+          title={report.visitReason}
+          subtitle={`${new Date(report.createdAt).toLocaleDateString()} • ${report.doctor?.user?.fullName}`}
+          detailPath={`/reports/${report.id}`}
+          appointment={report.appointment}
+          appointmentId={report.appointmentId}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h4 className="text-sm font-bold text-[var(--text-muted)] mb-2">{t('medical.symptoms') || 'Symptoms'}</h4>
@@ -153,7 +149,29 @@ export default function PatientDetailsPage() {
               <p className="text-sm">{report.summary}</p>
             </div>
           </div>
-        </div>
+          {report.pdfUrl && (
+            <a href={resolveUploadUrl(report.pdfUrl)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 mt-3 btn btn-secondary py-1.5 px-3 text-xs">
+              <FileText size={14} /> PDF
+            </a>
+          )}
+        </RelatedRecordCard>
+      )) : <div className="p-12 text-center bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] text-[var(--text-muted)]">{t('common.no_data')}</div>}
+    </div>
+  );
+
+  const renderLabTests = () => (
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {patient.labTests?.length > 0 ? patient.labTests.map((test) => (
+        <RelatedRecordCard
+          key={test.id}
+          title={test.title}
+          subtitle={`${new Date(test.requestedAt || test.createdAt).toLocaleDateString()} • ${test.doctor?.user?.fullName}`}
+          status={test.status}
+          detailPath={`/lab-tests/${test.id}`}
+          appointment={test.appointment}
+          appointmentId={test.appointmentId}
+          meta={test.notes}
+        />
       )) : <div className="p-12 text-center bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] text-[var(--text-muted)]">{t('common.no_data')}</div>}
     </div>
   );
@@ -210,6 +228,7 @@ export default function PatientDetailsPage() {
         )}
         {activeTab === 'prescriptions' && renderPrescriptions()}
         {activeTab === 'reports' && renderReports()}
+        {activeTab === 'lab_tests' && renderLabTests()}
         {activeTab === 'files' && renderFiles()}
       </div>
     </div>

@@ -15,7 +15,9 @@ const GenericDetailsPage = ({
   endpoint, 
   titleField = 'id', 
   sections = [], 
-  backPath 
+  backPath,
+  topContent,
+  bottomContent,
 }) => {
   const { t } = useTranslation();
   const { id } = useParams();
@@ -43,19 +45,25 @@ const GenericDetailsPage = ({
       />
 
       <div className="space-y-6">
+        {typeof topContent === 'function' ? topContent(data) : topContent}
+
         {sections.map((section, sIdx) => (
           <DetailsSection key={sIdx} title={section.title} icon={section.icon}>
-            {section.fields.map((field, fIdx) => (
+            {section.fields.map((field, fIdx) => {
+              const value = field.key.split('.').reduce((obj, key) => obj?.[key], data);
+              return (
               <DetailItem 
                 key={fIdx} 
                 label={field.label} 
-                value={field.key.split('.').reduce((obj, key) => obj?.[key], data)}
-                render={field.render}
+                value={value}
+                render={field.render ? (v) => field.render(v, data) : undefined}
                 fullWidth={field.fullWidth}
               />
-            ))}
+            );})}
           </DetailsSection>
         ))}
+
+        {typeof bottomContent === 'function' ? bottomContent(data) : bottomContent}
 
         {/* Audit Info Section */}
         <DetailsSection title={t('common.audit_info') || 'Audit Information'} icon={Clock}>

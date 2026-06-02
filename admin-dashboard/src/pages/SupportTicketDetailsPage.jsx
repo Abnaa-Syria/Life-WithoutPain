@@ -10,10 +10,10 @@ import DetailItem from '../components/ui/DetailItem';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import Badge from '../components/ui/Badge';
 import Card from '../components/ui/Card';
+import FilePreviewer from '../components/ui/FilePreviewer';
+import { resolveUploadUrl } from '../utils/uploads';
 import { Headphones, MessageSquare, User, Clock, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-const API_BASE = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:4000';
 
 export default function SupportTicketDetailsPage() {
   const { t } = useTranslation();
@@ -184,17 +184,16 @@ export default function SupportTicketDetailsPage() {
 
         <div className="lg:col-span-2 space-y-6">
           {ticket.attachments?.length > 0 && (
-            <Card bodyClassName="space-y-2">
+            <Card bodyClassName="space-y-3">
               <p className="text-sm font-semibold">{t('support.attachments') || 'Attachments'}</p>
-              <ul className="space-y-1 text-sm">
-                {ticket.attachments.map((a) => (
-                  <li key={a.id}>
-                    <a href={`${API_BASE}${a.fileUrl}`} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline">
-                      {a.fileName || a.fileUrl}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <FilePreviewer
+                files={ticket.attachments.map((a) => ({
+                  url: a.fileUrl,
+                  name: a.fileName || a.fileUrl,
+                  mimeType: a.mimeType,
+                }))}
+                height="360px"
+              />
             </Card>
           )}
 
@@ -224,7 +223,7 @@ export default function SupportTicketDetailsPage() {
                         {msg.attachments?.map((a) => (
                           <a
                             key={a.id}
-                            href={`${API_BASE}${a.fileUrl}`}
+                            href={resolveUploadUrl(a.fileUrl)}
                             target="_blank"
                             rel="noreferrer"
                             className={`block text-xs mt-2 underline ${isAdmin ? 'text-primary-100' : 'text-primary-600'}`}

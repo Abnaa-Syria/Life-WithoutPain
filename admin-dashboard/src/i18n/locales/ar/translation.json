@@ -301,7 +301,10 @@
     "test_type": "نوع الفحص",
     "test_value": "النتيجة/القيمة",
     "next_appointment": "الموعد القادم",
-    "report_attachments": "مرفقات التقرير"
+    "report_attachments": "مرفقات التقرير",
+    "test_requests": "طلبات التحاليل",
+    "lab_results": "نتائج التحاليل",
+    "prescription": "الوصفة الطبية"
   },
   "dashboard": {
     "greeting_SUPER_ADMIN": "مرحباً بك في لوحة إدارة النظام",
@@ -360,6 +363,7 @@
     "attachments": "المرفقات",
     "prescriptions": "الوصفات الطبية",
     "details": "تفاصيل الموعد",
+    "linked_appointment": "الموعد المرتبط",
     "search_placeholder": "البحث بالمرضى أو الأطباء...",
     "types": {
       "online": "أونلاين",
@@ -537,6 +541,7 @@
     "approved": "تمت الموافقة",
     "rejected": "مرفوض",
     "sample_collected": "تم جمع العينة",
+    "requested": "مطلوب",
     "processing": "قيد المعالجة",
     "paid": "مدفوع",
     "failed": "فشل",

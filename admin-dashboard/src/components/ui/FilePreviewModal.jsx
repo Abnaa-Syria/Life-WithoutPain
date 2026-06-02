@@ -1,11 +1,11 @@
 ﻿import React, { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Download, Maximize2, Minimize2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Download, Maximize2 } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { normalizePreviewFiles } from '../../utils/uploads';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Set worker for react-pdf
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const FilePreviewModal = ({ isOpen, onClose, files = [], initialIndex = 0 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -15,10 +15,17 @@ const FilePreviewModal = ({ isOpen, onClose, files = [], initialIndex = 0 }) => 
 
   if (!isOpen || !files.length) return null;
 
-  const currentFile = files[currentIndex];
-  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(currentFile.url || currentFile);
-  const isPdf = /\.(pdf)$/i.test(currentFile.url || currentFile);
-  const fileUrl = currentFile.url || currentFile;
+  const previewFiles = normalizePreviewFiles(files);
+  if (!previewFiles.length) return null;
+
+  const currentFile = previewFiles[currentIndex] || previewFiles[0];
+  const fileUrl = currentFile.url;
+  const isImage = currentFile.mimeType
+    ? currentFile.mimeType.startsWith('image/')
+    : /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(fileUrl);
+  const isPdf = currentFile.mimeType
+    ? currentFile.mimeType === 'application/pdf'
+    : /\.pdf(\?|$)/i.test(fileUrl);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
@@ -26,13 +33,13 @@ const FilePreviewModal = ({ isOpen, onClose, files = [], initialIndex = 0 }) => 
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % files.length);
+    setCurrentIndex((prev) => (prev + 1) % previewFiles.length);
     setNumPages(null);
     setPageNumber(1);
   };
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + files.length) % files.length);
+    setCurrentIndex((prev) => (prev - 1 + previewFiles.length) % previewFiles.length);
     setNumPages(null);
     setPageNumber(1);
   };
@@ -46,7 +53,7 @@ const FilePreviewModal = ({ isOpen, onClose, files = [], initialIndex = 0 }) => 
             {currentFile.name || `File ${currentIndex + 1}`}
           </span>
           <span className="text-xs opacity-60">
-            {currentIndex + 1} / {files.length}
+            {currentIndex + 1} / {previewFiles.length}
           </span>
         </div>
 
@@ -73,7 +80,7 @@ const FilePreviewModal = ({ isOpen, onClose, files = [], initialIndex = 0 }) => 
       {/* Content Area */}
       <div className="relative w-full h-full flex items-center justify-center p-4 md:p-12">
         {/* Navigation Arrows */}
-        {files.length > 1 && (
+        {previewFiles.length > 1 && (
           <>
             <button 
               onClick={handlePrev}

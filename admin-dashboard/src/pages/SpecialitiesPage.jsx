@@ -13,6 +13,7 @@ import { Plus, Edit, Trash2, Activity } from 'lucide-react';
 import useConfirmDelete from '../hooks/useConfirmDelete';
 import toast from 'react-hot-toast';
 import { executeBulkDelete } from '../utils/bulkDelete';
+import { resolveUploadUrl } from '../utils/uploads';
 
 export default function SpecialitiesPage() {
   const { t } = useTranslation();
@@ -71,7 +72,7 @@ export default function SpecialitiesPage() {
       cell: ({ row }) => (
         <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center overflow-hidden">
           {row.original.iconUrl ? (
-            <img src={row.original.iconUrl} alt="" className="w-full h-full object-cover" />
+            <img src={resolveUploadUrl(row.original.iconUrl)} alt="" className="w-full h-full object-cover" />
           ) : (
             <Activity size={20} className="text-primary-600" />
           )}

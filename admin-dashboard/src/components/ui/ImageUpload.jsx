@@ -2,6 +2,7 @@
 import { useDropzone } from 'react-dropzone';
 import { Upload, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { resolveUploadUrl } from '../../utils/uploads';
 
 const ImageUpload = ({ value, onChange, multiple = false, accept = 'image/*' }) => {
   const { t } = useTranslation();
@@ -81,7 +82,7 @@ const ImageUpload = ({ value, onChange, multiple = false, accept = 'image/*' }) 
           {previews.map((item, idx) => (
             <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-[var(--border-color)]">
               <img 
-                src={item.preview || item.url} 
+                src={item.preview || resolveUploadUrl(item.url)} 
                 alt="preview" 
                 className="w-full h-full object-cover"
               />

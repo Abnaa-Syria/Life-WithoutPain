@@ -1,19 +1,18 @@
-const API_BASE = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:4000';
+import { guessMimeType, resolveUploadUrl } from './uploads';
 
-export function resolveUploadUrl(path) {
-  if (!path) return '';
-  if (path.startsWith('http')) return path;
-  return `${API_BASE}${path}`;
-}
+export { resolveUploadUrl } from './uploads';
 
 export function getLicenseDocuments(doctor) {
   return (doctor?.verificationDocuments || [])
     .filter((doc) => doc.fileType === 'LICENSE')
-    .map((doc) => ({
-      url: resolveUploadUrl(doc.fileUrl),
-      name: doc.fileType,
-      mimeType: doc.mimeType,
-    }));
+    .map((doc) => {
+      const url = resolveUploadUrl(doc.fileUrl);
+      return {
+        url,
+        name: doc.fileType || 'LICENSE',
+        mimeType: doc.mimeType || guessMimeType(url),
+      };
+    });
 }
 
 export function formatLicenseExpiryDate(value, locale) {

@@ -33,8 +33,13 @@ import AuditLogDetailsPage from '../pages/AuditLogDetailsPage';
 import MedicalMasterDataPage from '../pages/MedicalMasterDataPage';
 import RolesPage from '../pages/RolesPage';
 import RoleDetailsPage from '../pages/RoleDetailsPage';
-import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Star, Settings, Pill, ClipboardList, Calendar, Paperclip, Bell } from 'lucide-react';
+import { Info, Shield, Briefcase, FileText, Activity, CreditCard, Star, Settings, Pill, ClipboardList, Calendar, Paperclip, Bell, FlaskConical } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
+import LinkedAppointmentSection from '../components/ui/LinkedAppointmentSection';
+import FilePreviewer from '../components/ui/FilePreviewer';
+import DetailsSection from '../components/ui/DetailsSection';
+import { resolveUploadUrl } from '../utils/uploads';
+import { formatAppointmentDateTime } from '../utils/appointment';
 
 const ALL_ADMIN = ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'INSURANCE_STAFF', 'SUPPORT_STAFF', 'ACCOUNTANT'];
 const ADMIN_MED = ['SUPER_ADMIN', 'MEDICAL_ADMIN'];
@@ -171,11 +176,12 @@ function AppRoutes() {
                 { key: 'title', label: t('common.title') },
                 { key: 'patient', label: t('appointments.patient'), render: (row) => row.patient?.user?.fullName || '-' },
                 { key: 'doctor', label: t('appointments.doctor'), render: (row) => row.doctor?.user?.fullName || '-' },
+                { key: 'appointment', label: t('appointments.appointment'), render: (row) => row.appointment ? `#${row.appointment.id} • ${formatAppointmentDateTime(row.appointment)}` : (row.appointmentId ? `#${row.appointmentId}` : '—') },
                 { key: 'status', label: t('common.status'), render: (row) => <StatusBadge status={row.status} /> },
               ]}
               formFields={[
                 { name: 'title', label: t('common.title'), required: true },
-                { name: 'status', label: t('common.status'), type: 'select', options: [{ value: 'PENDING', label: t('status.pending') }, { value: 'SAMPLE_COLLECTED', label: t('status.sample_collected') }, { value: 'PROCESSING', label: t('status.processing') }, { value: 'COMPLETED', label: t('status.completed') }, { value: 'CANCELLED', label: t('status.cancelled') }] },
+                { name: 'status', label: t('common.status'), type: 'select', options: [{ value: 'REQUESTED', label: t('status.requested') || 'Requested' }, { value: 'SAMPLE_COLLECTED', label: t('status.sample_collected') || 'Sample collected' }, { value: 'IN_PROGRESS', label: t('status.in_progress') || 'In progress' }, { value: 'COMPLETED', label: t('status.completed') }, { value: 'CANCELLED', label: t('status.cancelled') }] },
                 { name: 'notes', label: t('common.notes'), type: 'textarea' },
               ]}
               editLabel={t('common.edit')} deleteConfirmMessage={t('common.confirm.delete_text')}
@@ -186,6 +192,7 @@ function AppRoutes() {
           <ProtectedRoute permission={P.labTests} roles={ADMIN_MED}>
             <GenericDetailsPage 
               entityName={t('sidebar.lab_tests')} endpoint="/admin/lab-tests" titleField="title"
+              topContent={(data) => <LinkedAppointmentSection appointment={data.appointment} appointmentId={data.appointmentId} />}
               sections={[
                 { title: t('medical.test_info'), icon: Activity, fields: [
                   { label: t('common.title'), key: "title" },
@@ -195,6 +202,18 @@ function AppRoutes() {
                   { label: t('common.notes'), key: "notes", fullWidth: true },
                 ]}
               ]}
+              bottomContent={(data) => (
+                data.results?.length > 0 ? (
+                  <DetailsSection title={t('medical.lab_results') || 'Lab results'} icon={FlaskConical}>
+                    <div className="col-span-full">
+                      <FilePreviewer
+                        files={data.results.map((r) => ({ url: r.fileUrl, name: r.notes || `Result #${r.id}`, mimeType: 'application/pdf' }))}
+                        height="400px"
+                      />
+                    </div>
+                  </DetailsSection>
+                ) : null
+              )}
             />
           </ProtectedRoute>
         } />
@@ -330,6 +349,7 @@ function AppRoutes() {
                 { key: 'id', label: '#' },
                 { key: 'patient', label: t('appointments.patient'), render: (row) => row.patient?.user?.fullName || '-' },
                 { key: 'doctor', label: t('appointments.doctor'), render: (row) => row.doctor?.user?.fullName || '-' },
+                { key: 'appointment', label: t('appointments.appointment'), render: (row) => row.appointment ? `#${row.appointment.id}` : (row.appointmentId ? `#${row.appointmentId}` : '—') },
                 { key: 'diagnosis', label: t('medical.diagnosis'), render: (row) => (row.diagnosis || '-').substring(0, 50) },
                 { key: 'date', label: t('common.created_at'), render: (row) => new Date(row.createdAt).toLocaleDateString() },
               ]}
@@ -348,10 +368,12 @@ function AppRoutes() {
           <ProtectedRoute permission={P.reports} roles={ADMIN_MED}>
             <GenericDetailsPage 
               entityName={t('medical.reports')} endpoint="/admin/reports" titleField="id"
+              topContent={(data) => <LinkedAppointmentSection appointment={data.appointment} appointmentId={data.appointmentId} />}
               sections={[
                 { title: t('medical.report_details'), icon: FileText, fields: [
                   { label: t('appointments.patient'), key: "patient.user.fullName" },
                   { label: t('appointments.doctor'), key: "doctor.user.fullName" },
+                  { label: t('medical.prescription'), key: "prescription.id", render: (v, row) => v ? `#${v}${row?.prescription?.diagnosis ? ` — ${row.prescription.diagnosis}` : ''}` : '—' },
                   { label: t('medical.visit_reason'), key: "visitReason", fullWidth: true },
                   { label: t('medical.diagnosis'), key: "diagnosis", fullWidth: true },
                   { label: t('common.summary'), key: "summary", fullWidth: true },
@@ -389,7 +411,7 @@ function AppRoutes() {
                     return (
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
                         {v.map((att, idx) => (
-                          <a key={idx} href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-primary-400 transition-colors group">
+                          <a key={idx} href={resolveUploadUrl(att.fileUrl)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-primary-400 transition-colors group">
                             <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 group-hover:bg-primary-500 group-hover:text-white transition-colors">
                               <FileText size={20} />
                             </div>
@@ -418,6 +440,7 @@ function AppRoutes() {
                 { key: 'id', label: '#' },
                 { key: 'patient', label: t('appointments.patient'), render: (row) => row.patient?.user?.fullName || '-' },
                 { key: 'doctor', label: t('appointments.doctor'), render: (row) => row.doctor?.user?.fullName || '-' },
+                { key: 'appointment', label: t('appointments.appointment'), render: (row) => row.appointment ? `#${row.appointment.id}` : (row.appointmentId ? `#${row.appointmentId}` : '—') },
                 { key: 'diagnosis', label: t('medical.diagnosis'), render: (row) => (row.diagnosis || '-').substring(0, 50) },
                 { key: 'items', label: t('medical.medications_count'), render: (row) => row.items?.length || 0 },
                 { key: 'date', label: t('common.created_at'), render: (row) => new Date(row.createdAt).toLocaleDateString() },
@@ -434,6 +457,7 @@ function AppRoutes() {
           <ProtectedRoute permission={P.prescriptions} roles={ADMIN_MED}>
             <GenericDetailsPage 
               entityName={t('medical.prescriptions')} endpoint="/admin/prescriptions" titleField="id"
+              topContent={(data) => <LinkedAppointmentSection appointment={data.appointment} appointmentId={data.appointmentId} />}
               sections={[
                 { title: t('medical.prescription_details'), icon: Activity, fields: [
                   { label: t('appointments.patient'), key: "patient.user.fullName" },
@@ -442,6 +466,20 @@ function AppRoutes() {
                   { label: t('common.notes'), key: "notes", fullWidth: true },
                 ]}
               ]}
+              bottomContent={(data) => (
+                data.items?.length > 0 ? (
+                  <DetailsSection title={t('medical.medications') || 'Medications'} icon={Pill}>
+                    <div className="col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {data.items.map((item) => (
+                        <div key={item.id} className="p-3 bg-primary-50/80 rounded-xl border border-primary-100">
+                          <p className="font-bold text-primary-700">{item.medicineName}</p>
+                          <p className="text-xs text-[var(--text-muted)]">{item.dosage} • {item.frequency} • {item.duration}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </DetailsSection>
+                ) : null
+              )}
             />
           </ProtectedRoute>
         } />

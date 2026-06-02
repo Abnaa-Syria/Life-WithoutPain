@@ -301,7 +301,10 @@
     "test_type": "Test Type",
     "test_value": "Result/Value",
     "next_appointment": "Next Appointment",
-    "report_attachments": "Report Attachments"
+    "report_attachments": "Report Attachments",
+    "test_requests": "Test requests",
+    "lab_results": "Lab results",
+    "prescription": "Prescription"
   },
   "dashboard": {
     "greeting_SUPER_ADMIN": "Welcome to System Admin Dashboard",
@@ -360,6 +363,7 @@
     "attachments": "Attachments",
     "prescriptions": "Prescriptions",
     "details": "Appointment Details",
+    "linked_appointment": "Linked appointment",
     "search_placeholder": "Search by patient or doctor...",
     "types": {
       "online": "Online",
@@ -537,6 +541,7 @@
     "approved": "Approved",
     "rejected": "Rejected",
     "sample_collected": "Sample Collected",
+    "requested": "Requested",
     "processing": "Processing",
     "paid": "Paid",
     "failed": "Failed",
