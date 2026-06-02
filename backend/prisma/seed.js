@@ -348,6 +348,18 @@ async function main() {
     { offsetDays: -10, status: 'NO_SHOW', paymentStatus: 'PENDING', insuranceStatus: 'NOT_REQUIRED' },
   ];
 
+  // Add historical data for charts
+  for (let i = 0; i < 150; i++) {
+    const offsetDays = -Math.floor(Math.random() * 180); // Past 6 months
+    const isCompleted = Math.random() > 0.1;
+    appointmentTemplates.push({
+      offsetDays,
+      status: isCompleted ? 'COMPLETED' : 'CANCELLED',
+      paymentStatus: isCompleted ? 'PAID' : 'FAILED',
+      insuranceStatus: 'APPROVED'
+    });
+  }
+
   let idx = 0;
   for (const tpl of appointmentTemplates) {
     const patient = patients[idx % patients.length];
@@ -374,9 +386,9 @@ async function main() {
         requiresInsuranceApproval: tpl.insuranceStatus !== 'NOT_REQUIRED',
         notes: 'Seeded appointment',
         cancellationReason: tpl.status === 'CANCELLED' ? 'Seeded cancellation' : null,
-        confirmedAt: tpl.status === 'CONFIRMED' ? now() : null,
-        startedAt: tpl.status === 'IN_PROGRESS' ? now() : null,
-        completedAt: tpl.status === 'COMPLETED' ? now() : null,
+        confirmedAt: ['CONFIRMED', 'COMPLETED', 'IN_PROGRESS'].includes(tpl.status) ? date : null,
+        startedAt: ['IN_PROGRESS', 'COMPLETED'].includes(tpl.status) ? date : null,
+        completedAt: tpl.status === 'COMPLETED' ? date : null,
         createdBy: patient.userId,
       },
     });
@@ -830,7 +842,7 @@ async function main() {
   // ─────────────────────────────────────────────────────────────
   // 11) Payments (paid + pending) linked to appointments
   // ─────────────────────────────────────────────────────────────
-  for (const appt of appointmentRecords.slice(0, 5)) {
+  for (const appt of appointmentRecords) {
     const patient = await prisma.patientProfile.findUnique({ where: { id: appt.patientId } });
     const isPaid = appt.paymentStatus === 'PAID';
     await prisma.payment.create({
@@ -843,7 +855,7 @@ async function main() {
         provider: 'mock',
         transactionReference: `MOCK-TX-${appt.id}`,
         status: isPaid ? 'PAID' : 'PENDING',
-        paidAt: isPaid ? now() : null,
+        paidAt: isPaid ? appt.appointmentDate : null,
         rawPayload: { seeded: true, appointmentId: appt.id },
       },
     });
