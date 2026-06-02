@@ -6,7 +6,14 @@ const { asyncHandler } = require('../../utils/helpers');
 
 router.get('/', asyncHandler(async (req, res) => {
   const { data, total, page, limit } = await PatientService.getNotifications(req.user.id, req.query);
-  return paginatedResponse(res, { data, total, page, limit });
+  const profile = await PatientService.getSettings(req.user.id);
+  const { mapNotificationForPatient } = require('../../shared/utils/patientAppMappers');
+  return paginatedResponse(res, {
+    data: data.map((n) => mapNotificationForPatient(n, profile.language)),
+    total,
+    page,
+    limit,
+  });
 }));
 
 router.patch('/read-all', NotificationController.markAllRead);

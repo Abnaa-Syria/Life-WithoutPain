@@ -38,6 +38,12 @@ const PATIENT_APP_SUBMODULES = [
   { key: 'settings', name: 'Settings', description: 'Patient app settings' },
   { key: 'support', name: 'Support', description: 'Customer support tickets' },
   { key: 'lab-tests', name: 'Lab Tests', description: 'Laboratory tests and results' },
+  { key: 'notifications', name: 'Notifications', description: 'Patient in-app notifications' },
+  { key: 'medical-catalog', name: 'Medical Catalog', description: 'Read-only chronic diseases and medications catalogs' },
+  { key: 'medical-timeline', name: 'Medical Timeline', description: 'Unified medical records timeline' },
+  { key: 'bookings', name: 'Bookings', description: 'Unified appointment and home service bookings' },
+  { key: 'sub-specializations', name: 'Sub-Specializations', description: 'Sub-specializations filtered by specialization' },
+  { key: 'records', name: 'Records', description: 'Reports, prescriptions, and x-rays' },
 ];
 
 function appSubmoduleTag(appPrefix, submoduleKey) {

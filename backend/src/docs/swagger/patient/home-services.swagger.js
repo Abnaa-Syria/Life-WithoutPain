@@ -3,7 +3,7 @@
  * /patient/home-services:
  *   get:
  *     tags: [Patient App - Home Services]
- *     summary: List home service requests
+ *     summary: Retrieve home service requests
  *     security: [{ bearerAuth: [] }]
  *     parameters:
  *       - in: query
@@ -22,10 +22,23 @@
  *     responses:
  *       200:
  *         description: Paginated home service requests
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 data: { type: array, items: { type: object } }
+ *                 meta:
+ *                   $ref: '#/components/schemas/PaginationMeta'
  *   post:
  *     tags: [Patient App - Home Services]
- *     summary: Request a home service visit
- *     description: Date-only booking with visit address. Use POST /patient/appointments for clinic or remote visits. paymentMode INSURANCE creates a pre-authorization case and sets insuranceStatus to PENDING_VERIFICATION; track via GET /patient/insurance-requests.
+ *     summary: Book home service
+ *     description: |
+ *       Figma field aliases: bookingType → paymentMode, date → preferredDate,
+ *       address → visitAddress, additionalNotes → notes.
+ *       List available services via GET /patient/services?type=HOME.
  *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
@@ -36,10 +49,15 @@
  *             required: [serviceId, visitAddress, preferredDate, paymentMode]
  *             properties:
  *               serviceId: { type: integer, description: Must be a HOME type service }
- *               visitAddress: { type: string }
- *               notes: { type: string }
- *               preferredDate: { type: string, format: date }
+ *               visitAddress: { type: string, description: Figma alias — address }
+ *               address: { type: string, description: Alias for visitAddress }
+ *               notes: { type: string, description: Figma alias — additionalNotes }
+ *               additionalNotes: { type: string, description: Alias for notes }
+ *               preferredDate: { type: string, format: date, description: Figma alias — date }
+ *               date: { type: string, format: date, description: Alias for preferredDate }
  *               paymentMode: { type: string, enum: [DIRECT, INSURANCE] }
+ *               bookingType: { type: string, enum: [medicalInsurance, directPayment], description: Alias for paymentMode }
+ *               bookingMethod: { type: string, enum: [medicalInsurance, directPayment], description: Alias for paymentMode }
  *           example:
  *             serviceId: 2
  *             visitAddress: '123 Main St, Riyadh'

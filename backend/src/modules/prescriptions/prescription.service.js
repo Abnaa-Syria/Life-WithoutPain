@@ -1,3 +1,4 @@
+const prisma = require('../../config/database');
 const PrescriptionRepository = require('./prescription.repository');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
@@ -48,7 +49,8 @@ class PrescriptionService {
         where, skip, take: limit, orderBy: { createdAt: 'desc' },
         include: {
           patient: { include: { user: { select: { fullName: true } } } },
-          doctor: { include: { user: { select: { fullName: true } } } },
+          doctor: { include: { user: { select: { fullName: true } }, speciality: true } },
+          appointment: true,
           items: true,
         },
       }),
@@ -64,10 +66,19 @@ class PrescriptionService {
         items: true,
         patient: { include: { user: { select: { fullName: true } } } },
         doctor: { include: { user: { select: { fullName: true } }, speciality: true } },
+        appointment: true,
       },
     });
     if (!data) throw new NotFoundError('Prescription not found');
     return data;
+  }
+
+  static async getPdfForPatient(userId, id) {
+    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!patient) throw new NotFoundError('Patient profile not found');
+    const { assertPatientOwnsPrescription } = require('../../shared/utils/patientAppContext');
+    await assertPatientOwnsPrescription(patient.id, id);
+    return this.getPdf(id);
   }
 
   static async update(id, body) {

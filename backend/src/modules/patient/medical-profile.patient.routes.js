@@ -46,6 +46,26 @@ router.post(
   }),
 );
 
+router.post('/chronic-diseases/:id', asyncHandler(async (req, res) => {
+  const data = await MedicalProfileService.addCatalogItemByUserId(req.user.id, 'chronicDiseases', req.params.id);
+  return successResponse(res, { data, message: 'Chronic disease added' });
+}));
+
+router.delete('/chronic-diseases/:id', asyncHandler(async (req, res) => {
+  const data = await MedicalProfileService.removeCatalogItemByUserId(req.user.id, 'chronicDiseases', req.params.id);
+  return successResponse(res, { data, message: 'Chronic disease removed' });
+}));
+
+router.post('/medications/:id', asyncHandler(async (req, res) => {
+  const data = await MedicalProfileService.addCatalogItemByUserId(req.user.id, 'medications', req.params.id);
+  return successResponse(res, { data, message: 'Medication added' });
+}));
+
+router.delete('/medications/:id', asyncHandler(async (req, res) => {
+  const data = await MedicalProfileService.removeCatalogItemByUserId(req.user.id, 'medications', req.params.id);
+  return successResponse(res, { data, message: 'Medication removed' });
+}));
+
 router.delete(
   '/attachments/:id',
   validate(attachmentIdParamSchema, 'params'),

@@ -1,15 +1,30 @@
 const { z } = require('zod');
 const { emailSchema, passwordSchema, phoneSchema } = require('../../shared/validators/common');
 
-const registerPatientSchema = z.object({
-  fullName: z.string().min(2).max(255),
-  identityNumber: z.string().min(3).max(50),
-  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'dateOfBirth must be YYYY-MM-DD'),
-  email: emailSchema,
-  phone: phoneSchema,
-  password: passwordSchema,
-  preferredLanguage: z.enum(['ar', 'en']).default('ar'),
-});
+const registerPatientSchema = z
+  .object({
+    fullName: z.string().min(2).max(255).optional(),
+    name: z.string().min(2).max(255).optional(),
+    identityNumber: z.string().min(3).max(50),
+    dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'dateOfBirth must be YYYY-MM-DD'),
+    email: emailSchema,
+    phone: phoneSchema.optional(),
+    phoneNumber: phoneSchema.optional(),
+    password: passwordSchema,
+    preferredLanguage: z.enum(['ar', 'en']).default('ar'),
+  })
+  .transform((data) => ({
+    fullName: data.fullName || data.name,
+    identityNumber: data.identityNumber,
+    dateOfBirth: data.dateOfBirth,
+    email: data.email,
+    phone: data.phone || data.phoneNumber,
+    password: data.password,
+    preferredLanguage: data.preferredLanguage,
+  }))
+  .refine((data) => data.fullName && data.phone, {
+    message: 'fullName (or name) and phone (or phoneNumber) are required',
+  });
 
 const registerDoctorSchema = z.object({
   fullName: z.string().min(2).max(255),
@@ -19,6 +34,7 @@ const registerDoctorSchema = z.object({
   licenceNumber: z.string().min(3).max(100), // رقم الترخيص الطبي
   licenceExpiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'licenceExpiryDate must be YYYY-MM-DD').optional(),
   specialityId: z.number().int().positive().optional(),
+  subSpecializationIds: z.array(z.number().int().positive()).optional(),
   licenseNumber: z.string().min(3).max(100), // رقم الترخيص الطبي (backup alias)
   licenseExpiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'licenseExpiryDate must be YYYY-MM-DD'),
   title: z.string().min(2).max(100).optional(),
@@ -32,10 +48,17 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-const mobileLoginSchema = z.object({
-  phone: z.string().min(10).max(20),
-  password: z.string().min(6),
-});
+const mobileLoginSchema = z
+  .object({
+    phone: z.string().min(10).max(20).optional(),
+    phoneNumber: z.string().min(10).max(20).optional(),
+    password: z.string().min(6),
+  })
+  .transform((data) => ({
+    phone: data.phone || data.phoneNumber,
+    password: data.password,
+  }))
+  .refine((data) => data.phone, { message: 'phone or phoneNumber is required' });
 
 const verifyOtpSchema = z.object({
   userId: z.number().int().positive(),

@@ -1,10 +1,9 @@
 const router = require('express').Router();
-const LabTestController = require('./labTest.controller');
+const controller = require('./labTest.patient.controller');
 
-// All routes here are pre-authenticated and authorized as PATIENT by patient.route.js
-
-router.get('/', LabTestController.list);
-router.get('/:id', LabTestController.getById);
-router.get('/:id/results', LabTestController.getResults);
+router.get('/', controller.list);
+router.get('/:id/pdf', controller.getPdf);
+router.get('/:id/results', controller.getResults);
+router.get('/:id', controller.getById);
 
 module.exports = router;

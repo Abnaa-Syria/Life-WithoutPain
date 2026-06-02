@@ -1,3 +1,4 @@
+const prisma = require('../../config/database');
 const MedicalReportRepository = require('./report.repository');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
@@ -29,7 +30,8 @@ class ReportService {
         where, skip, take: limit, orderBy: { createdAt: 'desc' },
         include: {
           patient: { include: { user: { select: { fullName: true } } } },
-          doctor: { include: { user: { select: { fullName: true } } } },
+          doctor: { include: { user: { select: { fullName: true } }, speciality: true } },
+          appointment: true,
           prescription: { select: { id: true } },
           attachments: true,
         },
@@ -72,6 +74,14 @@ class ReportService {
     const report = await MedicalReportRepository.findUnique({ where: { id: parseInt(id) } });
     if (!report) throw new NotFoundError('Report not found');
     return report.pdfUrl;
+  }
+
+  static async getPdfForPatient(userId, id) {
+    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!patient) throw new NotFoundError('Patient profile not found');
+    const { assertPatientOwnsReport } = require('../../shared/utils/patientAppContext');
+    await assertPatientOwnsReport(patient.id, id);
+    return this.getPdf(id);
   }
 
   static async listForDoctor(userId, query) {

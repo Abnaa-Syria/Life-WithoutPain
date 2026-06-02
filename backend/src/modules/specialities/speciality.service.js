@@ -1,9 +1,17 @@
 const SpecialityRepository = require('./speciality.repository');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
+const { mapSpecializationWithSubs } = require('../../shared/utils/patientAppMappers');
+
+const SPECIALITY_INCLUDE_SUBS = {
+  subSpecialities: {
+    where: { isActive: true },
+    orderBy: { sortOrder: 'asc' },
+  },
+};
 
 class SpecialityService {
-  static async list(query) {
+  static async list(query, options = {}) {
     const { page, limit, skip } = buildPagination(query);
     const where = {};
     if (query.search) {
@@ -13,19 +21,30 @@ class SpecialityService {
       ];
     }
     if (query.isActive !== undefined) where.isActive = query.isActive === 'true';
+    else if (options.activeOnly) where.isActive = true;
 
     const [data, total] = await Promise.all([
-      SpecialityRepository.findMany({ where, skip, take: limit, orderBy: { sortOrder: 'asc' } }),
+      SpecialityRepository.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { sortOrder: 'asc' },
+        include: options.includeSubs ? SPECIALITY_INCLUDE_SUBS : undefined,
+      }),
       SpecialityRepository.count({ where }),
     ]);
 
-    return { data, total, page, limit };
+    const mapped = options.includeSubs ? data.map(mapSpecializationWithSubs) : data;
+    return { data: mapped, total, page, limit };
   }
 
-  static async getById(id) {
-    const data = await SpecialityRepository.findUnique({ where: { id: parseInt(id) } });
+  static async getById(id, options = {}) {
+    const data = await SpecialityRepository.findUnique({
+      where: { id: parseInt(id) },
+      include: options.includeSubs ? SPECIALITY_INCLUDE_SUBS : undefined,
+    });
     if (!data) throw new NotFoundError('Speciality not found');
-    return data;
+    return options.includeSubs ? mapSpecializationWithSubs(data) : data;
   }
 
   static async create(data) {

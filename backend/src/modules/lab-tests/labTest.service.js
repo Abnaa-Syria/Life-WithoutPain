@@ -74,6 +74,13 @@ class LabTestService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  static async getPdfForPatient(labTestRequestId) {
+    const results = await this.getResults(labTestRequestId);
+    const latest = results.find((r) => r.fileUrl);
+    if (!latest?.fileUrl) throw new NotFoundError('Lab test PDF not available');
+    return latest.fileUrl;
+  }
 }
 
 module.exports = LabTestService;

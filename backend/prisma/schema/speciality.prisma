@@ -12,10 +12,30 @@ model Speciality {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  doctors      DoctorProfile[]
-  appointments Appointment[]   @relation("SpecialityAppointments")
+  doctors          DoctorProfile[]
+  appointments     Appointment[]   @relation("SpecialityAppointments")
+  subSpecialities  SubSpeciality[]
 
   @@map("specialities")
+}
+
+model SubSpeciality {
+  id            Int      @id @default(autoincrement())
+  specialityId  Int
+  nameAr        String   @db.VarChar(255)
+  nameEn        String   @db.VarChar(255)
+  descriptionAr String?  @db.Text
+  descriptionEn String?  @db.Text
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  speciality Speciality      @relation(fields: [specialityId], references: [id], onDelete: Cascade)
+  doctors    DoctorProfile[] @relation("DoctorSubSpecialities")
+
+  @@index([specialityId])
+  @@map("sub_specialities")
 }
 
 model Service {

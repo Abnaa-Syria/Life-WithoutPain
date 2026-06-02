@@ -298,6 +298,40 @@ class PatientService {
     return this.getMedicalFiles(userId, { ...query, category: 'RADIOLOGY' });
   }
 
+  static async getMedicalTimeline(userId, query) {
+    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!patient) throw new NotFoundError('Patient profile not found');
+
+    const { mapTimelineItem } = require('../../shared/utils/patientAppMappers');
+    const PrescriptionService = require('../prescriptions/prescription.service');
+    const ReportService = require('../reports/report.service');
+
+    const [rx, reports, xrays, labTests] = await Promise.all([
+      PrescriptionService.list({ patientId: patient.id, limit: 500, page: 1 }),
+      ReportService.list({ patientId: patient.id, limit: 500, page: 1 }),
+      this.getMedicalFiles(userId, { category: 'RADIOLOGY', limit: 500, page: 1 }),
+      prisma.labTestRequest.findMany({
+        where: { patientId: patient.id },
+        orderBy: { createdAt: 'desc' },
+        take: 500,
+      }),
+    ]);
+
+    const items = [
+      ...rx.data.map((item) => mapTimelineItem('prescription', item)),
+      ...reports.data.map((item) => mapTimelineItem('report', item)),
+      ...xrays.data.map((item) => mapTimelineItem('xray', { ...item, uploadedFile: item.fileUrl })),
+      ...labTests.map((item) => mapTimelineItem('labTest', { ...item, summary: item.notes || item.title })),
+    ];
+
+    items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const { page, limit, skip } = buildPagination(query);
+    const total = items.length;
+    const data = items.slice(skip, skip + limit);
+    return { data, total, page, limit };
+  }
+
   static async listDirectories(userId, query) {
     const type = (query.type || 'all').toLowerCase();
     const result = { prescriptions: [], reports: [], xrays: [] };

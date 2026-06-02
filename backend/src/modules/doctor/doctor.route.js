@@ -5,6 +5,7 @@ const { ROLES } = require('../../constants');
 // Public routes
 router.use('/auth', require('../auth/auth.doctor.routes'));
 router.use('/specializations', require('../specialities/speciality.doctor.routes'));
+router.use('/sub-specializations', require('../specialities/subSpeciality.doctor.routes'));
 
 // Protected doctor routes
 router.use(authenticate, authorize(ROLES.DOCTOR));

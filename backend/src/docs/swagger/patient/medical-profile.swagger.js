@@ -13,14 +13,17 @@
  *             schema:
  *               type: object
  *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
  *                 data:
  *                   $ref: '#/components/schemas/MedicalProfile'
  *   put:
  *     tags: [Patient App - Medical Profile]
- *     summary: Update medical profile (structured data only)
+ *     summary: Complete / update medical profile (structured data)
  *     description: |
- *       JSON only. Updates chronic diseases, medications, allergies, and text fields.
- *       Upload or delete report attachments via `/medical-profile/attachments` sub-routes.
+ *       JSON only. Figma aliases: chronicDiseases → chronicDiseaseIds, mainMedications → medicationIds.
+ *       Upload medical reports via POST /patient/medical-profile/attachments (Figma — medicalReports).
+ *       Manage items individually via chronic-diseases/{id} and medications/{id} sub-routes.
  *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
@@ -48,8 +51,62 @@
  *             schema:
  *               type: object
  *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
  *                 data:
  *                   $ref: '#/components/schemas/MedicalProfile'
+ *
+ * /patient/medical-profile/chronic-diseases/{id}:
+ *   post:
+ *     tags: [Patient App - Medical Profile]
+ *     summary: Add chronic disease by catalog id
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Updated profile
+ *   delete:
+ *     tags: [Patient App - Medical Profile]
+ *     summary: Remove chronic disease
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Updated profile
+ *
+ * /patient/medical-profile/medications/{id}:
+ *   post:
+ *     tags: [Patient App - Medical Profile]
+ *     summary: Add medication by catalog id
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Updated profile
+ *   delete:
+ *     tags: [Patient App - Medical Profile]
+ *     summary: Remove medication
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Updated profile
  *
  * /patient/medical-profile/attachments:
  *   get:

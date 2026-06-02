@@ -4,6 +4,8 @@
  *   post:
  *     tags: [Patient App - Auth]
  *     summary: Register patient
+ *     description: |
+ *       After registration, call POST /patient/auth/verify-otp with `userId` set to the returned `id`.
  *     requestBody:
  *       required: true
  *       content:
@@ -21,6 +23,15 @@
  *     responses:
  *       201:
  *         description: Registered — verify phone via OTP
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string }
+ *                 data:
+ *                   $ref: '#/components/schemas/PatientRegisterResponseDto'
  *
  * /patient/auth/login:
  *   post:
@@ -33,12 +44,14 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required: [phone, password]
+ *             required: [password]
+ *             description: Provide `phone` or `phoneNumber` (Figma alias)
  *             properties:
  *               phone: { type: string }
+ *               phoneNumber: { type: string, description: Alias for phone }
  *               password: { type: string, minLength: 6 }
  *           example:
- *             phone: '+966500000001'
+ *             phoneNumber: '+966500000001'
  *             password: 'Password123'
  *     responses:
  *       200:
@@ -61,7 +74,9 @@
  *   post:
  *     tags: [Patient App - Auth]
  *     summary: Verify OTP
- *     description: Use stub code `12345` when OTP provider is mock (until SMS verification is implemented).
+ *     description: |
+ *       Use stub code `12345` when OTP provider is mock (until SMS verification is implemented).
+ *       On success returns the same shape as login (`token`, `refreshToken`, `patient`).
  *     requestBody:
  *       required: true
  *       content:
@@ -70,7 +85,7 @@
  *             type: object
  *             required: [userId, code]
  *             properties:
- *               userId: { type: integer }
+ *               userId: { type: integer, description: User id from register response (`data.id`) }
  *               code: { type: string, minLength: 5, maxLength: 5, description: Dev stub is 12345 }
  *               purpose: { type: string, enum: [verification, password_reset], default: verification }
  *           example:
@@ -79,7 +94,16 @@
  *             purpose: verification
  *     responses:
  *       200:
- *         description: OTP verified
+ *         description: OTP verified — same response shape as login
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 data:
+ *                   $ref: '#/components/schemas/PatientLoginResponseDto'
  *
  * /patient/auth/resend-otp:
  *   post:
@@ -166,11 +190,40 @@
  * /patient/auth/me:
  *   get:
  *     tags: [Patient App - Auth]
- *     summary: Get authenticated patient account
+ *     summary: Get authenticated patient account (auth context)
+ *     description: For profile fields (age, address), prefer GET /patient/profile.
  *     security: [{ bearerAuth: [] }]
  *     responses:
  *       200:
- *         description: Current user
+ *         description: Current user account
+ *
+ * /patient/auth/account:
+ *   delete:
+ *     tags: [Patient App - Auth]
+ *     summary: Delete patient account
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: Account deleted
+ *
+ * /patient/auth/change-password:
+ *   post:
+ *     tags: [Patient App - Auth]
+ *     summary: Change password
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword]
+ *             properties:
+ *               currentPassword: { type: string }
+ *               newPassword: { type: string }
+ *     responses:
+ *       200:
+ *         description: Password changed
  *
  * /patient/auth/logout:
  *   post:

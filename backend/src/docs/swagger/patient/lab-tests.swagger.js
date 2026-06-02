@@ -9,9 +9,31 @@
  *       - in: query
  *         name: appointmentId
  *         schema: { type: integer }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Patient lab tests list
+ *         description: doctorName, specialization, summary
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/PatientLabTestListItem'
+ *                 meta:
+ *                   $ref: '#/components/schemas/PaginationMeta'
  *
  * /patient/lab-tests/{id}:
  *   get:
@@ -26,6 +48,20 @@
  *     responses:
  *       200:
  *         description: Lab test details
+ *
+ * /patient/lab-tests/{id}/pdf:
+ *   get:
+ *     tags: [Patient App - Lab Tests]
+ *     summary: Download lab test result PDF URL
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Returns { pdfUrl }
  *
  * /patient/lab-tests/{id}/results:
  *   get:

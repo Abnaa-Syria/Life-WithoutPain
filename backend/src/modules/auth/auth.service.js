@@ -72,7 +72,7 @@ class AuthService {
     };
   }
 
-  static async registerDoctor({ fullName, email, phone, password, specialityId, licenceNumber, licenseNumber, licenceExpiryDate, licenseExpiryDate, licenseUrl, title, workplace, city, preferredLanguage }) {
+  static async registerDoctor({ fullName, email, phone, password, specialityId, licenceNumber, licenseNumber, licenceExpiryDate, licenseExpiryDate, licenseUrl, title, workplace, city, preferredLanguage, subSpecializationIds }) {
     const normalizedPhone = normalizePhone(phone);
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { phone: normalizedPhone }], deletedAt: null },
@@ -104,8 +104,17 @@ class AuthService {
       isPubliclyBookable: false,
     };
 
+    const SubSpecialityService = require('../specialities/subSpeciality.service');
+    const validatedSubIds = await SubSpecialityService.validateForDoctorRegistration(
+      specialityId,
+      subSpecializationIds,
+    );
+
     if (specialityId) {
       profileCreate.speciality = { connect: { id: parseInt(specialityId, 10) } };
+    }
+    if (validatedSubIds.length) {
+      profileCreate.subSpecialities = { connect: validatedSubIds.map((id) => ({ id })) };
     }
 
     const user = await prisma.user.create({
@@ -157,6 +166,11 @@ class AuthService {
       user: { id: user.id, fullName: user.fullName },
     });
 
+    const profileWithSubs = await prisma.doctorProfile.findUnique({
+      where: { id: user.doctorProfile.id },
+      include: { subSpecialities: { where: { isActive: true } } },
+    });
+
     return {
       id: user.id,
       fullName: user.fullName,
@@ -164,6 +178,12 @@ class AuthService {
       phone: user.phone,
       role: user.role,
       isVerified: user.isVerified,
+      subSpecializations: (profileWithSubs?.subSpecialities || []).map((s) => ({
+        id: s.id,
+        specialityId: s.specialityId,
+        nameAr: s.nameAr,
+        nameEn: s.nameEn,
+      })),
     };
   }
 
@@ -365,10 +385,44 @@ class AuthService {
 
   // Temporary stub until real OTP verification is implemented. Remove when SMS provider is wired.
   static async verifyOtpPatient({ userId, code, purpose }) {
+    let result;
     if (config.otp.allowStub && code === config.otp.stubCode) {
-      return this.completeVerification({ userId, purpose });
+      result = await this.completeVerification({ userId, purpose });
+    } else {
+      result = await this.verifyOtp({ userId, code, purpose });
     }
-    return this.verifyOtp({ userId, code, purpose });
+
+    if (purpose !== 'verification') {
+      return result;
+    }
+
+    const patientProfile = await prisma.patientProfile.findUnique({
+      where: { userId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+            avatarUrl: true,
+            isVerified: true,
+            preferredLanguage: true,
+            darkModeEnabled: true,
+          },
+        },
+      },
+    });
+
+    if (!patientProfile) {
+      throw new NotFoundError('Patient profile not found');
+    }
+
+    return mapPatientLoginResponseDto({
+      patientProfile,
+      token: result.accessToken,
+      refreshToken: result.refreshToken,
+    });
   }
 
   static async verifyOtp({ userId, code, purpose }) {
@@ -537,16 +591,28 @@ class AuthService {
     return { message: 'Logged out successfully' };
   }
 
-  static async registerDoctorMobile({ name, mobileNumber, password, specializationId, medicalLicenseNumber, medicalLicenseExpiryDate, workPlace, city, licenseUrl }) {
+  static async registerDoctorMobile({
+    name,
+    mobileNumber,
+    password,
+    specializationId,
+    subSpecializationIds,
+    medicalLicenseNumber,
+    medicalLicenseExpiryDate,
+    workPlace,
+    city,
+    licenseUrl,
+  }) {
     const phone = normalizePhone(mobileNumber);
     const email = `${phone.replace(/\D/g, '')}@doctor.app`;
 
-    await this.registerDoctor({
+    const result = await this.registerDoctor({
       fullName: name,
       email,
       phone,
       password,
       specialityId: specializationId,
+      subSpecializationIds,
       licenseNumber: medicalLicenseNumber,
       licenseExpiryDate: medicalLicenseExpiryDate,
       licenseUrl,
@@ -554,7 +620,11 @@ class AuthService {
       city,
     });
 
-    return { message: 'Signup submitted for approval', status: 'pending' };
+    return {
+      message: 'Signup submitted for approval',
+      status: 'pending',
+      subSpecializations: result.subSpecializations || [],
+    };
   }
 
   static async loginPatientByMobile({ phone, password }, req) {

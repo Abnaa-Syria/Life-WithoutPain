@@ -1,15 +1,14 @@
 /**
  * @swagger
- * /patient/services:
+ * /patient/notifications:
  *   get:
- *     tags: [Patient App - Services]
- *     summary: Retrieve services catalog (HOME, REMOTE, CLINIC)
+ *     tags: [Patient App - Notifications]
+ *     summary: Retrieve notifications
  *     security: [{ bearerAuth: [] }]
  *     parameters:
  *       - in: query
- *         name: type
- *         schema: { type: string, enum: [HOME, REMOTE, CLINIC] }
- *         example: HOME
+ *         name: isRead
+ *         schema: { type: boolean }
  *       - in: query
  *         name: page
  *         schema: { type: integer }
@@ -18,7 +17,7 @@
  *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Service catalog
+ *         description: Paginated notifications (localized title/body)
  *         content:
  *           application/json:
  *             schema:
@@ -26,14 +25,26 @@
  *               properties:
  *                 success: { type: boolean }
  *                 message: { type: string }
- *                 data: { type: array, items: { type: object } }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/PatientNotificationItem'
  *                 meta:
  *                   $ref: '#/components/schemas/PaginationMeta'
  *
- * /patient/services/{id}:
- *   get:
- *     tags: [Patient App - Services]
- *     summary: Get service by id
+ * /patient/notifications/read-all:
+ *   patch:
+ *     tags: [Patient App - Notifications]
+ *     summary: Mark all notifications as read
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: All marked read
+ *
+ * /patient/notifications/{id}/read:
+ *   patch:
+ *     tags: [Patient App - Notifications]
+ *     summary: Mark notification as read
  *     security: [{ bearerAuth: [] }]
  *     parameters:
  *       - in: path
@@ -42,8 +53,7 @@
  *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Service detail
- *
+ *         description: Marked read
  */
 
 module.exports = {};

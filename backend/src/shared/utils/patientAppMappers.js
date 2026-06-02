@@ -95,6 +95,83 @@ function mapInsuranceCase(insuranceCase, options = {}) {
   };
 }
 
+function mapSubSpecializationItem(item) {
+  return {
+    id: item.id,
+    specialityId: item.specialityId,
+    nameAr: item.nameAr,
+    nameEn: item.nameEn,
+    descriptionAr: item.descriptionAr ?? null,
+    descriptionEn: item.descriptionEn ?? null,
+  };
+}
+
+function mapSpecialization(speciality) {
+  if (!speciality) return null;
+  return {
+    id: speciality.id,
+    nameAr: speciality.nameAr,
+    nameEn: speciality.nameEn,
+    descriptionAr: speciality.descriptionAr ?? null,
+    descriptionEn: speciality.descriptionEn ?? null,
+    iconUrl: speciality.iconUrl ?? null,
+  };
+}
+
+function mapSpecializationWithSubs(speciality) {
+  return {
+    ...mapSpecialization(speciality),
+    subSpecializations: (speciality.subSpecialities || []).map(mapSubSpecializationItem),
+  };
+}
+
+function mapDoctorCertificatesForPatient(documents) {
+  return (documents || [])
+    .filter((d) => d.reviewStatus === 'APPROVED')
+    .map((d) => ({
+      id: d.id,
+      name: d.fileType || d.title || 'Certificate',
+      fileType: d.fileType,
+    }));
+}
+
+function mapDoctorForPatientList(doctor, extras = {}) {
+  const speciality = doctor.speciality;
+  const subs = doctor.subSpecialities || [];
+  return {
+    id: doctor.id,
+    doctorName: doctor.user?.fullName || null,
+    avatarUrl: doctor.user?.avatarUrl || null,
+    specialization: mapSpecialization(speciality),
+    subSpecializations: subs.map(mapSubSpecializationItem),
+    yearsOfExperience: doctor.yearsOfExperience,
+    consultationPrice: doctor.consultationFee != null ? Number(doctor.consultationFee) : null,
+    rating: { average: doctor.ratingAverage, count: doctor.ratingCount },
+    city: doctor.city,
+    address: doctor.clinicAddress || doctor.workplace || doctor.city,
+    totalAppointmentsCount: extras.totalAppointmentsCount ?? 0,
+    availableAppointmentsCount: extras.availableAppointmentsCount,
+  };
+}
+
+function mapDoctorForPatientDetail(doctor, extras = {}) {
+  const reviews = (doctor.reviews || []).map((r) => ({
+    id: r.id,
+    rating: r.rating,
+    comment: r.comment,
+    patientName: r.patient?.user?.fullName,
+    createdAt: r.createdAt,
+  }));
+  return {
+    ...mapDoctorForPatientList(doctor, extras),
+    bio: doctor.bio,
+    bioAr: doctor.bioAr,
+    reviews,
+    certificates: mapDoctorCertificatesForPatient(doctor.verificationDocuments),
+    workingHours: doctor.availability || [],
+  };
+}
+
 function mapAppointmentListItem(appointment) {
   const doctor = appointment.doctor;
   const speciality = doctor?.speciality;
@@ -105,6 +182,7 @@ function mapAppointmentListItem(appointment) {
     insuranceStatus: appointment.insuranceStatus,
     requiresInsuranceApproval: appointment.requiresInsuranceApproval,
     approvedAmount: insuranceCase?.approvals?.[0]?.approvedAmount ?? null,
+    paymentStatus: appointment.paymentStatus,
     doctorName: doctor?.user?.fullName || null,
     specializations: speciality
       ? [{ id: speciality.id, nameAr: speciality.nameAr, nameEn: speciality.nameEn }]
@@ -129,20 +207,8 @@ function mapAppointmentDetail(appointment) {
     notes: appointment.notes,
     paymentStatus: appointment.paymentStatus,
     insuranceStatus: appointment.insuranceStatus,
-    doctor: doctor
-      ? {
-          id: doctor.id,
-          fullName: doctor.user?.fullName,
-          avatarUrl: doctor.user?.avatarUrl,
-          yearsOfExperience: doctor.yearsOfExperience,
-          rating: { average: doctor.ratingAverage, count: doctor.ratingCount },
-          address: doctor.clinicAddress || doctor.workplace || doctor.city,
-          speciality: doctor.speciality,
-          certificates: (doctor.verificationDocuments || [])
-            .filter((d) => d.reviewStatus === 'APPROVED')
-            .map((d) => ({ id: d.id, fileUrl: d.fileUrl, fileType: d.fileType })),
-        }
-      : null,
+    price: appointment.amount != null ? Number(appointment.amount) : null,
+    doctor: doctor ? mapDoctorForPatientDetail(doctor) : null,
     attachments: appointment.attachments,
     prescriptions: appointment.prescriptions,
     reports: appointment.reports,
@@ -183,36 +249,148 @@ function mapPatientProfile(profile) {
   };
 }
 
-function mapDirectoryPrescription(item) {
+function mapDoctorBrief(doctor) {
+  if (!doctor) return null;
   return {
-    id: item.id,
-    createdAt: item.createdAt,
-    diagnosis: item.diagnosis,
-    pdfUrl: item.pdfUrl,
-    doctor: item.doctor
-      ? {
-          id: item.doctor.id,
-          fullName: item.doctor.user?.fullName,
-          speciality: item.doctor.speciality,
-        }
-      : null,
+    doctorName: doctor.user?.fullName,
+    specialization: mapSpecialization(doctor.speciality),
   };
 }
 
-function mapDirectoryReport(item) {
+function composeAppointmentDateTime(appointment) {
+  if (!appointment?.appointmentDate) return null;
+  const date = new Date(appointment.appointmentDate);
+  const [hours, minutes] = (appointment.startTime || '00:00').split(':').map(Number);
+  date.setHours(hours, minutes || 0, 0, 0);
+  return date.toISOString();
+}
+
+function mapPrescriptionListItem(item) {
   return {
     id: item.id,
-    title: item.title,
+    doctorName: item.doctor?.user?.fullName,
+    specialization: mapSpecialization(item.doctor?.speciality),
+    summary: item.diagnosis || item.notes || null,
+    appointmentDateTime: composeAppointmentDateTime(item.appointment),
     createdAt: item.createdAt,
-    pdfUrl: item.pdfUrl,
-    doctor: item.doctor
-      ? {
-          id: item.doctor.id,
-          fullName: item.doctor.user?.fullName,
-          speciality: item.doctor.speciality,
-        }
-      : null,
   };
+}
+
+function mapPrescriptionDetail(item) {
+  return {
+    id: item.id,
+    doctorName: item.doctor?.user?.fullName,
+    appointmentDate: item.appointment?.appointmentDate,
+    prescriptionNumber: `RX-${item.id}`,
+    summary: item.notes || item.diagnosis,
+    diagnosis: item.diagnosis,
+    appointmentDateTime: composeAppointmentDateTime(item.appointment),
+    medicines: (item.items || []).map((m) => ({
+      medicineName: m.medicineName,
+      description: m.instructions || null,
+      dosage: m.dosage,
+      frequency: m.frequency,
+      duration: m.duration,
+      timing: null,
+      sideEffectsNotes: null,
+    })),
+    pdfUrl: item.pdfUrl,
+  };
+}
+
+function mapReportListItem(item) {
+  return {
+    id: item.id,
+    doctorName: item.doctor?.user?.fullName,
+    specialization: mapSpecialization(item.doctor?.speciality),
+    summary: item.summary || item.diagnosis,
+    appointmentDateTime: composeAppointmentDateTime(item.appointment),
+    createdAt: item.createdAt,
+  };
+}
+
+function mapReportDetail(item) {
+  return {
+    id: item.id,
+    doctorName: item.doctor?.user?.fullName,
+    specialization: mapSpecialization(item.doctor?.speciality),
+    prescriptionNumber: item.prescriptionNumber || (item.prescription ? `RX-${item.prescription.id}` : null),
+    appointmentDateTime: composeAppointmentDateTime(item.appointment),
+    visitReason: item.visitReason,
+    summary: item.summary,
+    symptoms: item.symptoms,
+    clinicalTests: item.clinicalExam || item.clinicalFindings || null,
+    resultSummary: item.resultSummary,
+    results: item.resultsList,
+    nextAppointmentDate: item.nextAppointmentDate,
+    attachments: item.attachments || [],
+    pdfUrl: item.pdfUrl,
+  };
+}
+
+function mapXrayListItem(item) {
+  return {
+    id: item.id,
+    doctorName: null,
+    specialization: null,
+    summary: item.title || item.description,
+    createdAt: item.createdAt,
+    uploadedFile: item.fileUrl,
+  };
+}
+
+function mapXrayDetail(item) {
+  return {
+    ...mapXrayListItem(item),
+    pdfUrl: item.fileUrl,
+    mimeType: item.mimeType,
+  };
+}
+
+function mapDirectoryPrescription(item) {
+  return mapPrescriptionListItem({ ...item, appointment: item.appointment });
+}
+
+function mapDirectoryReport(item) {
+  return mapReportListItem(item);
+}
+
+function mapTimelineItem(recordType, item) {
+  const base = {
+    recordType,
+    createdAt: item.createdAt,
+    uploadedFile: item.uploadedFile || item.fileUrl || item.pdfUrl || null,
+  };
+  if (recordType === 'report') {
+    return { ...base, id: item.id, summary: item.summary || item.diagnosis };
+  }
+  if (recordType === 'prescription') {
+    return { ...base, id: item.id, summary: item.diagnosis || item.notes };
+  }
+  if (recordType === 'xray') {
+    return { ...base, id: item.id, summary: item.title || item.description };
+  }
+  if (recordType === 'labTest') {
+    return { ...base, id: item.id, summary: item.notes || item.testType || 'Lab test' };
+  }
+  return base;
+}
+
+function mapNotificationForPatient(notification, language = 'ar') {
+  const useAr = language === 'ar';
+  return {
+    id: notification.id,
+    title: useAr ? notification.titleAr : notification.titleEn,
+    body: useAr ? notification.bodyAr : notification.bodyEn,
+    type: notification.type,
+    isRead: notification.isRead,
+    createdAt: notification.createdAt,
+    metadata: notification.metadata,
+  };
+}
+
+function mapBookingListItem(item) {
+  return item;
 }
 
 function mapCatalogItem(item) {
@@ -307,14 +485,30 @@ module.exports = {
   computeAge,
   mapInsurance,
   mapInsuranceCase,
+  mapSubSpecializationItem,
+  mapSpecialization,
+  mapSpecializationWithSubs,
+  mapDoctorCertificatesForPatient,
+  mapDoctorForPatientList,
+  mapDoctorForPatientDetail,
   mapAppointmentListItem,
   mapAppointmentDetail,
   mapHomeServiceRequestListItem,
   mapHomeServiceRequestDetail,
   mapFamilyMember,
   mapPatientProfile,
+  mapDoctorBrief,
+  mapPrescriptionListItem,
+  mapPrescriptionDetail,
+  mapReportListItem,
+  mapReportDetail,
+  mapXrayListItem,
+  mapXrayDetail,
   mapDirectoryPrescription,
   mapDirectoryReport,
+  mapTimelineItem,
+  mapNotificationForPatient,
+  mapBookingListItem,
   mapCatalogItem,
   mapMedicalProfileAttachment,
   mapMedicalProfile,

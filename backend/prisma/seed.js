@@ -91,6 +91,24 @@ async function main() {
     await prisma.speciality.upsert({ where: { id: s.id }, update: s, create: s });
   }
 
+  const subSpecialitiesSeed = [
+    { specialityId: 1, nameAr: 'السكري', nameEn: 'Diabetes', sortOrder: 1 },
+    { specialityId: 1, nameAr: 'ضغط الدم', nameEn: 'Hypertension', sortOrder: 2 },
+    { specialityId: 4, nameAr: 'قسطرة القلب', nameEn: 'Cardiac Catheterization', sortOrder: 1 },
+    { specialityId: 4, nameAr: 'فشل القلب', nameEn: 'Heart Failure', sortOrder: 2 },
+    { specialityId: 6, nameAr: 'حديثي الولادة', nameEn: 'Neonatology', sortOrder: 1 },
+  ];
+  for (const sub of subSpecialitiesSeed) {
+    const existing = await prisma.subSpeciality.findFirst({
+      where: { specialityId: sub.specialityId, nameEn: sub.nameEn },
+    });
+    if (existing) {
+      await prisma.subSpeciality.update({ where: { id: existing.id }, data: sub });
+    } else {
+      await prisma.subSpeciality.create({ data: sub });
+    }
+  }
+
   const servicesSeed = [
     { id: 1, nameAr: 'استشارة عن بعد', nameEn: 'Remote Consultation', descriptionAr: 'استشارة عبر الفيديو/الصوت', descriptionEn: 'Video/voice consultation', type: 'REMOTE', sortOrder: 1, isActive: true },
     { id: 2, nameAr: 'زيارة منزلية', nameEn: 'Home Visit', descriptionAr: 'زيارة الطبيب للمنزل', descriptionEn: 'Doctor home visit', type: 'HOME', sortOrder: 2, isActive: true },

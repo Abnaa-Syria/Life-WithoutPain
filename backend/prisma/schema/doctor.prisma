@@ -25,6 +25,7 @@ model DoctorProfile {
 
   user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
   speciality            Speciality?                  @relation(fields: [specialityId], references: [id])
+  subSpecialities       SubSpeciality[]              @relation("DoctorSubSpecialities")
   verificationDocuments DoctorVerificationDocument[]
   doctorServices        DoctorService[]
   availability          DoctorAvailability[]

@@ -161,6 +161,56 @@ class MedicalProfileService {
     return this.deleteAttachmentByPatientId(patient.id, attachmentId);
   }
 
+  static async addCatalogItemByUserId(userId, field, catalogId) {
+    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!patient) throw new NotFoundError('Patient profile not found');
+    return this.addCatalogItemByPatientId(patient.id, field, catalogId);
+  }
+
+  static async addCatalogItemByPatientId(patientId, field, catalogId) {
+    const profile = await this.ensureMedicalProfile(patientId);
+    const id = parseInt(catalogId, 10);
+    const modelMap = {
+      chronicDiseases: { model: 'chronicDisease', connect: 'chronicDiseases' },
+      medications: { model: 'medication', connect: 'medications' },
+    };
+    const config = modelMap[field];
+    if (!config) throw new BadRequestError('Invalid catalog field');
+
+    await validateCatalogIds([id], config.model, field.slice(0, -1));
+
+    const existing = profile[config.connect] || [];
+    if (existing.some((item) => item.id === id)) {
+      return mapMedicalProfile(await this.ensureMedicalProfile(patientId));
+    }
+
+    await prisma.medicalProfile.update({
+      where: { id: profile.id },
+      data: { [config.connect]: { connect: { id } } },
+    });
+    return mapMedicalProfile(await this.ensureMedicalProfile(patientId));
+  }
+
+  static async removeCatalogItemByUserId(userId, field, catalogId) {
+    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!patient) throw new NotFoundError('Patient profile not found');
+    return this.removeCatalogItemByPatientId(patient.id, field, catalogId);
+  }
+
+  static async removeCatalogItemByPatientId(patientId, field, catalogId) {
+    const profile = await this.ensureMedicalProfile(patientId);
+    const id = parseInt(catalogId, 10);
+    const connectMap = { chronicDiseases: 'chronicDiseases', medications: 'medications' };
+    const connect = connectMap[field];
+    if (!connect) throw new BadRequestError('Invalid catalog field');
+
+    await prisma.medicalProfile.update({
+      where: { id: profile.id },
+      data: { [connect]: { disconnect: { id } } },
+    });
+    return mapMedicalProfile(await this.ensureMedicalProfile(patientId));
+  }
+
   static async deleteAttachmentByPatientId(patientId, attachmentId) {
     const profile = await prisma.medicalProfile.findUnique({ where: { patientId } });
     if (!profile) throw new NotFoundError('Medical profile not found');

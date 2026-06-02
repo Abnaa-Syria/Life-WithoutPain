@@ -19,7 +19,16 @@ class DoctorService {
       user: { deletedAt: null, status: 'ACTIVE' },
     };
 
-    if (query.specialityId) where.specialityId = parseInt(query.specialityId);
+    if (query.specialityId || query.specializationId) {
+      where.specialityId = parseInt(query.specialityId || query.specializationId, 10);
+    }
+    if (query.subSpecializationId) {
+      where.subSpecialities = { some: { id: parseInt(query.subSpecializationId, 10) } };
+    }
+    if (query.subSpecializationIds) {
+      const ids = String(query.subSpecializationIds).split(',').map((s) => parseInt(s.trim(), 10)).filter((n) => n > 0);
+      if (ids.length) where.subSpecialities = { some: { id: { in: ids } } };
+    }
     if (query.city) where.city = { contains: query.city };
     if (query.minFee || query.maxFee) {
       where.consultationFee = {};
@@ -41,14 +50,24 @@ class DoctorService {
         orderBy: query.sortBy === 'rating' ? { ratingAverage: 'desc' } : query.sortBy === 'fee' ? { consultationFee: 'asc' } : { createdAt: 'desc' },
         include: {
           user: { select: { id: true, fullName: true, avatarUrl: true } },
-          speciality: { select: { id: true, nameAr: true, nameEn: true } },
+          speciality: { select: { id: true, nameAr: true, nameEn: true, descriptionAr: true, descriptionEn: true, iconUrl: true } },
+          subSpecialities: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
           doctorServices: { include: { service: { select: { id: true, nameAr: true, nameEn: true, type: true } } } },
         },
       }),
       DoctorRepository.count({ where }),
     ]);
 
-    return { data, total, page, limit };
+    const enriched = await Promise.all(
+      data.map(async (doctor) => {
+        const totalAppointmentsCount = await prisma.appointment.count({
+          where: { doctorId: doctor.id, status: 'COMPLETED' },
+        });
+        return { ...doctor, totalAppointmentsCount };
+      }),
+    );
+
+    return { data: enriched, total, page, limit };
   }
 
   static async getById(doctorId) {
@@ -61,14 +80,47 @@ class DoctorService {
       include: {
         user: { select: { id: true, fullName: true, avatarUrl: true } },
         speciality: true,
+        subSpecialities: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
         doctorServices: { include: { service: true } },
-        availability: { where: { isActive: true } },
+        availability: { where: { isActive: true }, orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }] },
         verificationDocuments: { where: { reviewStatus: 'APPROVED' } },
         reviews: { where: { isVisible: true }, take: 10, orderBy: { createdAt: 'desc' }, include: { patient: { include: { user: { select: { fullName: true } } } } } },
       },
     });
     if (!doctor) throw new NotFoundError('Doctor not found');
-    return doctor;
+    const totalAppointmentsCount = await prisma.appointment.count({
+      where: { doctorId: doctor.id, status: 'COMPLETED' },
+    });
+    return { ...doctor, totalAppointmentsCount };
+  }
+
+  static async getAvailabilityForPatient(doctorId, query = {}) {
+    const doctor = await DoctorRepository.findUnique({
+      where: { id: parseInt(doctorId, 10) },
+      include: {
+        availability: { where: { isActive: true }, orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }] },
+      },
+    });
+    if (!doctor || doctor.verificationStatus !== 'APPROVED' || !doctor.isPubliclyBookable) {
+      throw new NotFoundError('Doctor not found');
+    }
+
+    const dateFilter = query.date ? new Date(query.date) : null;
+    const bookedWhere = {
+      doctorId: doctor.id,
+      status: { in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'] },
+    };
+    if (dateFilter) bookedWhere.appointmentDate = dateFilter;
+
+    const booked = await prisma.appointment.findMany({
+      where: bookedWhere,
+      select: { appointmentDate: true, startTime: true, endTime: true },
+    });
+
+    return {
+      slots: doctor.availability,
+      bookedAppointments: booked,
+    };
   }
 
   static async listBySpeciality(specialityId, query = {}) {
@@ -85,9 +137,13 @@ class DoctorService {
             },
           }),
         ]);
+        const totalAppointmentsCount = await prisma.appointment.count({
+          where: { doctorId: doctor.id, status: 'COMPLETED' },
+        });
         return {
           ...doctor,
           availableAppointmentsCount: Math.max(0, availabilityCount * 4 - upcomingBooked),
+          totalAppointmentsCount,
         };
       }),
     );

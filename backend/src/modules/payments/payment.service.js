@@ -38,6 +38,7 @@ class PaymentService {
       await HomeServiceService.assertPatientOwnsRequest(patient.id, body.homeServiceRequestId);
     }
 
+    const isMockProvider = result.provider === 'mock';
     const payment = await PaymentRepository.create({
       data: {
         appointmentId: body.appointmentId || null,
@@ -48,9 +49,21 @@ class PaymentService {
         method: body.method || null,
         provider: result.provider,
         transactionReference: result.transactionReference,
-        status: 'PENDING',
+        status: isMockProvider ? 'PAID' : 'PENDING',
+        paidAt: isMockProvider ? new Date() : null,
       },
     });
+
+    if (isMockProvider) {
+      // TODO: integrate real payment gateway — remove auto-accept when live provider is wired
+      if (payment.appointmentId) {
+        await AppointmentRepository.update({
+          where: { id: payment.appointmentId },
+          data: { paymentStatus: 'PAID' },
+        });
+      }
+      eventEmitter.emit(EVENTS.PAYMENT.COMPLETED, { paymentId: payment.id });
+    }
 
     return { payment, paymentUrl: result.paymentUrl };
   }

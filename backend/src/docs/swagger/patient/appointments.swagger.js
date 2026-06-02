@@ -1,5 +1,90 @@
 /**
  * @swagger
+ * /patient/appointments/upcoming:
+ *   get:
+ *     tags: [Patient App - Appointments]
+ *     summary: Upcoming confirmed appointments (ordered by date/time)
+ *     description: Returns confirmed appointments only, sorted ascending by date and time.
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Confirmed future appointments only
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/PatientAppointmentListItem'
+ *                 meta:
+ *                   $ref: '#/components/schemas/PaginationMeta'
+ *
+ * /patient/appointments/book/personal:
+ *   post:
+ *     tags: [Patient App - Appointments]
+ *     summary: Book online consultation for self
+ *     description: |
+ *       Personal booking endpoint. Retrieve availability from GET /patient/doctors/{id}/availability first.
+ *       Payment is separate — booking without payment is allowed.
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PatientBookAppointmentRequest'
+ *     responses:
+ *       201:
+ *         description: Booked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 data:
+ *                   $ref: '#/components/schemas/PatientAppointmentListItem'
+ *
+ * /patient/appointments/book/family:
+ *   post:
+ *     tags: [Patient App - Appointments]
+ *     summary: Book online consultation for family member
+ *     description: Same body as personal booking plus required familyMemberId. List family members via GET /patient/family-members.
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             allOf:
+ *               - $ref: '#/components/schemas/PatientBookAppointmentRequest'
+ *               - type: object
+ *                 required: [familyMemberId]
+ *     responses:
+ *       201:
+ *         description: Booked for family member
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 data:
+ *                   $ref: '#/components/schemas/PatientAppointmentListItem'
+ *
  * /patient/appointments:
  *   get:
  *     tags: [Patient App - Appointments]
@@ -12,6 +97,11 @@
  *           $ref: '#/components/schemas/PatientAppointmentFilter'
  *         example: all
  *       - in: query
+ *         name: status
+ *         schema:
+ *           $ref: '#/components/schemas/PatientAppointmentFilter'
+ *         description: Alias for filter
+ *       - in: query
  *         name: page
  *         schema: { type: integer }
  *         example: 1
@@ -21,38 +111,35 @@
  *         example: 20
  *     responses:
  *       200:
- *         description: Each item includes doctor name, specializations, datetime, fees, status, isComing
+ *         description: Each item includes doctorName, specializations, datetime, fees, paymentStatus, status, isComing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/PatientAppointmentListItem'
+ *                 meta:
+ *                   $ref: '#/components/schemas/PaginationMeta'
  *   post:
  *     tags: [Patient App - Appointments]
- *     summary: Book clinic or remote appointment
- *     description: Requires doctor and time slot. Home visits use POST /patient/home-services instead. When paymentMode is INSURANCE, a pre-authorization request is created automatically and insuranceStatus becomes PENDING_VERIFICATION until an agent approves (patient receives an in-app notification).
+ *     summary: Book clinic or remote appointment (generic)
+ *     description: |
+ *       Requires doctor and time slot from availability endpoints.
+ *       Home visits use POST /patient/home-services instead.
+ *       When paymentMode is INSURANCE, a pre-authorization request is created automatically.
+ *       Payment is separate — use POST /patient/payments/initiate after booking if needed.
  *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [doctorId, appointmentDate, startTime, endTime]
- *             properties:
- *               doctorId: { type: integer }
- *               serviceId: { type: integer }
- *               appointmentDate: { type: string, format: date }
- *               startTime: { type: string, example: '09:00' }
- *               endTime: { type: string, example: '09:30' }
- *               bookingFor: { type: string, enum: [personal, family] }
- *               familyMemberId: { type: integer }
- *               paymentMode: { type: string, enum: [DIRECT, INSURANCE] }
- *               notes: { type: string }
- *           example:
- *             doctorId: 1
- *             serviceId: 1
- *             appointmentDate: '2026-06-01'
- *             startTime: '09:00'
- *             endTime: '09:30'
- *             bookingFor: personal
- *             paymentMode: DIRECT
- *             notes: 'Optional booking notes'
+ *             $ref: '#/components/schemas/PatientBookAppointmentRequest'
  *     responses:
  *       201:
  *         description: Appointment booked
@@ -60,7 +147,8 @@
  * /patient/appointments/{id}:
  *   get:
  *     tags: [Patient App - Appointments]
- *     summary: Appointment detail with doctor preview
+ *     summary: Appointment details
+ *     description: Returns doctor data (name, specialization, yearsOfExperience, reviews, address) and appointment data (date, time, price, paymentStatus).
  *     security: [{ bearerAuth: [] }]
  *     parameters:
  *       - in: path
@@ -70,7 +158,16 @@
  *         example: 1
  *     responses:
  *       200:
- *         description: Doctor experience, rating, address, certificates
+ *         description: Appointment detail with doctor preview
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 data:
+ *                   $ref: '#/components/schemas/PatientAppointmentDetail'
  *
  * /patient/appointments/{id}/session:
  *   get:

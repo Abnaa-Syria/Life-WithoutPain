@@ -8,7 +8,90 @@ const { resolvePatientProfile, assertPatientOwnsAppointment } = require('../../s
 const { isComingAppointment } = require('../../shared/utils/patientAppMappers');
 
 class AppointmentService {
+  static normalizeBookingBody(data) {
+    const body = { ...data };
+    if (body.bookingMethod) {
+      const method = String(body.bookingMethod).toLowerCase();
+      body.paymentMode = method === 'medicalinsurance' || method === 'insurance' ? 'INSURANCE' : 'DIRECT';
+    }
+    return body;
+  }
+
+  static async getUpcomingForPatient(userId, query) {
+    const { patientId } = await resolvePatientProfile(userId);
+    const { page, limit, skip } = buildPagination(query);
+    const where = {
+      patientId,
+      status: 'CONFIRMED',
+      appointmentDate: { gte: new Date() },
+    };
+    const include = {
+      doctor: { include: { user: { select: { fullName: true, avatarUrl: true } }, speciality: true } },
+      service: true,
+      insuranceCases: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        include: { approvals: { orderBy: { createdAt: 'desc' }, take: 1 } },
+      },
+    };
+    const [data, total] = await Promise.all([
+      prisma.appointment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [{ appointmentDate: 'asc' }, { startTime: 'asc' }],
+        include,
+      }),
+      prisma.appointment.count({ where }),
+    ]);
+    return { data, total, page, limit };
+  }
+
+  static async listBookingsForPatient(userId, query) {
+    const filter = (query.status || query.filter || 'all').toLowerCase();
+    const appointmentQuery = { ...query, filter: filter === 'finished' ? 'completed' : filter };
+    const appointments = await this.listForPatient(userId, { ...appointmentQuery, limit: 1000, page: 1 });
+    const HomeServiceService = require('../home-services/home-service.service');
+    const homeResult = await HomeServiceService.listForPatient(userId, { ...query, limit: 1000, page: 1 });
+
+    const { mapAppointmentListItem, mapHomeServiceRequestListItem } = require('../../shared/utils/patientAppMappers');
+
+    let items = [
+      ...appointments.data.map((a) => ({
+        bookingType: 'appointment',
+        serviceType: a.service?.type || 'CLINIC',
+        ...mapAppointmentListItem(a),
+      })),
+      ...homeResult.data.map((h) => ({
+        bookingType: 'homeService',
+        serviceType: 'HOME',
+        paymentStatus: h.paymentStatus || 'PENDING',
+        ...mapHomeServiceRequestListItem(h),
+      })),
+    ];
+
+    if (filter === 'confirmed') {
+      items = items.filter((i) => i.status === 'CONFIRMED' || i.status === 'SCHEDULED' || i.status === 'ASSIGNED');
+    } else if (filter === 'cancelled') {
+      items = items.filter((i) => i.status === 'CANCELLED');
+    } else if (filter === 'finished' || filter === 'completed') {
+      items = items.filter((i) => i.status === 'COMPLETED');
+    }
+
+    items.sort((a, b) => {
+      const da = a.appointmentDate || a.preferredDate;
+      const db = b.appointmentDate || b.preferredDate;
+      return new Date(db) - new Date(da);
+    });
+
+    const { page, limit, skip } = buildPagination(query);
+    const total = items.length;
+    const data = items.slice(skip, skip + limit);
+    return { data, total, page, limit };
+  }
+
   static async createForPatient(userId, data) {
+    data = this.normalizeBookingBody(data);
     const requiresInsuranceApproval = data.paymentMode === 'INSURANCE';
     if (requiresInsuranceApproval) {
       const patient = await prisma.patientProfile.findUnique({ where: { userId } });
@@ -58,7 +141,7 @@ class AppointmentService {
 
     if (filter === 'confirmed') where.status = 'CONFIRMED';
     else if (filter === 'cancelled') where.status = 'CANCELLED';
-    else if (filter === 'completed') where.status = 'COMPLETED';
+    else if (filter === 'completed' || filter === 'finished') where.status = 'COMPLETED';
     else if (filter === 'coming') {
       where.status = { notIn: ['CANCELLED', 'COMPLETED'] };
     } else if (filter === 'all') {
@@ -113,7 +196,9 @@ class AppointmentService {
           include: {
             user: { select: { id: true, fullName: true, avatarUrl: true } },
             speciality: true,
+            subSpecialities: { where: { isActive: true } },
             verificationDocuments: { where: { reviewStatus: 'APPROVED' } },
+            reviews: { where: { isVisible: true }, take: 10, orderBy: { createdAt: 'desc' }, include: { patient: { include: { user: { select: { fullName: true } } } } } },
           },
         },
         service: true,

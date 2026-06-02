@@ -34,7 +34,40 @@ async function assertPatientOwnsAppointment(patientId, appointmentId) {
   return appointment;
 }
 
+async function assertPatientOwnsPrescription(patientId, prescriptionId) {
+  const rx = await prisma.prescription.findUnique({ where: { id: parseInt(prescriptionId, 10) } });
+  if (!rx) throw new NotFoundError('Prescription not found');
+  if (rx.patientId !== patientId) throw new ForbiddenError('You do not have access to this prescription');
+  return rx;
+}
+
+async function assertPatientOwnsReport(patientId, reportId) {
+  const report = await prisma.medicalReport.findUnique({ where: { id: parseInt(reportId, 10) } });
+  if (!report) throw new NotFoundError('Report not found');
+  if (report.patientId !== patientId) throw new ForbiddenError('You do not have access to this report');
+  return report;
+}
+
+async function assertPatientOwnsLabTest(patientId, labTestId) {
+  const labTest = await prisma.labTestRequest.findUnique({ where: { id: parseInt(labTestId, 10) } });
+  if (!labTest) throw new NotFoundError('Lab test not found');
+  if (labTest.patientId !== patientId) throw new ForbiddenError('You do not have access to this lab test');
+  return labTest;
+}
+
+async function assertPatientOwnsMedicalFile(patientId, fileId) {
+  const file = await prisma.medicalFile.findFirst({
+    where: { id: parseInt(fileId, 10), patientId, category: 'RADIOLOGY' },
+  });
+  if (!file) throw new NotFoundError('X-ray record not found');
+  return file;
+}
+
 module.exports = {
   resolvePatientProfile,
   assertPatientOwnsAppointment,
+  assertPatientOwnsPrescription,
+  assertPatientOwnsReport,
+  assertPatientOwnsLabTest,
+  assertPatientOwnsMedicalFile,
 };

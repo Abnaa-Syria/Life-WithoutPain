@@ -1,6 +1,6 @@
 const { z } = require('zod');
 
-const createAppointmentSchema = z.object({
+const bookAppointmentBaseSchema = z.object({
   doctorId: z.number().int().positive(),
   serviceId: z.number().int().positive().optional(),
   appointmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'appointmentDate must be YYYY-MM-DD'),
@@ -9,8 +9,11 @@ const createAppointmentSchema = z.object({
   bookingFor: z.enum(['personal', 'family']).optional(),
   familyMemberId: z.number().int().positive().optional(),
   paymentMode: z.enum(['DIRECT', 'INSURANCE']).optional(),
+  bookingMethod: z.enum(['medicalInsurance', 'directPayment', 'DIRECT', 'INSURANCE']).optional(),
   notes: z.string().max(5000).optional(),
-}).superRefine((data, ctx) => {
+});
+
+const createAppointmentSchema = bookAppointmentBaseSchema.superRefine((data, ctx) => {
   if (data.bookingFor === 'family' && !data.familyMemberId) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -18,6 +21,10 @@ const createAppointmentSchema = z.object({
       path: ['familyMemberId'],
     });
   }
+});
+
+const bookFamilyAppointmentSchema = bookAppointmentBaseSchema.extend({
+  familyMemberId: z.number().int().positive(),
 });
 
 const listAppointmentQuerySchema = z.object({
@@ -35,5 +42,6 @@ const listAppointmentQuerySchema = z.object({
 
 module.exports = {
   createAppointmentSchema,
+  bookFamilyAppointmentSchema,
   listAppointmentQuerySchema,
 };

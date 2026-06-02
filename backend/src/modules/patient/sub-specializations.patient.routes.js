@@ -1,8 +1,6 @@
 const router = require('express').Router();
 const controller = require('./specializations.patient.controller');
 
-router.get('/', controller.list);
-router.get('/:id/doctors', controller.getDoctors);
-router.get('/:id', controller.getById);
+router.get('/', controller.listSubSpecializations);
 
 module.exports = router;

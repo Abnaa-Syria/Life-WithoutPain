@@ -8,6 +8,10 @@
  *       properties:
  *         name: { type: string }
  *         specializationId: { type: integer }
+ *         subSpecializationIds:
+ *           type: array
+ *           items: { type: integer }
+ *           description: Optional; must belong to specializationId
  *         medicalLicenseNumber: { type: string }
  *         medicalLicenseExpiryDate: { type: string, format: date, example: '2027-12-31' }
  *         workPlace: { type: string }

@@ -7,6 +7,7 @@ router.get('/providers', InsuranceProviderController.list);
 router.get('/', controller.list);
 router.post('/', uploadSingle('cardImage'), controller.create);
 router.put('/:id', uploadSingle('cardImage'), controller.update);
+router.patch('/:id', uploadSingle('cardImage'), controller.update);
 router.delete('/:id', controller.remove);
 
 module.exports = router;

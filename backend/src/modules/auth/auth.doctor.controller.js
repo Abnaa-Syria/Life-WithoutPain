@@ -9,6 +9,7 @@ const register = asyncHandler(async (req, res) => {
     mobileNumber: req.body.mobileNumber,
     password: req.body.password,
     specializationId: req.body.specializationId,
+    subSpecializationIds: req.body.subSpecializationIds,
     medicalLicenseNumber: req.body.medicalLicenseNumber,
     medicalLicenseExpiryDate: req.body.medicalLicenseExpiryDate,
     workPlace: req.body.workPlace,
