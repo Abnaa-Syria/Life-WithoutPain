@@ -24,5 +24,6 @@ router.use('/payments', require('./payments.patient.routes'));
 router.use('/support', require('./support.patient.routes'));
 router.use('/settings', require('./settings.patient.routes'));
 router.use('/notifications', require('./notifications.patient.routes'));
+router.use('/lab-tests', require('../lab-tests/lab-tests.patient.routes'));
 
 module.exports = router;

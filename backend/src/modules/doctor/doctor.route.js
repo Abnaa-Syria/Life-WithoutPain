@@ -18,5 +18,6 @@ router.use('/profile', require('../doctors/doctorProfile.doctor.routes'));
 router.use('/clinic-details', require('../doctors/clinic.doctor.routes'));
 router.use('/settings', require('../doctors/settings.doctor.routes'));
 router.use('/support', require('./support.doctor.routes'));
+router.use('/lab-tests', require('../lab-tests/lab-tests.doctor.routes'));
 
 module.exports = router;

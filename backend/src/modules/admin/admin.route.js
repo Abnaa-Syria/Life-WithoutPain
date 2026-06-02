@@ -504,6 +504,12 @@ router.delete('/prescriptions/:id', guard('prescriptions.admin.delete', ...SUPER
 //  NOTIFICATIONS – full CRUD
 // ═══════════════════════════════════════════
 const notifCrud = crud('notification', { entityLabel: 'Notification' });
+const NotificationController = require('../notifications/notification.controller');
+
+router.get('/notifications/unread-count', guard('notifications.admin.manage', ...SUPER), NotificationController.unreadCount);
+router.patch('/notifications/read-all', guard('notifications.admin.manage', ...SUPER), NotificationController.markAllRead);
+router.patch('/notifications/:id/read', guard('notifications.admin.manage', ...SUPER), NotificationController.markRead);
+
 router.get('/notifications', guard('notifications.admin.manage', ...SUPER), notifCrud.list);
 router.get('/notifications/:id', guard('notifications.admin.manage', ...SUPER), notifCrud.getOne);
 router.post('/notifications', guard('notifications.admin.send', ...SUPER), notifCrud.create);

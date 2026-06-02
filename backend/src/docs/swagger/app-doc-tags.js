@@ -16,6 +16,7 @@ const DOCTOR_APP_SUBMODULES = [
   { key: 'clinic-details', name: 'Clinic', description: 'Clinic details and working hours' },
   { key: 'settings', name: 'Settings', description: 'Doctor app settings' },
   { key: 'support', name: 'Support', description: 'Help and support tickets' },
+  { key: 'lab-tests', name: 'Lab Tests', description: 'Laboratory test requests and results' },
 ];
 
 const PATIENT_APP_SUBMODULES = [
@@ -36,6 +37,7 @@ const PATIENT_APP_SUBMODULES = [
   { key: 'files', name: 'Files', description: 'Medical file attachments' },
   { key: 'settings', name: 'Settings', description: 'Patient app settings' },
   { key: 'support', name: 'Support', description: 'Customer support tickets' },
+  { key: 'lab-tests', name: 'Lab Tests', description: 'Laboratory tests and results' },
 ];
 
 function appSubmoduleTag(appPrefix, submoduleKey) {
