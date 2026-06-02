@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Heart, Stethoscope, Calendar, 
@@ -24,7 +24,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
     { icon: Users, label: t('sidebar.users'), path: '/users', permission: ROUTE_PERMISSIONS.users, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Heart, label: t('sidebar.patients'), path: '/patients', permission: ROUTE_PERMISSIONS.patients, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN', 'SUPPORT_STAFF'] },
     { icon: Stethoscope, label: t('sidebar.doctors'), path: '/doctors', permission: ROUTE_PERMISSIONS.doctors, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
-    { icon: UserCheck, label: t('sidebar.doctor_verification'), path: '/doctor-verification', permission: ROUTE_PERMISSIONS.doctors, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Activity, label: t('sidebar.specialities'), path: '/specialities', permission: ROUTE_PERMISSIONS.specialities, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Briefcase, label: t('sidebar.services'), path: '/services', permission: ROUTE_PERMISSIONS.services, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
     { icon: Database, label: t('sidebar.medical_master_data'), path: '/medical-master-data', permission: ROUTE_PERMISSIONS.medicalMaster, roles: ['SUPER_ADMIN', 'MEDICAL_ADMIN'] },
@@ -120,17 +119,17 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
         )}
       </div>
 
-      {/* Collapse Toggle */}
-      <button 
-        type="button"
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`absolute bottom-28 hidden md:flex items-center justify-center w-8 h-8 bg-[var(--surface)] border border-[var(--border-color)] rounded-full text-[var(--text-muted)] hover:text-[var(--primary)] hover:border-[var(--primary)] transition-all
-          ${isRTL ? (isCollapsed ? '-left-4' : '-left-4 rotate-180') : (isCollapsed ? '-right-4' : '-right-4 rotate-180')}
-        `}
-        aria-label="Toggle sidebar"
-      >
-        <ChevronLeft size={16} />
-      </button>
+       {/* Collapse Toggle */}
+       <button 
+         type="button"
+         onClick={() => setIsCollapsed(!isCollapsed)}
+         className={`absolute bottom-28 hidden md:flex items-center justify-center w-8 h-8 bg-[var(--surface)] border border-[var(--border-color)] rounded-full text-[var(--text-muted)] hover:text-[var(--primary)] hover:border-[var(--primary)] transition-all
+           ${isRTL ? (isCollapsed ? '-left-2' : '-left-2 rotate-180') : (isCollapsed ? '-right-2' : '-right-2 rotate-180')}
+         `}
+         aria-label="Toggle sidebar"
+       >
+         <ChevronLeft size={16} />
+       </button>
     </div>
   );
 

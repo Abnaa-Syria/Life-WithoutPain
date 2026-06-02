@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
@@ -128,18 +128,31 @@ export default function PatientInsuranceTab({ patientId }) {
                 <FilePreviewer url={ins.attachmentUrl} title={t('insurance.card_image')} />
               )}
               {canVerify && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {['VERIFIED', 'PENDING', 'REJECTED', 'EXPIRED'].map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      disabled={verifyMutation.isPending || ins.verificationStatus === status}
-                      onClick={() => verifyMutation.mutate({ insuranceId: ins.id, verificationStatus: status })}
-                      className="btn btn-secondary text-xs py-1 px-3"
-                    >
-                      {status}
-                    </button>
-                  ))}
+                <div className="flex bg-[var(--surface-primary)] rounded-lg p-1 w-fit border border-[var(--border-color)]">
+                  {['VERIFIED', 'PENDING', 'REJECTED', 'EXPIRED'].map((status) => {
+                    const isActive = ins.verificationStatus === status;
+                    const getActiveColor = (s) => {
+                      if (s === 'VERIFIED') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+                      if (s === 'REJECTED') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                      if (s === 'PENDING') return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+                      return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+                    };
+                    return (
+                      <button
+                        key={status}
+                        type="button"
+                        disabled={verifyMutation.isPending || isActive}
+                        onClick={() => verifyMutation.mutate({ insuranceId: ins.id, verificationStatus: status })}
+                        className={`text-xs font-medium px-4 py-1.5 rounded-md transition-all duration-200 ${
+                          isActive
+                            ? `${getActiveColor(status)} shadow-sm`
+                            : 'text-[var(--text-muted)] hover:text-[var(--text-color)] hover:bg-[var(--surface-hover)]'
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

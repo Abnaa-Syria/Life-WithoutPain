@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
@@ -46,7 +46,7 @@ export default function AppointmentsPage() {
     },
   });
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       header: t('appointments.patient') || 'Patient',
       accessorKey: 'patient.user.fullName',
@@ -85,10 +85,15 @@ export default function AppointmentsPage() {
       header: t('appointments.date') || 'Date & Time',
       accessorKey: 'startTime',
       cell: ({ row }) => {
+        const appointmentDate = row.original.appointmentDate;
         const startTime = row.original.startTime;
-        if (!startTime) return <span className="text-[var(--text-muted)]">-</span>;
+        if (!appointmentDate || !startTime) return <span className="text-[var(--text-muted)]">-</span>;
 
-        const date = new Date(startTime);
+        const datePart = typeof appointmentDate === 'string'
+          ? appointmentDate.split('T')[0]
+          : format(new Date(appointmentDate), 'yyyy-MM-dd');
+        const date = new Date(`${datePart}T${startTime}:00`);
+
         if (isNaN(date.getTime())) return <span className="text-[var(--text-muted)]">Invalid Date</span>;
 
         return (
@@ -102,8 +107,15 @@ export default function AppointmentsPage() {
       },
       meta: {
         exportValue: (row) => {
-          if (!row.startTime) return '—';
-          const date = new Date(row.startTime);
+          const appointmentDate = row.appointmentDate;
+          const startTime = row.startTime;
+          if (!appointmentDate || !startTime) return '—';
+
+          const datePart = typeof appointmentDate === 'string'
+            ? appointmentDate.split('T')[0]
+            : format(new Date(appointmentDate), 'yyyy-MM-dd');
+          const date = new Date(`${datePart}T${startTime}:00`);
+
           if (isNaN(date.getTime())) return '—';
           return `${format(date, 'dd MMM yyyy', { locale: isRTL ? arSA : undefined })} ${format(date, 'hh:mm a')}`;
         },
@@ -111,15 +123,15 @@ export default function AppointmentsPage() {
     },
     {
       header: t('appointments.type') || 'Type',
-      accessorKey: 'type',
+      accessorKey: 'appointmentType',
       cell: ({ row }) => (
         <Badge variant="secondary">
-          {t(`appointments.types.${row.original.type?.toLowerCase()}`) || row.original.type}
+          {t(`appointments.types.${row.original.appointmentType?.toLowerCase()}`) || row.original.appointmentType}
         </Badge>
       ),
       meta: {
         exportValue: (row) =>
-          t(`appointments.types.${row.type?.toLowerCase()}`) || row.type,
+          t(`appointments.types.${row.appointmentType?.toLowerCase()}`) || row.appointmentType,
       },
     },
     {
@@ -146,9 +158,9 @@ export default function AppointmentsPage() {
         exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
       },
     },
-  ];
+  ], [t, isRTL]);
 
-  const renderActions = (appointment) => (
+  const renderActions = useCallback((appointment) => (
     <div className="flex gap-1 border-r border-[var(--border-color)] mr-2 pr-2 rtl:mr-0 rtl:ml-2 rtl:pr-0 rtl:pl-2 rtl:border-r-0 rtl:border-l">
       {appointment.status === 'PENDING' && (
         <button 
@@ -169,7 +181,7 @@ export default function AppointmentsPage() {
         </button>
       )}
     </div>
-  );
+  ), [updateStatusMutation, t]);
 
   return (
     <div className="space-y-8">

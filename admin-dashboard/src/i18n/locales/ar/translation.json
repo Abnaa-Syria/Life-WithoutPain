@@ -357,7 +357,10 @@
     "types": {
       "online": "أونلاين",
       "home_visit": "زيارة منزلية",
-      "clinic": "عيادة"
+      "clinic": "عيادة",
+      "consultation": "استشارة",
+      "follow_up": "متابعة",
+      "emergency": "طوارئ"
     }
   },
   "patients": {

@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import '../i18n';
 import '../styles/globals.css';
@@ -62,7 +62,6 @@ function AppRoutes() {
         <Route path="doctors" element={<ProtectedRoute permission={P.doctors} roles={ADMIN_MED}><DoctorsPage /></ProtectedRoute>} />
         <Route path="doctors/:id" element={<ProtectedRoute permission={P.doctors} roles={ADMIN_MED}><DoctorDetailsPage /></ProtectedRoute>} />
         
-        <Route path="doctor-verification" element={<ProtectedRoute permission={P.doctors} roles={ADMIN_MED}><DoctorsPage /></ProtectedRoute>} />
         
         <Route path="specialities" element={<ProtectedRoute permission={P.specialities} roles={ADMIN_MED}><SpecialitiesPage /></ProtectedRoute>} />
         <Route path="specialities/:id" element={

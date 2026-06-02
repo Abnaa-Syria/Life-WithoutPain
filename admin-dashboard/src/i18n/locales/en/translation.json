@@ -357,7 +357,10 @@
     "types": {
       "online": "Online",
       "home_visit": "Home Visit",
-      "clinic": "Clinic"
+      "clinic": "Clinic",
+      "consultation": "Consultation",
+      "follow_up": "Follow Up",
+      "emergency": "Emergency"
     }
   },
   "patients": {

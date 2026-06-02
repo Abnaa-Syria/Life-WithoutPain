@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -50,6 +50,9 @@ const DataTable = ({
 
   const showBulkDelete =
     enableBulkDelete !== false && typeof onBulkDelete === 'function';
+
+  // Prevent infinite loops by stabilizing the data fallback reference
+  const tableData = useMemo(() => data || [], [data]);
 
   const tableColumns = useMemo(() => {
     const cols = [...columns];
@@ -119,10 +122,11 @@ const DataTable = ({
     });
 
     return cols;
-  }, [columns, t, onEdit, onDelete, onView, renderCustomActions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columns, t]);
 
   const table = useReactTable({
-    data: data || [],
+    data: tableData,
     columns: tableColumns,
     getRowId: (row, index) => String(row.id ?? row._id ?? row.uuid ?? index),
     enableRowSelection: true,
