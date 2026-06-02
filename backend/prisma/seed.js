@@ -14,6 +14,8 @@ const prisma = new PrismaClient();
 const now = () => new Date();
 const daysFromNow = (d) => new Date(Date.now() + d * 24 * 60 * 60 * 1000);
 const toDateOnly = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const SEED_SAMPLE_PDF = '/uploads/sample.pdf';
+const SEED_SAMPLE_IMAGE = '/uploads/45429c98-fc1f-4cb1-a99e-cafc78b9542e.jpeg';
 
 function phone(n) {
   return `+9665${String(n).padStart(8, '0')}`;
@@ -82,6 +84,36 @@ async function ensureDoctorProfile(user, data) {
     return prisma.doctorProfile.update({ where: { userId: user.id }, data });
   }
   return prisma.doctorProfile.create({ data: { userId: user.id, ...data } });
+}
+
+async function resetSeededAppointments() {
+  const seeded = await prisma.appointment.findMany({
+    where: { notes: 'Seeded appointment' },
+    select: { id: true },
+  });
+  const ids = seeded.map((a) => a.id);
+  if (!ids.length) return;
+
+  const conversations = await prisma.conversation.findMany({
+    where: { appointmentId: { in: ids } },
+    select: { id: true },
+  });
+  if (conversations.length) {
+    await prisma.message.deleteMany({
+      where: { conversationId: { in: conversations.map((c) => c.id) } },
+    });
+  }
+
+  await prisma.labTestRequest.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.prescription.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.medicalReport.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.review.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.claimItem.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.callSession.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.payment.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.doctorPayout.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.conversation.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.appointment.deleteMany({ where: { id: { in: ids } } });
 }
 
 async function main() {
@@ -253,13 +285,13 @@ async function main() {
 
     await connectDoctorSubSpecialities(profile.id, d.specialityId, d.subSpecializations);
 
-    // Verification documents — include LICENSE type for dashboard preview
+    await prisma.doctorVerificationDocument.deleteMany({ where: { doctorId: profile.id } });
     const docCount = d.verificationStatus === 'PENDING' ? 2 : 3;
     for (let i = 0; i < docCount; i++) {
       await prisma.doctorVerificationDocument.create({
         data: {
           doctorId: profile.id,
-          fileUrl: i === 0 ? `/uploads/sample.pdf` : `/uploads/download.jpeg`,
+          fileUrl: i === 0 ? SEED_SAMPLE_PDF : SEED_SAMPLE_IMAGE,
           fileType: i === 0 ? 'LICENSE' : 'CERTIFICATE',
           reviewStatus: d.verificationStatus === 'APPROVED' ? 'APPROVED' : d.verificationStatus === 'REJECTED' ? 'REJECTED' : 'PENDING',
           reviewNotes: d.verificationStatus === 'REJECTED' ? 'Document is not clear' : null,
@@ -376,8 +408,8 @@ async function main() {
     await prisma.medicalProfileAttachment.deleteMany({ where: { medicalProfileId: medicalProfile.id } });
     await prisma.medicalProfileAttachment.createMany({
       data: [
-        { medicalProfileId: medicalProfile.id, fileUrl: '/uploads/sample.pdf', mimeType: 'application/pdf', title: 'تقرير مختبر' },
-        { medicalProfileId: medicalProfile.id, fileUrl: '/uploads/download.jpeg', mimeType: 'image/jpeg', title: 'أشعة سينية' },
+        { medicalProfileId: medicalProfile.id, fileUrl: SEED_SAMPLE_PDF, mimeType: 'application/pdf', title: 'تقرير مختبر' },
+        { medicalProfileId: medicalProfile.id, fileUrl: SEED_SAMPLE_IMAGE, mimeType: 'image/jpeg', title: 'أشعة سينية' },
       ],
     });
 
@@ -408,10 +440,10 @@ async function main() {
     await prisma.medicalFile.deleteMany({ where: { patientId: patientProfile.id } });
     await prisma.medicalFile.createMany({
       data: [
-        { patientId: patientProfile.id, uploadedBy: user.id, category: 'LAB_RESULT', fileUrl: `/uploads/sample.pdf`, mimeType: 'application/pdf', title: 'نتيجة تحليل', description: 'ملف تجريبي' },
-        { patientId: patientProfile.id, uploadedBy: user.id, category: 'INSURANCE_DOCUMENT', fileUrl: `/uploads/download.jpeg`, mimeType: 'image/jpeg', title: 'ملف تأمين', description: 'ملف تجريبي' },
-        { patientId: patientProfile.id, uploadedBy: user.id, category: 'RADIOLOGY', fileUrl: `/uploads/download.jpeg`, mimeType: 'image/jpeg', title: 'أشعة صدر', description: 'ملف أشعة تجريبي' },
-        { patientId: patientProfile.id, uploadedBy: user.id, category: 'MEDICAL_REPORT', fileUrl: `/uploads/sample.pdf`, mimeType: 'application/pdf', title: 'تقرير طبي', description: 'تقرير سابق' },
+        { patientId: patientProfile.id, uploadedBy: user.id, category: 'LAB_RESULT', fileUrl: SEED_SAMPLE_PDF, mimeType: 'application/pdf', title: 'نتيجة تحليل', description: 'ملف تجريبي' },
+        { patientId: patientProfile.id, uploadedBy: user.id, category: 'INSURANCE_DOCUMENT', fileUrl: SEED_SAMPLE_IMAGE, mimeType: 'image/jpeg', title: 'ملف تأمين', description: 'ملف تجريبي' },
+        { patientId: patientProfile.id, uploadedBy: user.id, category: 'RADIOLOGY', fileUrl: SEED_SAMPLE_IMAGE, mimeType: 'image/jpeg', title: 'أشعة صدر', description: 'ملف أشعة تجريبي' },
+        { patientId: patientProfile.id, uploadedBy: user.id, category: 'MEDICAL_REPORT', fileUrl: SEED_SAMPLE_PDF, mimeType: 'application/pdf', title: 'تقرير طبي', description: 'تقرير سابق' },
       ],
     });
 
@@ -434,7 +466,7 @@ async function main() {
           memberId: `MEM-${patient.id}-A`,
           policyNumber: `POL-${patient.id}-A`,
           expiryDate: daysFromNow(365),
-          attachmentUrl: `/uploads/sample.pdf`,
+          attachmentUrl: SEED_SAMPLE_PDF,
           isPrimary: true,
           verificationStatus: 'VERIFIED',
         },
@@ -444,7 +476,7 @@ async function main() {
           memberId: `MEM-${patient.id}-B`,
           policyNumber: `POL-${patient.id}-B`,
           expiryDate: daysFromNow(120),
-          attachmentUrl: `/uploads/download.jpeg`,
+          attachmentUrl: SEED_SAMPLE_IMAGE,
           isPrimary: false,
           verificationStatus: patient.id % 2 === 0 ? 'PENDING' : 'REJECTED',
         },
@@ -456,11 +488,14 @@ async function main() {
   // ─────────────────────────────────────────────────────────────
   // 6) Appointments in multiple statuses + attachments + conversations + calls
   // ─────────────────────────────────────────────────────────────
+  await resetSeededAppointments();
+
+  const coreAppointments = [];
   const appointmentRecords = [];
   const serviceRemote = await prisma.service.findUnique({ where: { id: 1 } });
   const serviceClinic = await prisma.service.findUnique({ where: { id: 3 } });
 
-  // Create 9 appointments across patients/doctors with varied statuses
+  // Core demo appointments (predictable patient/doctor/status for dashboard previews)
   const appointmentTemplates = [
     { offsetDays: 2, status: 'PENDING', paymentStatus: 'PENDING', insuranceStatus: 'PENDING_VERIFICATION' },
     { offsetDays: 3, status: 'CONFIRMED', paymentStatus: 'PENDING', insuranceStatus: 'APPROVED' },
@@ -473,20 +508,7 @@ async function main() {
     { offsetDays: -10, status: 'NO_SHOW', paymentStatus: 'PENDING', insuranceStatus: 'NOT_REQUIRED' },
   ];
 
-  // Add historical data for charts
-  for (let i = 0; i < 150; i++) {
-    const offsetDays = -Math.floor(Math.random() * 180); // Past 6 months
-    const isCompleted = Math.random() > 0.1;
-    appointmentTemplates.push({
-      offsetDays,
-      status: isCompleted ? 'COMPLETED' : 'CANCELLED',
-      paymentStatus: isCompleted ? 'PAID' : 'FAILED',
-      insuranceStatus: 'APPROVED'
-    });
-  }
-
-  let idx = 0;
-  for (const tpl of appointmentTemplates) {
+  async function seedAppointmentWithExtras(tpl, idx) {
     const patient = patients[idx % patients.length];
     const doctor = approvedDoctors[idx % approvedDoctors.length];
     const date = toDateOnly(daysFromNow(tpl.offsetDays));
@@ -517,18 +539,15 @@ async function main() {
         createdBy: patient.userId,
       },
     });
-    appointmentRecords.push(appointment);
 
-    // Appointment attachments
     await prisma.appointmentAttachment.createMany({
       data: [
-        { appointmentId: appointment.id, fileUrl: `/uploads/download.jpeg`, type: 'IMAGE', uploadedBy: patient.userId },
-        { appointmentId: appointment.id, fileUrl: `/uploads/sample.pdf`, type: 'DOCUMENT', uploadedBy: patient.userId },
+        { appointmentId: appointment.id, fileUrl: SEED_SAMPLE_IMAGE, type: 'IMAGE', uploadedBy: patient.userId },
+        { appointmentId: appointment.id, fileUrl: SEED_SAMPLE_PDF, type: 'DOCUMENT', uploadedBy: patient.userId },
       ],
       skipDuplicates: true,
     });
 
-    // Conversation + messages (for some appointments)
     if (['CONFIRMED', 'IN_PROGRESS', 'COMPLETED'].includes(tpl.status)) {
       const conversation = await prisma.conversation.create({
         data: {
@@ -547,7 +566,6 @@ async function main() {
       });
     }
 
-    // Call session (for in-progress/completed)
     if (['IN_PROGRESS', 'COMPLETED'].includes(tpl.status)) {
       await prisma.callSession.create({
         data: {
@@ -568,7 +586,37 @@ async function main() {
       });
     }
 
+    return appointment;
+  }
+
+  let idx = 0;
+  for (const tpl of appointmentTemplates) {
+    const appointment = await seedAppointmentWithExtras(tpl, idx);
+    coreAppointments.push(appointment);
+    appointmentRecords.push(appointment);
     idx++;
+  }
+
+  // Historical data for charts (no clinical records tied to these)
+  for (let i = 0; i < 150; i++) {
+    const offsetDays = -Math.floor(Math.random() * 180);
+    const isCompleted = Math.random() > 0.1;
+    const historical = await seedAppointmentWithExtras(
+      {
+        offsetDays,
+        status: isCompleted ? 'COMPLETED' : 'CANCELLED',
+        paymentStatus: isCompleted ? 'PAID' : 'FAILED',
+        insuranceStatus: 'APPROVED',
+      },
+      idx++,
+    );
+    appointmentRecords.push(historical);
+  }
+
+  const completedAppointment = coreAppointments.find((a) => a.status === 'COMPLETED');
+  const inProgressAppt = coreAppointments.find((a) => a.status === 'IN_PROGRESS');
+  if (!completedAppointment || !inProgressAppt) {
+    throw new Error('Seed misconfiguration: core demo appointments must include COMPLETED and IN_PROGRESS');
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -857,11 +905,15 @@ async function main() {
   });
 
   // ─────────────────────────────────────────────────────────────
-  // 9) Lab tests + results (linked to completed/in-progress appointment)
+  // 9) Lab tests + results (linked to core demo appointments; idempotent)
   // ─────────────────────────────────────────────────────────────
-  const completedAppointment = appointmentRecords.find((a) => a.status === 'COMPLETED') || appointmentRecords[0];
-  const doctorForCompleted = await prisma.doctorProfile.findUnique({ where: { id: completedAppointment.doctorId } });
-  const labReq = await prisma.labTestRequest.create({
+  const demoAppointmentIds = [completedAppointment.id, inProgressAppt.id];
+  await prisma.labTestRequest.deleteMany({ where: { appointmentId: { in: demoAppointmentIds } } });
+  await prisma.prescription.deleteMany({ where: { appointmentId: { in: demoAppointmentIds } } });
+  await prisma.medicalReport.deleteMany({ where: { appointmentId: { in: demoAppointmentIds } } });
+
+  const completedPatient = await prisma.patientProfile.findUnique({ where: { id: completedAppointment.patientId } });
+  const completedLabReq = await prisma.labTestRequest.create({
     data: {
       appointmentId: completedAppointment.id,
       patientId: completedAppointment.patientId,
@@ -874,27 +926,34 @@ async function main() {
   });
   await prisma.labResult.create({
     data: {
-      labTestRequestId: labReq.id,
-      uploadedBy: (await prisma.patientProfile.findUnique({ where: { id: completedAppointment.patientId } })).userId,
-      fileUrl: `/uploads/sample.pdf`,
+      labTestRequestId: completedLabReq.id,
+      uploadedBy: completedPatient.userId,
+      fileUrl: SEED_SAMPLE_PDF,
       notes: 'نتيجة طبيعية',
       reviewedByDoctor: true,
       reviewedAt: now(),
     },
   });
 
+  await prisma.labTestRequest.create({
+    data: {
+      appointmentId: inProgressAppt.id,
+      patientId: inProgressAppt.patientId,
+      doctorId: inProgressAppt.doctorId,
+      title: 'أشعة صدر',
+      notes: 'متابعة الأعراض التنفسية',
+      status: 'IN_PROGRESS',
+      requestedAt: now(),
+    },
+  });
+
   // ─────────────────────────────────────────────────────────────
-  // 10) Reports + prescriptions (with items) for completed appointment
-  // ─────────────────────────────────────────────────────────────
-  // 10.1) Detailed Demo Report for a specific patient
-  const patient1 = patients[0];
-  const doctor1 = approvedDoctors[0];
-  
+  // 10) Reports + prescriptions (aligned patient/doctor per appointment)
   const report = await prisma.medicalReport.create({
     data: {
       appointmentId: completedAppointment.id,
-      patientId: patient1.id,
-      doctorId: doctor1.id,
+      patientId: completedAppointment.patientId,
+      doctorId: completedAppointment.doctorId,
       visitReason: 'متابعة دورية وفحص سنوي',
       diagnosis: 'حالة مستقرة - لا توجد مشاكل حادة',
       summary: 'تم إجراء الفحص السريري الشامل ومراجعة التاريخ المرضي. المريض يلتزم بنمط حياة صحي.',
@@ -916,26 +975,21 @@ async function main() {
       ],
       nextAppointmentDate: daysFromNow(90),
       recommendations: 'الاستمرار على ممارسة الرياضة، شرب الماء بكثرة، تقليل الأملاح في الطعام.',
-      pdfUrl: `/uploads/sample.pdf`,
+      pdfUrl: SEED_SAMPLE_PDF,
       attachments: {
         create: [
-          { fileUrl: '/uploads/sample.pdf', type: 'DOCUMENT' },
-          { fileUrl: '/uploads/download.jpeg', type: 'IMAGE' }
+          { fileUrl: SEED_SAMPLE_PDF, type: 'DOCUMENT' },
+          { fileUrl: SEED_SAMPLE_IMAGE, type: 'IMAGE' }
         ]
       }
     },
   });
 
-  // 10.2) Another report for variety
-  const patient2 = patients[1];
-  const doctor2 = approvedDoctors[1] || doctor1;
-  const inProgressAppt = appointmentRecords.find(a => a.status === 'IN_PROGRESS') || completedAppointment;
-
   await prisma.medicalReport.create({
     data: {
       appointmentId: inProgressAppt.id,
-      patientId: patient2.id,
-      doctorId: doctor2.id,
+      patientId: inProgressAppt.patientId,
+      doctorId: inProgressAppt.doctorId,
       visitReason: 'ألم حاد في الركبة اليمنى',
       diagnosis: 'التهاب في الأوتار',
       summary: 'ألم ناتج عن إجهاد بدني زائد.',
@@ -950,7 +1004,7 @@ async function main() {
       ],
       nextAppointmentDate: daysFromNow(7),
       recommendations: 'وضع كمادات باردة، راحة تامة للقدم، استخدام المسكنات عند الضرورة.',
-      pdfUrl: `/uploads/sample.pdf`,
+      pdfUrl: SEED_SAMPLE_PDF,
     }
   });
 
@@ -963,7 +1017,7 @@ async function main() {
       notes: 'التزم بالجرعات',
       qrCodeValue: `RX-${completedAppointment.id}`,
       digitalSealValue: `SEAL-${completedAppointment.id}`,
-      pdfUrl: `/uploads/sample.pdf`,
+      pdfUrl: SEED_SAMPLE_PDF,
       items: {
         create: [
           { medicineName: 'Paracetamol', dosage: '500mg', frequency: '2/day', duration: '5 days', instructions: 'After meals' },
@@ -974,16 +1028,16 @@ async function main() {
     include: { items: true },
   });
 
-  await prisma.prescription.create({
+  const inProgressPrescription = await prisma.prescription.create({
     data: {
       appointmentId: inProgressAppt.id,
-      patientId: patient2.id,
-      doctorId: doctor2.id,
+      patientId: inProgressAppt.patientId,
+      doctorId: inProgressAppt.doctorId,
       diagnosis: 'التهاب في الأوتار',
       notes: 'راحة تامة وتجنب مجهود الركبة',
-      qrCodeValue: `RX-${inProgressAppt.id}-2`,
-      digitalSealValue: `SEAL-${inProgressAppt.id}-2`,
-      pdfUrl: `/uploads/sample.pdf`,
+      qrCodeValue: `RX-${inProgressAppt.id}`,
+      digitalSealValue: `SEAL-${inProgressAppt.id}`,
+      pdfUrl: SEED_SAMPLE_PDF,
       items: {
         create: [
           { medicineName: 'Diclofenac', dosage: '50mg', frequency: '2/day', duration: '7 days', instructions: 'After food' },
@@ -992,9 +1046,19 @@ async function main() {
     },
   });
 
+  await prisma.medicalReport.update({
+    where: { id: report.id },
+    data: { prescriptionId: prescription.id },
+  });
+  await prisma.medicalReport.updateMany({
+    where: { appointmentId: inProgressAppt.id },
+    data: { prescriptionId: inProgressPrescription.id },
+  });
+
   // ─────────────────────────────────────────────────────────────
   // 11) Payments (paid + pending) linked to appointments
   // ─────────────────────────────────────────────────────────────
+  await prisma.payment.deleteMany({ where: { transactionReference: { startsWith: 'MOCK-TX-' } } });
   for (const appt of appointmentRecords) {
     const patient = await prisma.patientProfile.findUnique({ where: { id: appt.patientId } });
     const isPaid = appt.paymentStatus === 'PAID';

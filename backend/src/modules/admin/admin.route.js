@@ -31,6 +31,21 @@ const MEDICAL_PROFILE_INCLUDE = {
   attachments: { orderBy: { createdAt: 'desc' } },
 };
 
+const APPOINTMENT_PREVIEW_INCLUDE = {
+  select: {
+    id: true,
+    appointmentDate: true,
+    startTime: true,
+    endTime: true,
+    status: true,
+    appointmentType: true,
+    amount: true,
+    patient: { include: { user: { select: { fullName: true } } } },
+    doctor: { include: { user: { select: { fullName: true } }, speciality: { select: { nameAr: true } } } },
+    service: { select: { nameAr: true, nameEn: true } },
+  },
+};
+
 router.use(authenticate);
 
 // ═══════════════════════════════════════════
@@ -154,8 +169,29 @@ router.get('/patients/:id', guard('patients.read', ...MEDICAL, ROLES.SUPPORT_STA
       medicalProfile: { include: MEDICAL_PROFILE_INCLUDE },
       familyMembers: true, 
       insurances: { include: { provider: true } },
-      prescriptions: { include: { items: true, doctor: { include: { user: { select: { fullName: true } } } } }, orderBy: { createdAt: 'desc' } },
-      reports: { include: { doctor: { include: { user: { select: { fullName: true } } } } }, orderBy: { createdAt: 'desc' } },
+      prescriptions: {
+        include: {
+          items: true,
+          appointment: APPOINTMENT_PREVIEW_INCLUDE,
+          doctor: { include: { user: { select: { fullName: true } } } },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
+      reports: {
+        include: {
+          appointment: APPOINTMENT_PREVIEW_INCLUDE,
+          doctor: { include: { user: { select: { fullName: true } } } },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
+      labTests: {
+        include: {
+          appointment: APPOINTMENT_PREVIEW_INCLUDE,
+          doctor: { include: { user: { select: { fullName: true } } } },
+          results: true,
+        },
+        orderBy: { requestedAt: 'desc' },
+      },
       medicalFiles: true
     } 
   });
@@ -270,7 +306,18 @@ router.get('/appointments', guard('appointments.list', ...MEDICAL), asyncHandler
   return paginatedResponse(res, { data, total, page, limit });
 }));
 router.get('/appointments/:id', guard('appointments.read', ...MEDICAL, ROLES.SUPPORT_STAFF), asyncHandler(async (req, res) => {
-  const data = await prisma.appointment.findUnique({ where: { id: parseInt(req.params.id) }, include: { patient: { include: { user: true } }, doctor: { include: { user: true, speciality: true } }, service: true, attachments: true, prescriptions: true, reports: true } });
+  const data = await prisma.appointment.findUnique({
+    where: { id: parseInt(req.params.id) },
+    include: {
+      patient: { include: { user: true } },
+      doctor: { include: { user: true, speciality: true } },
+      service: true,
+      attachments: true,
+      prescriptions: { include: { items: true }, orderBy: { createdAt: 'desc' } },
+      reports: { orderBy: { createdAt: 'desc' } },
+      labTests: { include: { results: true }, orderBy: { requestedAt: 'desc' } },
+    },
+  });
   if (!data) throw new NotFoundError('Appointment not found');
   return successResponse(res, { data });
 }));
@@ -377,7 +424,12 @@ router.delete('/support-cases/:id', guard('support.cases.manage', ...SUPPORT), a
 const labCrud = crud('labTestRequest', {
   searchFields: ['title'],
   entityLabel: 'LabTest',
-  include: { patient: { include: { user: { select: { fullName: true } } } }, doctor: { include: { user: { select: { fullName: true } } } }, results: true },
+  include: {
+    patient: { include: { user: { select: { fullName: true } } } },
+    doctor: { include: { user: { select: { fullName: true } } } },
+    appointment: APPOINTMENT_PREVIEW_INCLUDE,
+    results: true,
+  },
   filterFn: (q) => ({ ...(q.status ? { status: q.status } : {}) }),
 });
 router.get('/lab-tests', guard('lab-tests.list', ...MEDICAL), labCrud.list);
@@ -485,7 +537,16 @@ router.delete('/doctor-payouts/:id', guard('payouts.manage', ...FINANCE), payout
 // ═══════════════════════════════════════════
 //  REPORTS – full CRUD
 // ═══════════════════════════════════════════
-const reportCrud = crud('medicalReport', { include: { patient: { include: { user: { select: { fullName: true } } } }, doctor: { include: { user: { select: { fullName: true } } } } }, entityLabel: 'MedicalReport' });
+const reportCrud = crud('medicalReport', {
+  include: {
+    patient: { include: { user: { select: { fullName: true } } } },
+    doctor: { include: { user: { select: { fullName: true } } } },
+    appointment: APPOINTMENT_PREVIEW_INCLUDE,
+    prescription: { select: { id: true, diagnosis: true } },
+    attachments: true,
+  },
+  entityLabel: 'MedicalReport',
+});
 router.get('/reports', guard('reports.admin.list', ...MEDICAL), reportCrud.list);
 router.get('/reports/:id', guard('reports.admin.list', ...MEDICAL), reportCrud.getOne);
 router.put('/reports/:id', guard('reports.admin.update', ...MEDICAL), reportCrud.update);
@@ -494,7 +555,15 @@ router.delete('/reports/:id', guard('reports.admin.delete', ...SUPER), reportCru
 // ═══════════════════════════════════════════
 //  PRESCRIPTIONS – full CRUD
 // ═══════════════════════════════════════════
-const rxCrud = crud('prescription', { include: { items: true, patient: { include: { user: { select: { fullName: true } } } }, doctor: { include: { user: { select: { fullName: true } } } } }, entityLabel: 'Prescription' });
+const rxCrud = crud('prescription', {
+  include: {
+    items: true,
+    patient: { include: { user: { select: { fullName: true } } } },
+    doctor: { include: { user: { select: { fullName: true } } } },
+    appointment: APPOINTMENT_PREVIEW_INCLUDE,
+  },
+  entityLabel: 'Prescription',
+});
 router.get('/prescriptions', guard('prescriptions.admin.list', ...MEDICAL), rxCrud.list);
 router.get('/prescriptions/:id', guard('prescriptions.admin.list', ...MEDICAL), rxCrud.getOne);
 router.put('/prescriptions/:id', guard('prescriptions.admin.update', ...MEDICAL), rxCrud.update);

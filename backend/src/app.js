@@ -45,9 +45,16 @@ app.use(globalLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static files
+// Static files — allow dashboard (different origin) to embed uploads in img/pdf previews
 const uploadsDir = path.resolve(__dirname, '..', config.upload.dir);
-app.use('/uploads', express.static(uploadsDir));
+app.use(
+  '/uploads',
+  (req, res, next) => {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+  },
+  express.static(uploadsDir),
+);
 
 // Request logging
 app.use((req, res, next) => {

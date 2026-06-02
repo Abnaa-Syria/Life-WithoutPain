@@ -1,6 +1,21 @@
 const BaseRepository = require('../../shared/repositories/BaseRepository');
 const prisma = require('../../config/database');
 
+const APPOINTMENT_PREVIEW_INCLUDE = {
+  select: {
+    id: true,
+    appointmentDate: true,
+    startTime: true,
+    endTime: true,
+    status: true,
+    appointmentType: true,
+    amount: true,
+    patient: { include: { user: { select: { fullName: true } } } },
+    doctor: { include: { user: { select: { fullName: true } }, speciality: { select: { nameAr: true } } } },
+    service: { select: { nameAr: true, nameEn: true } },
+  },
+};
+
 class DoctorRepository extends BaseRepository {
   constructor() {
     super('doctorProfile');
@@ -52,6 +67,7 @@ class DoctorRepository extends BaseRepository {
           take: 50,
           include: {
             items: true,
+            appointment: APPOINTMENT_PREVIEW_INCLUDE,
             patient: { include: { user: { select: { fullName: true } } } },
           },
         },
@@ -59,7 +75,17 @@ class DoctorRepository extends BaseRepository {
           orderBy: { createdAt: 'desc' },
           take: 50,
           include: {
+            appointment: APPOINTMENT_PREVIEW_INCLUDE,
             patient: { include: { user: { select: { fullName: true } } } },
+          },
+        },
+        labTestRequests: {
+          orderBy: { requestedAt: 'desc' },
+          take: 50,
+          include: {
+            appointment: APPOINTMENT_PREVIEW_INCLUDE,
+            patient: { include: { user: { select: { fullName: true } } } },
+            results: true,
           },
         },
       },
