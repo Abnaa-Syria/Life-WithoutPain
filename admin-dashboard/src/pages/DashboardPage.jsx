@@ -31,26 +31,8 @@ export default function DashboardPage() {
   const stats = data || {};
   const isInsuranceStaff = user?.role === 'INSURANCE_STAFF';
 
-  // Mock data for charts if API doesn't provide it
-  const revenueData = [
-    { name: 'Jan', value: 4000 },
-    { name: 'Feb', value: 3000 },
-    { name: 'Mar', value: 2000 },
-    { name: 'Apr', value: 2780 },
-    { name: 'May', value: 1890 },
-    { name: 'Jun', value: 2390 },
-    { name: 'Jul', value: 3490 },
-  ];
-
-  const appointmentData = [
-    { name: 'Mon', value: 12 },
-    { name: 'Tue', value: 19 },
-    { name: 'Wed', value: 15 },
-    { name: 'Thu', value: 22 },
-    { name: 'Fri', value: 30 },
-    { name: 'Sat', value: 10 },
-    { name: 'Sun', value: 5 },
-  ];
+  const revenueData = stats.revenueData || [];
+  const appointmentData = stats.appointmentData || [];
 
   return (
     <div className="space-y-10">
@@ -166,7 +148,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card title={t('dashboard.revenue_trend') || 'Revenue Trend'}>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minHeight={1}>
               <AreaChart data={revenueData}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -198,7 +180,7 @@ export default function DashboardPage() {
 
         <Card title={t('dashboard.appointment_activity') || 'Appointment Activity'}>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minHeight={1}>
               <BarChart data={appointmentData}>
                 <defs>
                   <linearGradient id="barPink" x1="0" y1="0" x2="0" y2="1">
