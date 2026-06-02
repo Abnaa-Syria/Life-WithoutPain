@@ -29,6 +29,7 @@ export default function CrudPage({
   extraFilters,
   embedded = false,
   breadcrumbs: breadcrumbsProp,
+  invalidateQueryKeys = [],
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -39,6 +40,11 @@ export default function CrudPage({
   const [form, setForm] = useState({});
 
   const key = queryKey || endpoint;
+
+  const invalidateAll = () => {
+    qc.invalidateQueries({ queryKey: [key] });
+    invalidateQueryKeys.forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: [key],
@@ -53,7 +59,7 @@ export default function CrudPage({
     onSuccess: () => {
       toast.success(t('messages.saved'));
       setIsModalOpen(false);
-      qc.invalidateQueries([key]);
+      invalidateAll();
     },
     onError: (err) => toast.error(err.response?.data?.message || t('messages.error')),
   });
@@ -62,7 +68,7 @@ export default function CrudPage({
     mutationFn: (id) => api.delete(`${endpoint}/${id}`),
     onSuccess: () => {
       toast.success(t('messages.deleted'));
-      qc.invalidateQueries([key]);
+      invalidateAll();
     },
   });
 
@@ -109,7 +115,7 @@ export default function CrudPage({
           deleteOne: (item) => api.delete(`${endpoint}/${item.id}`),
           t,
           toast,
-          invalidate: () => qc.invalidateQueries([key]),
+          invalidate: invalidateAll,
         });
       }
     : undefined;

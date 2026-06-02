@@ -240,12 +240,19 @@
   "specialities": {
     "add": "إضافة تخصص",
     "edit": "تعديل التخصص",
+    "details": "تفاصيل التخصص",
     "name_ar": "الاسم بالعربي",
     "name_en": "الاسم بالإنجليزي",
     "description_ar": "الوصف بالعربي",
     "description_en": "الوصف بالإنجليزي",
     "icon": "الأيقونة",
-    "doctors_count": "الأطباء"
+    "doctors_count": "الأطباء",
+    "sub_specialities": "التخصصات الفرعية",
+    "sub_specialities_count": "التخصصات الفرعية",
+    "sub_specialities_subtitle": "إدارة التخصصات الفرعية ضمن هذا التخصص",
+    "add_sub_speciality": "إضافة تخصص فرعي",
+    "edit_sub_speciality": "تعديل التخصص الفرعي",
+    "delete_sub_speciality_confirm": "حذف هذا التخصص الفرعي؟"
   },
   "messages": {
     "login_success": "تم تسجيل الدخول بنجاح",
@@ -396,6 +403,7 @@
   "doctors": {
     "name": "اسم الطبيب",
     "speciality": "التخصص",
+    "sub_specialities": "التخصصات الفرعية",
     "phone": "رقم الهاتف",
     "rating": "التقييم",
     "consultations": "الاستشارات",

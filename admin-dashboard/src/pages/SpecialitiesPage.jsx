@@ -87,6 +87,12 @@ export default function SpecialitiesPage() {
       cell: ({ row }) => row.original._count?.doctors || 0,
       meta: { exportValue: (row) => String(row._count?.doctors || 0) },
     },
+    {
+      header: t('specialities.sub_specialities_count') || 'Sub-specialities',
+      accessorKey: '_count.subSpecialities',
+      cell: ({ row }) => row.original._count?.subSpecialities || 0,
+      meta: { exportValue: (row) => String(row._count?.subSpecialities || 0) },
+    },
   ];
 
   return (

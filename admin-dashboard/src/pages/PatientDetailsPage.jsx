@@ -84,7 +84,7 @@ export default function PatientDetailsPage() {
         {patient.familyMembers?.length > 0 ? patient.familyMembers.map((member, idx) => (
           <React.Fragment key={idx}>
             <DetailItem label={t('common.name')} value={member.fullName} />
-            <DetailItem label={t('common.relationship') || 'Relationship'} value={member.relationship} />
+            <DetailItem label={t('common.relationship') || 'Relationship'} value={member.relationType || member.relationship} />
             <DetailItem label={t('patients.phone')} value={member.phone} />
           </React.Fragment>
         )) : <div className="col-span-full text-center text-[var(--text-muted)] py-4">{t('common.no_data')}</div>}

@@ -122,7 +122,14 @@ export default function DoctorDetailsPage() {
         <DetailsSection title={t('doctors.professional_info') || 'Professional Information'} icon={Stethoscope}>
           <DetailItem label={t('doctors.title')} value={doctor.title} />
           <DetailItem label={t('doctors.speciality')} value={doctor.speciality?.nameAr} />
-          <DetailItem label={t('doctors.bio')} value={doctor.bio} fullWidth />
+          {doctor.subSpecialities?.length > 0 && (
+            <DetailItem
+              label={t('doctors.sub_specialities') || 'Sub-specialities'}
+              value={doctor.subSpecialities.map((s) => s.nameAr).join('، ')}
+              fullWidth
+            />
+          )}
+          <DetailItem label={t('doctors.bio')} value={doctor.bioAr || doctor.bio} fullWidth />
         </DetailsSection>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -240,12 +240,19 @@
   "specialities": {
     "add": "Add Speciality",
     "edit": "Edit Speciality",
+    "details": "Speciality Details",
     "name_ar": "Name (AR)",
     "name_en": "Name (EN)",
     "description_ar": "Description (AR)",
     "description_en": "Description (EN)",
     "icon": "Icon",
-    "doctors_count": "Doctors"
+    "doctors_count": "Doctors",
+    "sub_specialities": "Sub-specialities",
+    "sub_specialities_count": "Sub-specialities",
+    "sub_specialities_subtitle": "Manage sub-specialities under this speciality",
+    "add_sub_speciality": "Add Sub-speciality",
+    "edit_sub_speciality": "Edit Sub-speciality",
+    "delete_sub_speciality_confirm": "Delete this sub-speciality?"
   },
   "messages": {
     "login_success": "Welcome back!",
@@ -396,6 +403,7 @@
   "doctors": {
     "name": "Doctor Name",
     "speciality": "Speciality",
+    "sub_specialities": "Sub-specialities",
     "phone": "Phone Number",
     "rating": "Rating",
     "consultations": "Consultations",

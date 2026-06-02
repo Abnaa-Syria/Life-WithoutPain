@@ -13,6 +13,7 @@ import UsersPage from '../pages/UsersPage';
 import PatientsPage from '../pages/PatientsPage';
 import DoctorsPage from '../pages/DoctorsPage';
 import SpecialitiesPage from '../pages/SpecialitiesPage';
+import SpecialityDetailsPage from '../pages/SpecialityDetailsPage';
 import AppointmentsPage from '../pages/AppointmentsPage';
 import InsuranceCasesPage from '../pages/InsuranceCasesPage';
 import SupportPage from '../pages/SupportPage';
@@ -66,17 +67,7 @@ function AppRoutes() {
         <Route path="specialities" element={<ProtectedRoute permission={P.specialities} roles={ADMIN_MED}><SpecialitiesPage /></ProtectedRoute>} />
         <Route path="specialities/:id" element={
           <ProtectedRoute permission={P.specialities} roles={ADMIN_MED}>
-             <GenericDetailsPage 
-               entityName={t('sidebar.specialities')} endpoint="/admin/specialities" titleField="nameAr"
-               sections={[
-                 { title: t('common.personal_info'), icon: Info, fields: [
-                   { label: t('common.name_ar'), key: "nameAr" },
-                   { label: t('common.name_en'), key: "nameEn" },
-                   { label: t('common.sort_order'), key: "sortOrder" },
-                   { label: t('common.is_active'), key: "isActive", render: (v) => v ? t('common.active') : t('common.inactive') },
-                 ]}
-               ]}
-            />
+            <SpecialityDetailsPage />
           </ProtectedRoute>
         } />
 
