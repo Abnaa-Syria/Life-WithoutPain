@@ -19,6 +19,40 @@ function phone(n) {
   return `+9665${String(n).padStart(8, '0')}`;
 }
 
+async function upsertCatalogByNameEn(model, items) {
+  const map = {};
+  for (const item of items) {
+    const existing = await prisma[model].findFirst({ where: { nameEn: item.nameEn } });
+    const record = existing
+      ? await prisma[model].update({ where: { id: existing.id }, data: item })
+      : await prisma[model].create({ data: item });
+    map[item.nameEn] = record;
+  }
+  return map;
+}
+
+async function upsertSubSpeciality(sub) {
+  const existing = await prisma.subSpeciality.findFirst({
+    where: { specialityId: sub.specialityId, nameEn: sub.nameEn },
+  });
+  if (existing) {
+    return prisma.subSpeciality.update({ where: { id: existing.id }, data: sub });
+  }
+  return prisma.subSpeciality.create({ data: sub });
+}
+
+async function connectDoctorSubSpecialities(profileId, specialityId, subNameEns) {
+  if (!subNameEns?.length) return;
+  const subs = await prisma.subSpeciality.findMany({
+    where: { specialityId, nameEn: { in: subNameEns }, isActive: true },
+  });
+  if (!subs.length) return;
+  await prisma.doctorProfile.update({
+    where: { id: profileId },
+    data: { subSpecialities: { set: subs.map((s) => ({ id: s.id })) } },
+  });
+}
+
 async function upsertUser({ fullName, email, phoneNumber, role, passwordHash, isVerified = true, status = 'ACTIVE' }) {
   await assertRoleExists(prisma, role);
   return prisma.user.upsert({
@@ -92,22 +126,60 @@ async function main() {
   }
 
   const subSpecialitiesSeed = [
-    { specialityId: 1, nameAr: 'السكري', nameEn: 'Diabetes', sortOrder: 1 },
-    { specialityId: 1, nameAr: 'ضغط الدم', nameEn: 'Hypertension', sortOrder: 2 },
-    { specialityId: 4, nameAr: 'قسطرة القلب', nameEn: 'Cardiac Catheterization', sortOrder: 1 },
-    { specialityId: 4, nameAr: 'فشل القلب', nameEn: 'Heart Failure', sortOrder: 2 },
-    { specialityId: 6, nameAr: 'حديثي الولادة', nameEn: 'Neonatology', sortOrder: 1 },
+    { specialityId: 1, nameAr: 'السكري', nameEn: 'Diabetes', descriptionAr: 'إدارة مرض السكري', descriptionEn: 'Diabetes management', sortOrder: 1 },
+    { specialityId: 1, nameAr: 'ضغط الدم', nameEn: 'Hypertension', descriptionAr: 'علاج ارتفاع ضغط الدم', descriptionEn: 'Hypertension treatment', sortOrder: 2 },
+    { specialityId: 2, nameAr: 'طب الأسنان العام', nameEn: 'General Dentistry', descriptionAr: 'علاج الأسنان العام', descriptionEn: 'General dental care', sortOrder: 1 },
+    { specialityId: 2, nameAr: 'تقويم الأسنان', nameEn: 'Orthodontics', descriptionAr: 'تقويم وتجميل الأسنان', descriptionEn: 'Orthodontic treatment', sortOrder: 2 },
+    { specialityId: 3, nameAr: 'الماء الأزرق', nameEn: 'Glaucoma', descriptionAr: 'أمراض الماء الأزرق', descriptionEn: 'Glaucoma care', sortOrder: 1 },
+    { specialityId: 3, nameAr: 'جراحة الساد', nameEn: 'Cataract Surgery', descriptionAr: 'جراحة وعلاج الساد', descriptionEn: 'Cataract surgery', sortOrder: 2 },
+    { specialityId: 4, nameAr: 'قسطرة القلب', nameEn: 'Cardiac Catheterization', descriptionAr: 'قسطرة تشخيصية وعلاجية', descriptionEn: 'Diagnostic and interventional catheterization', sortOrder: 1 },
+    { specialityId: 4, nameAr: 'فشل القلب', nameEn: 'Heart Failure', descriptionAr: 'متابعة فشل القلب', descriptionEn: 'Heart failure management', sortOrder: 2 },
+    { specialityId: 5, nameAr: 'علاج حب الشباب', nameEn: 'Acne Treatment', descriptionAr: 'علاج حب الشباب والجلد', descriptionEn: 'Acne and skin treatment', sortOrder: 1 },
+    { specialityId: 5, nameAr: 'التجميل الجلدي', nameEn: 'Cosmetic Dermatology', descriptionAr: 'إجراءات تجميلية للجلد', descriptionEn: 'Cosmetic dermatology procedures', sortOrder: 2 },
+    { specialityId: 6, nameAr: 'حديثي الولادة', nameEn: 'Neonatology', descriptionAr: 'رعاية حديثي الولادة', descriptionEn: 'Neonatal care', sortOrder: 1 },
+    { specialityId: 6, nameAr: 'أمراض الأطفال الشائعة', nameEn: 'Pediatric Infectious Diseases', descriptionAr: 'العدوى لدى الأطفال', descriptionEn: 'Pediatric infectious diseases', sortOrder: 2 },
+    { specialityId: 7, nameAr: 'القلق والاكتئاب', nameEn: 'Anxiety and Depression', descriptionAr: 'اضطرابات القلق والاكتئاب', descriptionEn: 'Anxiety and depression disorders', sortOrder: 1 },
+    { specialityId: 8, nameAr: 'إصابات رياضية', nameEn: 'Sports Injuries', descriptionAr: 'علاج الإصابات الرياضية', descriptionEn: 'Sports injury treatment', sortOrder: 1 },
+    { specialityId: 8, nameAr: 'استبدال المفاصل', nameEn: 'Joint Replacement', descriptionAr: 'جراحة استبدال المفاصل', descriptionEn: 'Joint replacement surgery', sortOrder: 2 },
   ];
   for (const sub of subSpecialitiesSeed) {
-    const existing = await prisma.subSpeciality.findFirst({
-      where: { specialityId: sub.specialityId, nameEn: sub.nameEn },
-    });
-    if (existing) {
-      await prisma.subSpeciality.update({ where: { id: existing.id }, data: sub });
-    } else {
-      await prisma.subSpeciality.create({ data: sub });
-    }
+    await upsertSubSpeciality(sub);
   }
+
+  // ─────────────────────────────────────────────────────────────
+  // 2b) Medical master data catalogs (dashboard preview)
+  // ─────────────────────────────────────────────────────────────
+  const chronicDiseaseCatalog = await upsertCatalogByNameEn('chronicDisease', [
+    { nameAr: 'ارتفاع ضغط الدم', nameEn: 'Hypertension', description: 'High blood pressure', isActive: true },
+    { nameAr: 'السكري من النوع الثاني', nameEn: 'Diabetes Type 2', description: 'Type 2 diabetes mellitus', isActive: true },
+    { nameAr: 'الربو', nameEn: 'Asthma', description: 'Chronic respiratory condition', isActive: true },
+    { nameAr: 'التهاب المفاصل', nameEn: 'Arthritis', description: 'Joint inflammation', isActive: true },
+    { nameAr: 'ارتفاع الكolesterol', nameEn: 'Hyperlipidemia', description: 'High cholesterol', isActive: true },
+  ]);
+
+  const medicationCatalog = await upsertCatalogByNameEn('medication', [
+    { nameAr: 'فيتامين د', nameEn: 'Vitamin D', description: 'Vitamin D supplement', isActive: true },
+    { nameAr: 'ميتفورمين', nameEn: 'Metformin', description: 'Diabetes medication', isActive: true },
+    { nameAr: 'أملوديبين', nameEn: 'Amlodipine', description: 'Blood pressure medication', isActive: true },
+    { nameAr: 'أوميبرازول', nameEn: 'Omeprazole', description: 'Acid reflux medication', isActive: true },
+    { nameAr: 'باراسيتامول', nameEn: 'Paracetamol', description: 'Pain reliever', isActive: true },
+  ]);
+
+  const allergyCatalog = await upsertCatalogByNameEn('allergy', [
+    { nameAr: 'بنسلين', nameEn: 'Penicillin', description: 'Penicillin allergy', isActive: true },
+    { nameAr: 'الفول السوداني', nameEn: 'Peanuts', description: 'Peanut allergy', isActive: true },
+    { nameAr: 'اللاكتوز', nameEn: 'Lactose', description: 'Lactose intolerance', isActive: true },
+    { nameAr: 'الغبار', nameEn: 'Dust', description: 'Dust allergy', isActive: true },
+  ]);
+
+  await upsertCatalogByNameEn('medicalTest', [
+    { nameAr: 'تحليل دم شامل', nameEn: 'Complete Blood Count', categoryAr: 'دم', categoryEn: 'Blood', description: 'CBC panel', isActive: true },
+    { nameAr: 'سكر صائم', nameEn: 'Fasting Blood Sugar', categoryAr: 'دم', categoryEn: 'Blood', description: 'FBS test', isActive: true },
+    { nameAr: 'وظائف الكلى', nameEn: 'Kidney Function Test', categoryAr: 'دم', categoryEn: 'Blood', description: 'Renal function panel', isActive: true },
+    { nameAr: 'أشعة صدر', nameEn: 'Chest X-Ray', categoryAr: 'أشعة', categoryEn: 'Radiology', description: 'Chest radiograph', isActive: true },
+    { nameAr: 'تخطيط قلب', nameEn: 'ECG', categoryAr: 'قلب', categoryEn: 'Cardiology', description: 'Electrocardiogram', isActive: true },
+    { nameAr: 'تحليل فيتامين د', nameEn: 'Vitamin D Level', categoryAr: 'دم', categoryEn: 'Blood', description: 'Vitamin D blood test', isActive: false },
+  ]);
 
   const servicesSeed = [
     { id: 1, nameAr: 'استشارة عن بعد', nameEn: 'Remote Consultation', descriptionAr: 'استشارة عبر الفيديو/الصوت', descriptionEn: 'Video/voice consultation', type: 'REMOTE', sortOrder: 1, isActive: true },
@@ -141,10 +213,10 @@ async function main() {
   // ─────────────────────────────────────────────────────────────
   const doctorsUsers = [];
   const doctorBase = [
-    { email: 'dr.ahmed@example.com', fullName: 'د. أحمد الخالدي', specialityId: 1, city: 'الرياض', licenseNumber: 'LIC-001', verificationStatus: 'APPROVED', isPubliclyBookable: true, fee: 150, years: 10 },
-    { email: 'dr.sara@example.com', fullName: 'د. سارة العمري', specialityId: 5, city: 'جدة', licenseNumber: 'LIC-002', verificationStatus: 'APPROVED', isPubliclyBookable: true, fee: 200, years: 7 },
-    { email: 'dr.hassan.pending@example.com', fullName: 'د. حسن الغامدي', specialityId: 4, city: 'الدمام', licenseNumber: 'LIC-003', verificationStatus: 'PENDING', isPubliclyBookable: false, fee: 220, years: 9 },
-    { email: 'dr.noor.rejected@example.com', fullName: 'د. نور الحربي', specialityId: 2, city: 'مكة', licenseNumber: 'LIC-004', verificationStatus: 'REJECTED', isPubliclyBookable: false, fee: 180, years: 6 },
+    { email: 'dr.ahmed@example.com', fullName: 'د. أحمد الخالدي', specialityId: 1, subSpecializations: ['Diabetes', 'Hypertension'], city: 'الرياض', clinicAddress: 'مجمع طبي - شارع الملك فهد، الرياض', licenseNumber: 'LIC-001', verificationStatus: 'APPROVED', isPubliclyBookable: true, fee: 150, years: 10 },
+    { email: 'dr.sara@example.com', fullName: 'د. سارة العمري', specialityId: 5, subSpecializations: ['Acne Treatment', 'Cosmetic Dermatology'], city: 'جدة', clinicAddress: 'عيادة الجلدية - حي الروضة، جدة', licenseNumber: 'LIC-002', verificationStatus: 'APPROVED', isPubliclyBookable: true, fee: 200, years: 7 },
+    { email: 'dr.hassan.pending@example.com', fullName: 'د. حسن الغامدي', specialityId: 4, subSpecializations: ['Cardiac Catheterization', 'Heart Failure'], city: 'الدمام', clinicAddress: 'مستشفى القلب - الدمام', licenseNumber: 'LIC-003', verificationStatus: 'PENDING', isPubliclyBookable: false, fee: 220, years: 9 },
+    { email: 'dr.noor.rejected@example.com', fullName: 'د. نور الحربي', specialityId: 2, subSpecializations: ['General Dentistry', 'Orthodontics'], city: 'مكة', clinicAddress: 'عيادة الأسنان - مكة', licenseNumber: 'LIC-004', verificationStatus: 'REJECTED', isPubliclyBookable: false, fee: 180, years: 6 },
   ];
 
   let doctorPhoneSeed = 11111111;
@@ -162,13 +234,14 @@ async function main() {
     const profile = await ensureDoctorProfile(user, {
       specialityId: d.specialityId,
       title: 'استشاري',
-      bio: 'Experienced specialist',
-      bioAr: 'طبيب بخبرة عالية',
+      bio: 'Board-certified specialist with extensive clinical experience.',
+      bioAr: 'طبيب استشاري بخبرة سريرية واسعة في تخصصه.',
       yearsOfExperience: d.years,
       licenseNumber: d.licenseNumber,
       licenseExpiryDate: new Date('2028-06-01'),
       workplace: 'مجمع طبي',
       city: d.city,
+      clinicAddress: d.clinicAddress,
       consultationFee: d.fee,
       followUpFee: Math.round(d.fee * 0.5),
       verificationStatus: d.verificationStatus,
@@ -178,14 +251,16 @@ async function main() {
       ratingCount: 12,
     });
 
-    // Verification documents
+    await connectDoctorSubSpecialities(profile.id, d.specialityId, d.subSpecializations);
+
+    // Verification documents — include LICENSE type for dashboard preview
     const docCount = d.verificationStatus === 'PENDING' ? 2 : 3;
     for (let i = 0; i < docCount; i++) {
       await prisma.doctorVerificationDocument.create({
         data: {
           doctorId: profile.id,
-          fileUrl: i % 2 === 0 ? `/uploads/download.jpeg` : `/uploads/sample.pdf`,
-          fileType: 'LICENSE',
+          fileUrl: i === 0 ? `/uploads/sample.pdf` : `/uploads/download.jpeg`,
+          fileType: i === 0 ? 'LICENSE' : 'CERTIFICATE',
           reviewStatus: d.verificationStatus === 'APPROVED' ? 'APPROVED' : d.verificationStatus === 'REJECTED' ? 'REJECTED' : 'PENDING',
           reviewNotes: d.verificationStatus === 'REJECTED' ? 'Document is not clear' : null,
           reviewedBy: d.verificationStatus === 'PENDING' ? null : medicalAdmin.id,
@@ -222,9 +297,27 @@ async function main() {
   // ─────────────────────────────────────────────────────────────
   const patientsUsers = [];
   const patientBase = [
-    { email: 'patient@example.com', fullName: 'محمد العلي', gender: 'MALE', city: 'الرياض', bloodType: 'O_POSITIVE' },
-    { email: 'patient2@example.com', fullName: 'نورة السبيعي', gender: 'FEMALE', city: 'جدة', bloodType: 'A_POSITIVE' },
-    { email: 'patient3@example.com', fullName: 'خالد الشهري', gender: 'MALE', city: 'الدمام', bloodType: 'B_POSITIVE' },
+    { email: 'patient@example.com', fullName: 'محمد العلي', gender: 'MALE', city: 'الرياض', bloodType: 'O_POSITIVE', identityNumber: '1023456789' },
+    { email: 'patient2@example.com', fullName: 'نورة السبيعي', gender: 'FEMALE', city: 'جدة', bloodType: 'A_POSITIVE', identityNumber: '1034567890' },
+    { email: 'patient3@example.com', fullName: 'خالد الشهري', gender: 'MALE', city: 'الدمام', bloodType: 'B_POSITIVE', identityNumber: '1045678901' },
+  ];
+
+  const patientCatalogSets = [
+    {
+      diseases: ['Hypertension', 'Diabetes Type 2'],
+      medications: ['Vitamin D', 'Metformin'],
+      allergies: ['Penicillin'],
+    },
+    {
+      diseases: ['Asthma', 'Arthritis'],
+      medications: ['Amlodipine', 'Omeprazole'],
+      allergies: ['Peanuts', 'Dust'],
+    },
+    {
+      diseases: ['Hyperlipidemia'],
+      medications: ['Paracetamol', 'Vitamin D'],
+      allergies: ['Lactose'],
+    },
   ];
 
   let patientPhoneSeed = 22222222;
