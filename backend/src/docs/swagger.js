@@ -16,7 +16,9 @@ const options = {
     info: {
       title: 'Haya Bila Alam - حياة بلا ألم API',
       version: '1.0.0',
-      description: 'Complete API reference for all platform modules. Doctor and Patient mobile APIs are grouped by sub-module tags (e.g. Doctor App - Appointments, Patient App - Auth). Auto-discovered routes are merged with hand-written schemas.',
+      description:
+        'Complete API reference for all platform modules. Doctor and Patient mobile APIs are grouped by sub-module tags (e.g. Doctor App - Appointments, Patient App - Auth). ' +
+        'Send the `Accept-Language` header (`ar` or `en`) on every request for localized messages and catalog text; it is documented on all operations.',
       contact: {
         name: 'API Support',
         email: 'support@hayabilaalam.com',
@@ -34,6 +36,17 @@ const options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
+        },
+      },
+      parameters: {
+        AcceptLanguage: {
+          in: 'header',
+          name: 'Accept-Language',
+          required: false,
+          description:
+            'Response locale for messages and localized catalog fields (ar | en). Used for this request when sent; DB preferredLanguage applies only if the header is omitted.',
+          schema: { type: 'string', enum: ['ar', 'en'], default: 'ar' },
+          example: 'ar',
         },
       },
       schemas: {
@@ -131,10 +144,11 @@ const options = {
   ],
 };
 
+const { injectAcceptLanguageParameter } = require('./swagger/i18n.openapi');
 const manualSwaggerSpec = swaggerJsdoc(options);
 const { buildPathsFromRoutes, mergeSpecs, TAG_BY_MODULE } = require('./swagger/routeRegistry');
 const autoRoutes = buildPathsFromRoutes();
-const swaggerSpec = mergeSpecs(manualSwaggerSpec, autoRoutes);
+const swaggerSpec = injectAcceptLanguageParameter(mergeSpecs(manualSwaggerSpec, autoRoutes));
 
 function filterSpecByTag(spec, tag) {
   const paths = {};
@@ -261,3 +275,4 @@ module.exports.filterSpecByModule = filterSpecByModule;
 module.exports.getAvailableModules = getAvailableModules;
 module.exports.allDoctorAppTagNames = allDoctorAppTagNames;
 module.exports.allPatientAppTagNames = allPatientAppTagNames;
+module.exports.injectAcceptLanguageParameter = injectAcceptLanguageParameter;

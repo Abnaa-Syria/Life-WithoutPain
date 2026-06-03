@@ -65,6 +65,71 @@
  *                     $ref: '#/components/schemas/MedicalCatalogItem'
  *                 meta:
  *                   $ref: '#/components/schemas/PaginationMeta'
+ *
+ * /patient/medical-catalog/allergies:
+ *   get:
+ *     tags: [Patient App - Medical Catalog]
+ *     summary: List active allergies (admin-managed catalog)
+ *     description: Use returned ids when completing medical profile (allergyIds).
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Paginated catalog items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/MedicalCatalogItem'
+ *                 meta:
+ *                   $ref: '#/components/schemas/PaginationMeta'
+ *
+ * /patient/medical-catalog/medical-tests:
+ *   get:
+ *     tags: [Patient App - Medical Catalog]
+ *     summary: List active medical test types (admin-managed catalog)
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Paginated catalog items (includes localized category when present)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/MedicalCatalogItem'
+ *                 meta:
+ *                   $ref: '#/components/schemas/PaginationMeta'
  */
 
 module.exports = {};

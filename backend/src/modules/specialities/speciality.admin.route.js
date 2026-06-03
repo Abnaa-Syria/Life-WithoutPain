@@ -4,6 +4,10 @@ const { authenticate } = require('../../middlewares/auth');
 const { guard, MEDICAL, SUPER } = require('../admin/admin.permissions');
 
 router.use(authenticate);
+router.use((req, _res, next) => {
+  req.catalogAdmin = true;
+  next();
+});
 
 router.get('/', guard('specialities.list', ...MEDICAL), SpecialityController.list);
 router.use('/:specialityId/sub-specialities', require('./subSpeciality.admin.routes'));

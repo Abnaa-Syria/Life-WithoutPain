@@ -5,7 +5,8 @@ const { pickLocalized } = require('../../src/i18n/mapLocalized');
 const { localeStorage } = require('../../src/i18n/localeContext');
 
 async function run() {
-  assert.strictEqual(resolveLocale({ preferredLanguage: 'ar', acceptLanguageHeader: 'en' }), 'ar');
+  assert.strictEqual(resolveLocale({ preferredLanguage: 'ar', acceptLanguageHeader: 'en' }), 'en');
+  assert.strictEqual(resolveLocale({ preferredLanguage: 'ar', acceptLanguageHeader: null }), 'ar');
   assert.strictEqual(resolveLocale({ preferredLanguage: null, acceptLanguageHeader: 'ar-SA,ar;q=0.9' }), 'ar');
   assert.strictEqual(resolveLocale({ preferredLanguage: null, acceptLanguageHeader: null }), 'en');
   assert.strictEqual(parseAcceptLanguage('fr-FR,fr;q=0.9'), null);

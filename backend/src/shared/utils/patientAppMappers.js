@@ -411,6 +411,19 @@ function mapCatalogItem(item) {
   };
 }
 
+function mapCatalogItemForAdmin(item) {
+  return {
+    id: item.id,
+    nameAr: item.nameAr ?? null,
+    nameEn: item.nameEn ?? null,
+    descriptionAr: item.descriptionAr ?? null,
+    descriptionEn: item.descriptionEn ?? null,
+    categoryAr: item.categoryAr ?? null,
+    categoryEn: item.categoryEn ?? null,
+    isActive: item.isActive,
+  };
+}
+
 function mapMedicalProfileAttachment(attachment) {
   return {
     id: attachment.id,
@@ -487,6 +500,32 @@ function mapMedicalProfile(profile) {
   };
 }
 
+function mapMedicalProfileForAdmin(profile) {
+  if (!profile) return null;
+
+  const chronicDiseases = profile.chronicDiseases || [];
+  const medications = profile.medications || [];
+  const allergies = profile.allergies || [];
+  const attachments = profile.attachments || [];
+
+  return {
+    id: profile.id,
+    patientId: profile.patientId,
+    chronicDiseaseIds: chronicDiseases.map((d) => d.id),
+    chronicDiseases: chronicDiseases.map(mapCatalogItemForAdmin),
+    medicationIds: medications.map((m) => m.id),
+    medications: medications.map(mapCatalogItemForAdmin),
+    allergyIds: allergies.map((a) => a.id),
+    allergies: allergies.map(mapCatalogItemForAdmin),
+    reportAttachments: attachments.map(mapMedicalProfileAttachment),
+    surgeries: profile.surgeries ?? null,
+    familyHistory: profile.familyHistory ?? null,
+    notes: profile.notes ?? null,
+    createdAt: profile.createdAt,
+    updatedAt: profile.updatedAt,
+  };
+}
+
 module.exports = {
   getAppointmentDateTime,
   isComingAppointment,
@@ -518,6 +557,8 @@ module.exports = {
   mapNotificationForPatient,
   mapBookingListItem,
   mapCatalogItem,
+  mapCatalogItemForAdmin,
   mapMedicalProfileAttachment,
   mapMedicalProfile,
+  mapMedicalProfileForAdmin,
 };

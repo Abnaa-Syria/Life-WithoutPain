@@ -4,6 +4,7 @@ const { asyncHandler } = require('../../utils/helpers');
 const { buildPagination } = require('../../utils/pagination');
 const DoctorRepository = require('./doctor.repository');
 const UserRepository = require('../auth/user.repository'); // I'll need this too
+const { enrichDoctorsForPatient } = require('../../i18n/enrichRelations');
 
 class DoctorAdminController {
   static list = asyncHandler(async (req, res) => {
@@ -30,13 +31,15 @@ class DoctorAdminController {
       DoctorRepository.count({ where }),
     ]);
     
-    return paginatedResponse(res, { data, total, page, limit });
+    const enriched = await enrichDoctorsForPatient(data, req.locale, { admin: true });
+    return paginatedResponse(res, { data: enriched, total, page, limit });
   });
 
   static getOne = asyncHandler(async (req, res) => {
     const data = await DoctorRepository.findWithDetails(req.params.id);
     if (!data) return res.status(404).json({ message: 'Doctor not found' });
-    return successResponse(res, { data });
+    const enriched = await enrichDoctorsForPatient(data, req.locale, { admin: true });
+    return successResponse(res, { data: enriched });
   });
 
   static update = asyncHandler(async (req, res) => {

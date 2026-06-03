@@ -234,6 +234,12 @@ app.use('/api-docs', swaggerUi.serve, (req, res, next) => {
       urls: reorderedUrls,
       docExpansion: 'none',
       persistAuthorization: true,
+      requestInterceptor: (req) => {
+        if (!req.headers['Accept-Language']) {
+          req.headers['Accept-Language'] = 'ar';
+        }
+        return req;
+      },
     },
   })(req, res, next);
 });

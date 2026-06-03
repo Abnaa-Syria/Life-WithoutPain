@@ -4,12 +4,18 @@ const { asyncHandler } = require('../../utils/helpers');
 
 class SpecialityController {
   static list = asyncHandler(async (req, res) => {
-    const { data, total, page, limit } = await SpecialityService.list(req.query);
+    const { data, total, page, limit } = await SpecialityService.list(req.query, {
+      admin: !!req.catalogAdmin,
+      includeSubs: req.query.includeSubs === 'true',
+    });
     return paginatedResponse(res, { data, total, page, limit });
   });
 
   static getById = asyncHandler(async (req, res) => {
-    const data = await SpecialityService.getById(req.params.id);
+    const data = await SpecialityService.getById(req.params.id, {
+      admin: !!req.catalogAdmin,
+      includeSubs: req.query.includeSubs === 'true',
+    });
     return successResponse(res, { data });
   });
 

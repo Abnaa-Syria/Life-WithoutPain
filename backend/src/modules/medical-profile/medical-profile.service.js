@@ -6,6 +6,7 @@ const prisma = require('../../config/database');
 const { NotFoundError, BadRequestError } = require('../../shared/errors/AppError');
 const { mapMedicalProfile, mapMedicalProfileAttachment } = require('../../shared/utils/patientAppMappers');
 const { enrichMedicalProfile } = require('../../i18n/enrichRelations');
+const { getLocale } = require('../../i18n/localeContext');
 const { deleteStoredFile } = require('./medical-profile.storage');
 
 const MEDICAL_PROFILE_INCLUDE = {
@@ -58,9 +59,10 @@ function mapAttachmentRows(attachments) {
   return attachments.map(mapMedicalProfileAttachment);
 }
 
-async function mapLocalizedMedicalProfile(profilePromise) {
+async function mapLocalizedMedicalProfile(profilePromise, locale) {
   const profile = await profilePromise;
-  return mapMedicalProfile(await enrichMedicalProfile(profile));
+  const resolvedLocale = locale || getLocale();
+  return mapMedicalProfile(await enrichMedicalProfile(profile, resolvedLocale));
 }
 
 class MedicalProfileService {

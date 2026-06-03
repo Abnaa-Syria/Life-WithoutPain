@@ -158,9 +158,7 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: header
- *         name: Accept-Language
- *         schema: { type: string, example: ar }
+ *       - $ref: '#/components/parameters/AcceptLanguage'
  *     requestBody:
  *       required: true
  *       content:

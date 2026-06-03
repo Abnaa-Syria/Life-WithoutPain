@@ -31,6 +31,7 @@ function crud(model, {
   defaultOrder = { createdAt: 'desc' },
   filterFn,
   entityLabel = model,
+  postMap,
 } = {}) {
   const translationMeta = translationEntityType
     ? { entityType: translationEntityType, fields: translatableFields || MODEL_TO_ENTITY[model]?.fields || ['name'] }
@@ -70,6 +71,7 @@ function crud(model, {
         admin: true,
       });
     }
+    if (postMap) mapped = await postMap(mapped, req);
     return paginatedResponse(res, { data: mapped, total, page, limit });
   });
 
@@ -79,13 +81,15 @@ function crud(model, {
       ...(include ? { include } : {}),
     });
     if (!data) throw new NotFoundError('ENTITY_NOT_FOUND', { entityLabel });
+    let result = data;
     if (translationMeta) {
       const [mapped] = await attachTranslations([data], translationMeta.entityType, translationMeta.fields, req.locale, {
         admin: true,
       });
-      return successResponse(res, { data: mapped });
+      result = mapped;
     }
-    return successResponse(res, { data });
+    if (postMap) result = await postMap(result, req);
+    return successResponse(res, { data: result });
   });
 
   const create = asyncHandler(async (req, res) => {
@@ -94,6 +98,10 @@ function crud(model, {
       data = await createWithTranslations(prisma[model], translationMeta.entityType, req.body, translationMeta.fields);
     } else if (translationMeta) {
       data = await prisma[model].create({ data: stripLegacyFields(req.body) });
+      const [mapped] = await attachTranslations([data], translationMeta.entityType, translationMeta.fields, req.locale, {
+        admin: true,
+      });
+      data = mapped;
     } else {
       data = await prisma[model].create({ data: req.body });
     }
@@ -110,6 +118,10 @@ function crud(model, {
         where: { id: parseInt(req.params.id) },
         data: stripLegacyFields(req.body),
       });
+      const [mapped] = await attachTranslations([data], translationMeta.entityType, translationMeta.fields, req.locale, {
+        admin: true,
+      });
+      data = mapped;
     } else {
       data = await prisma[model].update({ where: { id: parseInt(req.params.id) }, data: req.body });
     }

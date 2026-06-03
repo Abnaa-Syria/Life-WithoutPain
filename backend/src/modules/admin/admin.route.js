@@ -22,9 +22,15 @@ const {
   medicalProfileAttachmentsUpload,
   getAttachmentTitlesFromBody,
 } = require('../medical-profile/medical-profile.middleware');
-const { mapMedicalProfile } = require('../../shared/utils/patientAppMappers');
+const { mapMedicalProfileForAdmin } = require('../../shared/utils/patientAppMappers');
+const { crud: translatableCrud } = require('../../shared/utils/adminCrud');
 const PatientService = require('../patients/patient.service');
-const { enrichInsuranceProvidersOnRecords, enrichAppointments, enrichMedicalProfile } = require('../../i18n/enrichRelations');
+const {
+  enrichInsuranceProvidersOnRecords,
+  enrichAppointments,
+  enrichMedicalProfile,
+  enrichClaimItems,
+} = require('../../i18n/enrichRelations');
 
 const MEDICAL_PROFILE_INCLUDE = {
   chronicDiseases: { orderBy: { id: 'asc' } },
@@ -207,15 +213,15 @@ router.get('/patients/:id', guard('patients.read', ...MEDICAL, ROLES.SUPPORT_STA
   });
   if (!data) throw new NotFoundError('PATIENT_NOT_FOUND');
   const [insurances, appointments, medicalProfile] = await Promise.all([
-    enrichInsuranceProvidersOnRecords(data.insurances, req.locale),
-    enrichAppointments(data.appointments, req.locale),
-    data.medicalProfile ? enrichMedicalProfile(data.medicalProfile, req.locale) : null,
+    enrichInsuranceProvidersOnRecords(data.insurances, req.locale, 'provider', { admin: true }),
+    enrichAppointments(data.appointments, req.locale, { admin: true }),
+    data.medicalProfile ? enrichMedicalProfile(data.medicalProfile, req.locale, { admin: true }) : null,
   ]);
   const response = {
     ...data,
     insurances,
     appointments,
-    medicalProfile: medicalProfile ? mapMedicalProfile(medicalProfile) : null,
+    medicalProfile: medicalProfile ? mapMedicalProfileForAdmin(medicalProfile) : null,
   };
   return successResponse(res, { data: response });
 }));
@@ -290,7 +296,7 @@ router.delete('/patients/:id', guard('patients.delete', ...SUPER), asyncHandler(
 // ═══════════════════════════════════════════
 //  SERVICES – full CRUD
 // ═══════════════════════════════════════════
-const svcCrud = crud('service', { entityLabel: 'Service', defaultOrder: { sortOrder: 'asc' } });
+const svcCrud = translatableCrud('service', { entityLabel: 'Service', defaultOrder: { sortOrder: 'asc' } });
 router.get('/services', guard('services.list', ...MEDICAL), svcCrud.list);
 router.get('/services/:id', guard('services.read', ...MEDICAL), svcCrud.getOne);
 router.post('/services', guard('services.create', ...MEDICAL), svcCrud.create);
@@ -300,7 +306,7 @@ router.delete('/services/:id', guard('services.delete', ...SUPER), svcCrud.remov
 // ═══════════════════════════════════════════
 //  INSURANCE PROVIDERS – full CRUD
 // ═══════════════════════════════════════════
-const ipCrud = crud('insuranceProvider', { searchFields: ['code'], entityLabel: 'InsuranceProvider' });
+const ipCrud = translatableCrud('insuranceProvider', { searchFields: ['code'], entityLabel: 'InsuranceProvider' });
 router.get('/insurance-providers', guard('insurance.providers.manage', ...SUPER), ipCrud.list);
 router.get('/insurance-providers/:id', guard('insurance.providers.manage', ...SUPER), ipCrud.getOne);
 router.post('/insurance-providers', guard('insurance.providers.manage', ...SUPER), ipCrud.create);
@@ -322,7 +328,7 @@ router.get('/appointments', guard('appointments.list', ...MEDICAL), asyncHandler
     prisma.appointment.findMany({ where, skip, take: limit, orderBy: { appointmentDate: 'desc' }, include: { patient: { include: { user: { select: { fullName: true } } } }, doctor: { include: { user: { select: { fullName: true } }, speciality: true } }, service: true } }),
     prisma.appointment.count({ where }),
   ]);
-  const enriched = await enrichAppointments(data, req.locale);
+  const enriched = await enrichAppointments(data, req.locale, { admin: true });
   return paginatedResponse(res, { data: enriched, total, page, limit });
 }));
 router.get('/appointments/:id', guard('appointments.read', ...MEDICAL, ROLES.SUPPORT_STAFF), asyncHandler(async (req, res) => {
@@ -339,7 +345,8 @@ router.get('/appointments/:id', guard('appointments.read', ...MEDICAL, ROLES.SUP
     },
   });
   if (!data) throw new NotFoundError('APPOINTMENT_NOT_FOUND');
-  return successResponse(res, { data });
+  const enriched = await enrichAppointments(data, req.locale, { admin: true });
+  return successResponse(res, { data: enriched });
 }));
 router.patch('/appointments/:id/status', guard('appointments.update', ...MEDICAL), asyncHandler(async (req, res) => {
   const AppointmentService = require('../appointments/appointment.service');
@@ -380,11 +387,11 @@ const InsuranceRequestOrchestrator = require('../insurance-cases/insuranceReques
 const INSURANCE_CASE_ADMIN_INCLUDE = InsuranceRequestOrchestrator.caseInclude();
 
 router.get('/insurance-cases', guard('insurance.cases.list', ...INSURANCE), asyncHandler(async (req, res) => {
-  const { data, total, page, limit } = await InsuranceCaseService.list(req.query);
+  const { data, total, page, limit } = await InsuranceCaseService.list(req.query, { admin: true });
   return paginatedResponse(res, { data, total, page, limit });
 }));
 router.get('/insurance-cases/:id', guard('insurance.cases.read', ...INSURANCE), asyncHandler(async (req, res) => {
-  const data = await InsuranceCaseService.getById(req.params.id);
+  const data = await InsuranceCaseService.getById(req.params.id, { admin: true });
   return successResponse(res, { data });
 }));
 router.put('/insurance-cases/:id', guard('insurance.cases.update', ...INSURANCE), asyncHandler(async (req, res) => {
@@ -516,12 +523,13 @@ router.delete('/payments/:id', guard('payments.delete', ...SUPER), asyncHandler(
 //  CLAIMS – full CRUD
 // ═══════════════════════════════════════════
 const claimCrud = crud('claimItem', {
-  include: { 
-    claimBatch: { include: { provider: true } }, 
-    appointment: { include: { patient: { include: { user: true } } } } 
+  include: {
+    claimBatch: { include: { provider: true } },
+    appointment: { include: { patient: { include: { user: true } } } },
   },
   entityLabel: 'Claim',
-  filterFn: (q) => ({ ...(q.status ? { status: q.status } : {}) })
+  filterFn: (q) => ({ ...(q.status ? { status: q.status } : {}) }),
+  postMap: (data, req) => enrichClaimItems(data, req.locale, { admin: true }),
 });
 router.get('/claims', guard('claims.list', ...FINANCE), claimCrud.list);
 router.get('/claims/:id', guard('claims.list', ...FINANCE), claimCrud.getOne);
@@ -536,13 +544,13 @@ router.get('/claims/batches', guard('claims.list', ...FINANCE), asyncHandler(asy
     prisma.claimBatch.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { provider: true, _count: { select: { items: true } } } }),
     prisma.claimBatch.count({ where }),
   ]);
-  const enriched = await enrichInsuranceProvidersOnRecords(data, req.locale);
+  const enriched = await enrichInsuranceProvidersOnRecords(data, req.locale, 'provider', { admin: true });
   return paginatedResponse(res, { data: enriched, total, page, limit });
 }));
 router.get('/claims/batches/:id', guard('claims.list', ...FINANCE), asyncHandler(async (req, res) => {
   const data = await prisma.claimBatch.findUnique({ where: { id: parseInt(req.params.id) }, include: { provider: true, items: true } });
   if (!data) throw new NotFoundError('CLAIM_BATCH_NOT_FOUND');
-  const enriched = await enrichInsuranceProvidersOnRecords(data, req.locale);
+  const enriched = await enrichInsuranceProvidersOnRecords(data, req.locale, 'provider', { admin: true });
   return successResponse(res, { data: enriched });
 }));
 router.post('/claims/batches', guard('claims.manage', ...FINANCE), asyncHandler(async (req, res) => {
@@ -564,7 +572,11 @@ router.delete('/claims/batches/:id', guard('claims.manage', ...FINANCE), asyncHa
 // ═══════════════════════════════════════════
 //  RECONCILIATIONS – full CRUD
 // ═══════════════════════════════════════════
-const recCrud = crud('reconciliation', { include: { provider: true }, entityLabel: 'Reconciliation' });
+const recCrud = crud('reconciliation', {
+  include: { provider: true },
+  entityLabel: 'Reconciliation',
+  postMap: (data, req) => enrichInsuranceProvidersOnRecords(data, req.locale, 'provider', { admin: true }),
+});
 router.get('/reconciliations', guard('reconciliations.manage', ...FINANCE), recCrud.list);
 router.get('/reconciliations/:id', guard('reconciliations.manage', ...FINANCE), recCrud.getOne);
 router.post('/reconciliations', guard('reconciliations.manage', ...FINANCE), recCrud.create);
@@ -705,7 +717,7 @@ router.get('/audit-logs/:id', guard('audit.view', ...SUPER), asyncHandler(async 
 // ═══════════════════════════════════════════
 //  CHRONIC DISEASES – full CRUD
 // ═══════════════════════════════════════════
-const chronicDiseaseCrud = crud('chronicDisease', { entityLabel: 'ChronicDisease' });
+const chronicDiseaseCrud = translatableCrud('chronicDisease', { entityLabel: 'ChronicDisease' });
 router.get('/chronic-diseases', guard('medical-master.list', ...MEDICAL), chronicDiseaseCrud.list);
 router.get('/chronic-diseases/:id', guard('medical-master.list', ...MEDICAL), chronicDiseaseCrud.getOne);
 router.post('/chronic-diseases', guard('medical-master.create', ...MEDICAL), chronicDiseaseCrud.create);
@@ -715,7 +727,7 @@ router.delete('/chronic-diseases/:id', guard('medical-master.delete', ...SUPER),
 // ═══════════════════════════════════════════
 //  ALLERGIES – full CRUD
 // ═══════════════════════════════════════════
-const allergyCrud = crud('allergy', { entityLabel: 'Allergy' });
+const allergyCrud = translatableCrud('allergy', { entityLabel: 'Allergy' });
 router.get('/allergies', guard('medical-master.list', ...MEDICAL), allergyCrud.list);
 router.get('/allergies/:id', guard('medical-master.list', ...MEDICAL), allergyCrud.getOne);
 router.post('/allergies', guard('medical-master.create', ...MEDICAL), allergyCrud.create);
@@ -725,7 +737,7 @@ router.delete('/allergies/:id', guard('medical-master.delete', ...SUPER), allerg
 // ═══════════════════════════════════════════
 //  MEDICATIONS – full CRUD
 // ═══════════════════════════════════════════
-const medCrud = crud('medication', { entityLabel: 'Medication' });
+const medCrud = translatableCrud('medication', { entityLabel: 'Medication' });
 router.get('/medications', guard('medical-master.list', ...MEDICAL), medCrud.list);
 router.get('/medications/:id', guard('medical-master.list', ...MEDICAL), medCrud.getOne);
 router.post('/medications', guard('medical-master.create', ...MEDICAL), medCrud.create);
@@ -735,7 +747,7 @@ router.delete('/medications/:id', guard('medical-master.delete', ...SUPER), medC
 // ═══════════════════════════════════════════
 //  MEDICAL TESTS – full CRUD
 // ═══════════════════════════════════════════
-const testCrud = crud('medicalTest', { entityLabel: 'MedicalTest' });
+const testCrud = translatableCrud('medicalTest', { entityLabel: 'MedicalTest' });
 router.get('/medical-tests', guard('medical-master.list', ...MEDICAL), testCrud.list);
 router.get('/medical-tests/:id', guard('medical-master.list', ...MEDICAL), testCrud.getOne);
 router.post('/medical-tests', guard('medical-master.create', ...MEDICAL), testCrud.create);

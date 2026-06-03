@@ -7,6 +7,21 @@ function pickLocalized(translations, locale, fieldKey, fallbackLocale = DEFAULT_
   return loc[fieldKey] ?? translations[fallbackLocale]?.[fieldKey] ?? translations.en?.[fieldKey] ?? null;
 }
 
+/** Flatten { en, ar } translations into legacy *Ar / *En (and bio) fields for admin dashboard. */
+function applyLegacyBilingualFields(target, translations, fields = ['name', 'description']) {
+  const tr = translations || { en: {}, ar: {} };
+  for (const field of fields) {
+    if (field === 'bio') {
+      target.bio = tr.en?.bio ?? null;
+      target.bioAr = tr.ar?.bio ?? null;
+      continue;
+    }
+    target[`${field}Ar`] = tr.ar?.[field] ?? null;
+    target[`${field}En`] = tr.en?.[field] ?? null;
+  }
+  return target;
+}
+
 function mapEntityForApi(entity, translationMap, locale, fields = ['name', 'description']) {
   if (!entity) return null;
   const id = entity.id;
@@ -35,10 +50,9 @@ function mapEntityForAdmin(entity, translationMap, fields = ['name', 'descriptio
   const id = entity.id;
   const translations = translationMap?.get?.(id) || translationMap?.[id] || { en: {}, ar: {} };
   const { nameAr, nameEn, descriptionAr, descriptionEn, titleAr, titleEn, bodyAr, bodyEn, categoryAr, categoryEn, bioAr, bio, ...rest } = entity;
-  return {
-    ...rest,
-    translations,
-  };
+  const result = { ...rest, translations };
+  applyLegacyBilingualFields(result, translations, fields);
+  return result;
 }
 
 async function attachTranslations(entities, entityType, fields, locale, { admin = false } = {}) {
@@ -114,6 +128,7 @@ function stripLegacyFields(data) {
 
 module.exports = {
   pickLocalized,
+  applyLegacyBilingualFields,
   mapEntityForApi,
   mapEntityForAdmin,
   attachTranslations,

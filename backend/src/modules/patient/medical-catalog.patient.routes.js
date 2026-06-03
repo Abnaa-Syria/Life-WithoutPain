@@ -10,6 +10,8 @@ const { attachTranslations } = require('../../i18n/mapLocalized');
 const MODEL_ENTITY = {
   chronicDisease: { entityType: 'chronic_disease', fields: ['name', 'description'] },
   medication: { entityType: 'medication', fields: ['name', 'description'] },
+  allergy: { entityType: 'allergy', fields: ['name', 'description'] },
+  medicalTest: { entityType: 'medical_test', fields: ['name', 'description', 'category'] },
 };
 
 async function listCatalog(model, query, locale) {
@@ -35,6 +37,16 @@ router.get('/chronic-diseases', asyncHandler(async (req, res) => {
 
 router.get('/medications', asyncHandler(async (req, res) => {
   const { data, total, page, limit } = await listCatalog('medication', req.query, req.locale);
+  return paginatedResponse(res, { data, total, page, limit });
+}));
+
+router.get('/allergies', asyncHandler(async (req, res) => {
+  const { data, total, page, limit } = await listCatalog('allergy', req.query, req.locale);
+  return paginatedResponse(res, { data, total, page, limit });
+}));
+
+router.get('/medical-tests', asyncHandler(async (req, res) => {
+  const { data, total, page, limit } = await listCatalog('medicalTest', req.query, req.locale);
   return paginatedResponse(res, { data, total, page, limit });
 }));
 

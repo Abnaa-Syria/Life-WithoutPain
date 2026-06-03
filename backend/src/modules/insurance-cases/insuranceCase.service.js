@@ -15,7 +15,7 @@ class InsuranceCaseService {
     return InsuranceCaseRepository.create({ data, include: { provider: true } });
   }
 
-  static async list(query) {
+  static async list(query, options = {}) {
     const { page, limit, skip } = buildPagination(query);
     const where = {};
     if (query.status) where.status = query.status;
@@ -38,16 +38,21 @@ class InsuranceCaseService {
       }),
       InsuranceCaseRepository.count({ where }),
     ]);
-    return { data: await enrichInsuranceCases(data), total, page, limit };
+    return {
+      data: await enrichInsuranceCases(data, null, { admin: options.admin }),
+      total,
+      page,
+      limit,
+    };
   }
 
-  static async getById(id) {
+  static async getById(id, options = {}) {
     const data = await InsuranceCaseRepository.findUnique({
       where: { id: parseInt(id, 10) },
       include: CASE_INCLUDE,
     });
     if (!data) throw new NotFoundError('INSURANCE_CASE_NOT_FOUND');
-    return enrichInsuranceCases(data);
+    return enrichInsuranceCases(data, null, { admin: options.admin });
   }
 
   static async _loadCase(id) {

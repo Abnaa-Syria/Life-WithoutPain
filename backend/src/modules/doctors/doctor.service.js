@@ -1,5 +1,6 @@
 const prisma = require('../../config/database');
-const { enrichDoctorsForPatient } = require('../../i18n/enrichRelations');
+const { enrichDoctorsForPatient, enrichMedicalProfile } = require('../../i18n/enrichRelations');
+const { getLocale } = require('../../i18n/localeContext');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
 const { resolveDoctorProfile, assertDoctorHasPatient } = require('../../shared/utils/doctorAppContext');
@@ -458,6 +459,10 @@ class DoctorService {
       },
     });
     if (!patient) throw new NotFoundError('PATIENT_NOT_FOUND');
+
+    if (patient.medicalProfile) {
+      patient.medicalProfile = await enrichMedicalProfile(patient.medicalProfile, getLocale());
+    }
 
     const [nextAppointment, prescriptions, reports] = await Promise.all([
       AppointmentRepository.findFirst({

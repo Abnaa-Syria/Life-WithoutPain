@@ -21,7 +21,12 @@ class ClaimService {
       }),
       ClaimBatchRepository.count({ where }),
     ]);
-    return { data: await enrichInsuranceProvidersOnRecords(data), total, page, limit };
+    return {
+      data: await enrichInsuranceProvidersOnRecords(data, null, 'provider', { admin: true }),
+      total,
+      page,
+      limit,
+    };
   }
 
   static async getBatchById(id) {
@@ -29,7 +34,7 @@ class ClaimService {
       where: { id: parseInt(id) },
       include: { provider: true, items: { include: { appointment: true } } },
     });
-    return enrichInsuranceProvidersOnRecords(batch);
+    return enrichInsuranceProvidersOnRecords(batch, null, 'provider', { admin: true });
   }
 
   static async submitBatch(id) {

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { tagForDoctorPatientRoute } = require('./app-doc-tags');
+const { ACCEPT_LANGUAGE_PARAM_REF } = require('./i18n.openapi');
 
 const MODULES_DIR = path.join(__dirname, '..', '..', 'modules');
 
@@ -124,6 +125,8 @@ function buildOperation(method, tag, summary, openApiPath) {
   if (!isPublicPath(openApiPath, method)) {
     op.security = [{ bearerAuth: [] }];
   }
+
+  op.parameters = [{ $ref: ACCEPT_LANGUAGE_PARAM_REF }];
 
   return op;
 }

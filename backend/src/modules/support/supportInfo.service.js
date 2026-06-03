@@ -1,7 +1,7 @@
 const prisma = require('../../config/database');
 const { mapSupportInfo } = require('./support.mapper');
 const TranslationRepository = require('../../i18n/TranslationRepository');
-const { normalizeTranslationsInput } = require('../../i18n/mapLocalized');
+const { normalizeTranslationsInput, mapEntityForAdmin } = require('../../i18n/mapLocalized');
 
 const ENTITY_TYPE = 'support_contact_info';
 
@@ -37,7 +37,9 @@ class SupportInfoService {
   }
 
   static async getAdminInfo() {
-    return this.getRecord();
+    const info = await this.getRecord();
+    const map = await TranslationRepository.loadForEntities(ENTITY_TYPE, [info.id]);
+    return mapEntityForAdmin(info, map, ['description']);
   }
 
   static async updateAdminInfo(body, updatedBy) {
@@ -53,7 +55,7 @@ class SupportInfoService {
       await TranslationRepository.upsertSet(ENTITY_TYPE, 1, translations);
     }
     const map = await TranslationRepository.loadForEntities(ENTITY_TYPE, [1]);
-    return { ...info, translations: map.get(1) };
+    return mapEntityForAdmin(info, map, ['description']);
   }
 }
 

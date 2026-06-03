@@ -17,15 +17,17 @@ function parseAcceptLanguage(header) {
 }
 
 /**
- * Priority: user DB preference → Accept-Language → default (en).
+ * Priority: Accept-Language header → user DB preferredLanguage → default (en).
+ * Per-request header wins so clients (and Swagger) can negotiate language; DB preference
+ * applies when the header is missing or unsupported.
  */
 function resolveLocale({ preferredLanguage, acceptLanguageHeader }) {
-  if (preferredLanguage && SUPPORTED_LOCALES.includes(preferredLanguage)) {
-    return preferredLanguage;
-  }
   const fromHeader = parseAcceptLanguage(acceptLanguageHeader);
   if (fromHeader) {
     return fromHeader;
+  }
+  if (preferredLanguage && SUPPORTED_LOCALES.includes(preferredLanguage)) {
+    return preferredLanguage;
   }
   return DEFAULT_LOCALE;
 }
