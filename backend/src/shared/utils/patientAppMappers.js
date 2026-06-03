@@ -219,6 +219,7 @@ function mapAppointmentDetail(appointment) {
 function mapFamilyMember(member) {
   return {
     id: member.id,
+    name: member.fullName,
     fullName: member.fullName,
     residenceCardNumber: member.residenceCardNumber,
     relationType: member.relationType,
@@ -235,7 +236,9 @@ function mapPatientProfile(profile) {
   return {
     id: profile.id,
     userId: user?.id,
+    name: user?.fullName,
     fullName: user?.fullName,
+    language: user?.preferredLanguage,
     identityNumber: profile.identityNumber,
     email: user?.email,
     phone: user?.phone,

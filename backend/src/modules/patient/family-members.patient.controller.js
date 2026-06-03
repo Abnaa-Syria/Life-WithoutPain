@@ -9,27 +9,13 @@ const list = asyncHandler(async (req, res) => {
 });
 
 const create = asyncHandler(async (req, res) => {
-  const payload = {
-    ...req.body,
-    fullName: req.body.fullName || req.body.name,
-    relationType: req.body.relationType || req.body.relationship,
-    dateOfBirth: req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : undefined,
-  };
-  delete payload.name;
-  delete payload.relationship;
+  const payload = PatientService.buildFamilyMemberPayload(req.body);
   const data = await PatientService.createFamilyMember(req.user.id, payload);
   return createdResponse(res, { data: mapFamilyMember(data) });
 });
 
 const update = asyncHandler(async (req, res) => {
-  const payload = {
-    ...req.body,
-    fullName: req.body.fullName || req.body.name,
-    relationType: req.body.relationType || req.body.relationship,
-    dateOfBirth: req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : undefined,
-  };
-  delete payload.name;
-  delete payload.relationship;
+  const payload = PatientService.buildFamilyMemberPayload(req.body);
   const data = await PatientService.updateFamilyMember(req.user.id, parseInt(req.params.id, 10), payload);
   return successResponse(res, { data: mapFamilyMember(data), message: 'Family member updated' });
 });

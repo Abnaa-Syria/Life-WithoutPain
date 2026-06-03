@@ -2,7 +2,13 @@ const prisma = require('../../config/database');
 const PrescriptionRepository = require('./prescription.repository');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
-const { resolveDoctorProfile, assertDoctorOwnsPrescription } = require('../../shared/utils/doctorAppContext');
+const {
+  resolveDoctorProfile,
+  assertDoctorOwnsPrescription,
+  resolveDoctorAppointmentContext,
+  assertDoctorHasPatient,
+} = require('../../shared/utils/doctorAppContext');
+const { BadRequestError } = require('../../shared/errors/AppError');
 const PdfGenerator = require('../../shared/pdf/PdfGenerator');
 const QRCode = require('qrcode');
 const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
@@ -111,20 +117,38 @@ class PrescriptionService {
 
   static async createForDoctor(userId, body) {
     const { doctorId } = await resolveDoctorProfile(userId);
-    const { doctorId: _omit, ...rest } = body;
-    const items = rest.medications?.map((m) => ({
-      medicineName: m.medicineName,
-      dosage: m.dosage,
-      frequency: m.frequency,
-      duration: m.duration,
+    const { patientId, appointmentId } = await resolveDoctorAppointmentContext(doctorId, body);
+
+    const parsedPatientId = parseInt(body.patientId, 10);
+    if (Number.isFinite(parsedPatientId) && parsedPatientId !== patientId) {
+      await assertDoctorHasPatient(doctorId, patientId);
+    }
+
+    const diagnosis =
+      body.diagnosis
+      || body.prescriptionData
+      || body.notes
+      || 'General prescription';
+
+    const items = body.medications?.map((m) => ({
+      medicineName: m.medicineName || m.name,
+      dosage: m.dosage || '—',
+      frequency: m.frequency || '—',
+      duration: m.duration || '—',
       instructions: m.timing || m.instructions || null,
-    })) || rest.items;
+    })) || body.items;
+
+    if (!items?.length) {
+      throw new BadRequestError('At least one prescription item is required');
+    }
 
     return this.create({
-      ...rest,
+      appointmentId,
+      patientId,
       doctorId,
+      diagnosis: String(diagnosis),
       items,
-      notes: rest.sideEffectsNotes || rest.notes,
+      notes: body.sideEffectsNotes || body.notes || null,
     });
   }
 

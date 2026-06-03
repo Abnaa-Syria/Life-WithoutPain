@@ -12,8 +12,8 @@ const create = asyncHandler(async (req, res) => {
   const { patientId } = await resolvePatientProfile(req.user.id);
   const data = await ConversationService.create({
     patientId,
-    doctorId: parseInt(req.body.doctorId, 10),
-    appointmentId: req.body.appointmentId ? parseInt(req.body.appointmentId, 10) : null,
+    doctorId: req.body.doctorId,
+    appointmentId: req.body.appointmentId,
   });
   return createdResponse(res, { data });
 });

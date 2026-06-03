@@ -2,7 +2,8 @@ const ConversationRepository = require('./conversation.repository');
 const MessageRepository = require('./message.repository');
 const DoctorRepository = require('../doctors/doctor.repository');
 const PatientRepository = require('../patients/patient.repository');
-const { NotFoundError, ForbiddenError } = require('../../shared/errors/AppError');
+const prisma = require('../../config/database');
+const { NotFoundError, ForbiddenError, BadRequestError } = require('../../shared/errors/AppError');
 const { resolveDoctorProfile, assertDoctorOwnsAppointment } = require('../../shared/utils/doctorAppContext');
 const { buildPagination } = require('../../utils/pagination');
 const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
@@ -33,11 +34,30 @@ class ConversationService {
   }
 
   static async create(body) {
+    let doctorId = body.doctorId != null ? parseInt(body.doctorId, 10) : null;
+    const appointmentId = body.appointmentId != null ? parseInt(body.appointmentId, 10) : null;
+
+    if (appointmentId) {
+      const appointment = await prisma.appointment.findFirst({
+        where: { id: appointmentId, patientId: body.patientId },
+        select: { doctorId: true },
+      });
+      if (!appointment) throw new BadRequestError('Invalid appointmentId for this patient');
+      doctorId = appointment.doctorId;
+    }
+
+    if (!doctorId || Number.isNaN(doctorId)) {
+      throw new BadRequestError('doctorId is required');
+    }
+
+    const doctor = await DoctorRepository.findUnique({ where: { id: doctorId } });
+    if (!doctor) throw new BadRequestError('Invalid doctorId');
+
     return ConversationRepository.create({
       data: {
         patientId: body.patientId,
-        doctorId: body.doctorId,
-        appointmentId: body.appointmentId || null,
+        doctorId,
+        appointmentId: appointmentId || null,
       },
     });
   }
@@ -83,7 +103,7 @@ class ConversationService {
         conversationId: parseInt(conversationId),
         senderId,
         messageType: body.messageType || 'TEXT',
-        content: body.content,
+        content: body.content ?? body.body,
         attachmentUrl: body.attachmentUrl || null,
       },
       include: { sender: { select: { fullName: true, avatarUrl: true, role: true } } },

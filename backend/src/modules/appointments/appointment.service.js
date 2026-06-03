@@ -458,7 +458,7 @@ class AppointmentService {
       where.appointmentDate = new Date(query.date);
     }
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       prisma.appointment.findMany({
         where,
         skip,
@@ -471,6 +471,12 @@ class AppointmentService {
       }),
       prisma.appointment.count({ where }),
     ]);
+
+    const statusOrder = { PENDING: 0, CONFIRMED: 1, IN_PROGRESS: 2, RESCHEDULED: 3, COMPLETED: 4, NO_SHOW: 5, CANCELLED: 6 };
+    const data = [...rows].sort(
+      (a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99),
+    );
+
     return { data, total, page, limit };
   }
 

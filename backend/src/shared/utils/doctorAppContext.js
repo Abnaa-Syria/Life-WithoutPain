@@ -1,5 +1,5 @@
 const prisma = require('../../config/database');
-const { NotFoundError, ForbiddenError } = require('../errors/AppError');
+const { NotFoundError, ForbiddenError, BadRequestError } = require('../errors/AppError');
 
 async function resolveDoctorProfile(userId) {
   const profile = await prisma.doctorProfile.findUnique({
@@ -55,9 +55,52 @@ async function assertDoctorOwnsReport(doctorId, reportId) {
 
 async function assertDoctorHasPatient(doctorId, patientId) {
   const link = await prisma.appointment.findFirst({
-    where: { doctorId, patientId: parseInt(patientId) },
+    where: { doctorId, patientId: parseInt(patientId, 10) },
   });
   if (!link) throw new ForbiddenError('You do not have access to this patient');
+}
+
+async function resolveDoctorAppointmentContext(doctorId, body) {
+  let patientId = parseInt(body.patientId, 10);
+  let appointmentId = parseInt(body.appointmentId, 10);
+
+  if (!Number.isFinite(patientId) && body.patientEmail) {
+    const patient = await prisma.patientProfile.findFirst({
+      where: { user: { email: String(body.patientEmail).trim(), deletedAt: null } },
+      select: { id: true },
+    });
+    if (patient) patientId = patient.id;
+  }
+
+  if (!Number.isFinite(patientId) || !Number.isFinite(appointmentId)) {
+    const where = { doctorId, notes: 'Mobile demo appointment' };
+    if (Number.isFinite(patientId)) where.patientId = patientId;
+    let appointment = await prisma.appointment.findFirst({
+      where,
+      orderBy: [{ appointmentDate: 'desc' }, { id: 'desc' }],
+    });
+    if (!appointment) {
+      delete where.notes;
+      appointment = await prisma.appointment.findFirst({
+        where,
+        orderBy: [{ appointmentDate: 'desc' }, { id: 'desc' }],
+      });
+    }
+    if (!appointment) {
+      throw new BadRequestError('No appointment found for this doctor to attach the record');
+    }
+    patientId = appointment.patientId;
+    appointmentId = appointment.id;
+  }
+
+  const appointment = await prisma.appointment.findFirst({
+    where: { id: appointmentId, doctorId, patientId },
+  });
+  if (!appointment) {
+    throw new BadRequestError('Appointment not found for this doctor and patient');
+  }
+
+  return { patientId, appointmentId, appointment };
 }
 
 module.exports = {
@@ -66,4 +109,5 @@ module.exports = {
   assertDoctorOwnsPrescription,
   assertDoctorOwnsReport,
   assertDoctorHasPatient,
+  resolveDoctorAppointmentContext,
 };

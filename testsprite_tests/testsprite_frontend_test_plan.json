@@ -1,0 +1,2140 @@
+[
+  {
+    "id": "TC001",
+    "title": "Log in and reach the dashboard",
+    "description": "This verifies that a staff member can authenticate and land on the main dashboard successfully.",
+    "category": "Admin Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the dashboard is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify dashboard statistics are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Log out from the dashboard",
+    "description": "This test verifies that a signed-in user can end their session from the dashboard and return to the login screen.",
+    "category": "Logout",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the logout control"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the session is ended"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Delete a staff user after confirming the action",
+    "description": "This verifies that an administrator can remove a staff user and confirm the user no longer appears in the list.",
+    "category": "User Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the staff user management link"
+      },
+      {
+        "type": "action",
+        "description": "Select a staff user for deletion"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the deletion"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user is removed from the staff list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the staff user list is still displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Approve an insurance case from the list",
+    "description": "This test verifies that an insurance staff member can approve a case directly from the list and see the case updated to an approved state.",
+    "category": "Insurance Case Workflow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /insurance-cases"
+      },
+      {
+        "type": "action",
+        "description": "Select a case for quick approval"
+      },
+      {
+        "type": "action",
+        "description": "Approve the case"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the case is marked as approved"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated approval state is reflected in the list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Log out from a secondary page",
+    "description": "This test verifies that a signed-in user can end their session from a non-dashboard page and return to the login screen.",
+    "category": "Logout",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the staff users link"
+      },
+      {
+        "type": "action",
+        "description": "Click the logout control"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the session is ended"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Complete the support ticket assignment and reply flow",
+    "description": "This test verifies the full support staff journey from filtering tickets to assigning one and posting a reply in the same ticket.",
+    "category": "Support Tickets",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /support/tickets"
+      },
+      {
+        "type": "action",
+        "description": "Filter the ticket list by status or category"
+      },
+      {
+        "type": "action",
+        "description": "Open a ticket detail from the filtered results"
+      },
+      {
+        "type": "action",
+        "description": "Assign the ticket to a staff member"
+      },
+      {
+        "type": "action",
+        "description": "Reply to the ticket with an update"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the assignment and reply are both reflected in the ticket detail"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Complete the insurance case list and detail review flow",
+    "description": "This test verifies the end-to-end insurance staff journey from list review to opening a case and processing it from the detail page.",
+    "category": "Insurance Case Workflow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /insurance-cases"
+      },
+      {
+        "type": "action",
+        "description": "Filter the insurance cases list by a status"
+      },
+      {
+        "type": "action",
+        "description": "Open a case detail page from the list"
+      },
+      {
+        "type": "action",
+        "description": "Request additional information"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the case detail workflow is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the case status update is reflected"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Assign a support ticket to a staff member",
+    "description": "This test verifies that support staff can assign a ticket to another staff member and see the assignment reflected in the ticket detail view.",
+    "category": "Support Tickets",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /support/tickets"
+      },
+      {
+        "type": "action",
+        "description": "Open a ticket detail"
+      },
+      {
+        "type": "action",
+        "description": "Assign the ticket to a staff member"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the ticket assignment is updated"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the assigned staff member is shown in the ticket detail"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Create a new staff user and see it in the list",
+    "description": "This verifies that an administrator can add a new staff account and confirm it appears in the staff list.",
+    "category": "User Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the staff user management link"
+      },
+      {
+        "type": "action",
+        "description": "Start creating a new staff user"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the new user details and role"
+      },
+      {
+        "type": "action",
+        "description": "Save the new user"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new user appears in the staff list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user list remains accessible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "View the patient list",
+    "description": "Verifies that a signed-in user can open the patient list and see patient records available for review.",
+    "category": "Patient Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /patients"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify patient records are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Review insurance cases by status",
+    "description": "This test verifies that an insurance staff member can open the insurance cases list, filter it by status, and open a case detail from the filtered results.",
+    "category": "Insurance Case Workflow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /insurance-cases"
+      },
+      {
+        "type": "action",
+        "description": "Filter the insurance cases list by a status"
+      },
+      {
+        "type": "action",
+        "description": "Open a case detail from the filtered list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the case detail view is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the filtered insurance case data is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "Create a role and see it listed",
+    "description": "This test verifies that an administrator can create a new RBAC role and see it appear in the roles list.",
+    "category": "RBAC Role Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the roles management page"
+      },
+      {
+        "type": "action",
+        "description": "Create a new role"
+      },
+      {
+        "type": "action",
+        "description": "Save the new role"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new role is displayed in the roles list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "Update an appointment status",
+    "description": "A staff member can change an appointment status and see the updated status reflected in the appointments list.",
+    "category": "Appointments Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /appointments"
+      },
+      {
+        "type": "action",
+        "description": "Open an appointment"
+      },
+      {
+        "type": "action",
+        "description": "Change the appointment status to a valid new status"
+      },
+      {
+        "type": "action",
+        "description": "Save the status change"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated appointment status is displayed in the list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC014",
+    "title": "Browse support tickets by status or category",
+    "description": "This test verifies that support staff can open the tickets list, apply filters, and open a ticket detail from the results.",
+    "category": "Support Tickets",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /support/tickets"
+      },
+      {
+        "type": "action",
+        "description": "Filter the ticket list by status or category"
+      },
+      {
+        "type": "action",
+        "description": "Open a ticket detail from the filtered results"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the ticket detail view is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the filtered ticket data is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC015",
+    "title": "Delete a patient record",
+    "description": "Verifies that a signed-in user can delete an existing patient and see the record removed from the list.",
+    "category": "Patient Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /patients"
+      },
+      {
+        "type": "action",
+        "description": "Select an existing patient for deletion"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the deletion"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the patient is removed from the list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC016",
+    "title": "Request more information on an insurance case",
+    "description": "This test verifies that an insurance staff member can request additional information from a case detail page and see the case move into a more-info state.",
+    "category": "Insurance Case Workflow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /insurance-cases"
+      },
+      {
+        "type": "action",
+        "description": "Open a case detail page"
+      },
+      {
+        "type": "action",
+        "description": "Request additional information"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the case is moved into a more-info state"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated case status is visible in the detail view"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC017",
+    "title": "Update a role's permissions",
+    "description": "This test verifies that an administrator can open an existing role, change its permissions, and see the updated permissions reflected after saving.",
+    "category": "RBAC Role Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the roles management page"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing role"
+      },
+      {
+        "type": "action",
+        "description": "Edit the role permissions"
+      },
+      {
+        "type": "action",
+        "description": "Save the role changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated permissions are displayed for the role"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC018",
+    "title": "Update a claim status",
+    "description": "This test verifies that a finance staff user can update a claim status and see the change reflected in the claims list.",
+    "category": "Claims Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /claims"
+      },
+      {
+        "type": "action",
+        "description": "Open a claim record from the list"
+      },
+      {
+        "type": "action",
+        "description": "Update the claim status"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated claim status is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the claim remains accessible in the claims list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC019",
+    "title": "View dashboard KPIs and widgets after login",
+    "description": "This verifies that an authenticated user can see the main operational dashboard content after signing in.",
+    "category": "Dashboard Overview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify dashboard KPIs are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify role-specific dashboard widgets are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC020",
+    "title": "Filter appointments and open appointment details",
+    "description": "A staff member can filter the appointments list and open a specific appointment detail page.",
+    "category": "Appointments Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /appointments"
+      },
+      {
+        "type": "action",
+        "description": "Filter appointments by status"
+      },
+      {
+        "type": "action",
+        "description": "Open an appointment from the filtered list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the appointment detail view is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC021",
+    "title": "Reply to a support ticket with an attachment",
+    "description": "This test verifies that support staff can post a threaded reply to a ticket and see the new message appear in the conversation.",
+    "category": "Support Tickets",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /support/tickets"
+      },
+      {
+        "type": "action",
+        "description": "Open a ticket detail"
+      },
+      {
+        "type": "action",
+        "description": "Reply to the ticket with an update and an attachment"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new reply appears in the thread"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the attachment is visible in the conversation"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC022",
+    "title": "Approve a doctor from the list",
+    "description": "Verifies that a signed-in user can approve a doctor and see the verification state updated in the doctor list.",
+    "category": "Doctor Verification",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /doctors"
+      },
+      {
+        "type": "action",
+        "description": "Select a doctor pending verification"
+      },
+      {
+        "type": "action",
+        "description": "Approve the doctor verification"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the doctor is marked as approved"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC023",
+    "title": "Update an existing staff user and keep the changes visible",
+    "description": "This verifies that an administrator can edit an existing user and see the updated details afterward.",
+    "category": "User Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the staff user management link"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing staff user profile"
+      },
+      {
+        "type": "action",
+        "description": "Edit the user details"
+      },
+      {
+        "type": "action",
+        "description": "Save the changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated user information is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user detail page remains accessible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC024",
+    "title": "Delete a role from the list",
+    "description": "This test verifies that an administrator can delete a role and no longer see it in the roles list afterward.",
+    "category": "RBAC Role Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the roles management page"
+      },
+      {
+        "type": "action",
+        "description": "Select a role for deletion"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the deletion"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the deleted role is removed from the list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC025",
+    "title": "Reject an insurance case from the list",
+    "description": "This test verifies that an insurance staff member can reject a case directly from the list and see the case updated to a rejected state.",
+    "category": "Insurance Case Workflow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /insurance-cases"
+      },
+      {
+        "type": "action",
+        "description": "Select a case for quick rejection"
+      },
+      {
+        "type": "action",
+        "description": "Reject the case"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the case is marked as rejected"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated rejection state is reflected in the list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC026",
+    "title": "Review claims by status",
+    "description": "This test verifies that a finance staff user can view claims, filter them by status, and see the matching claims list.",
+    "category": "Claims Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /claims"
+      },
+      {
+        "type": "action",
+        "description": "Select a claims status filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the claims list is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the list reflects the selected status filter"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC027",
+    "title": "View the doctor list and filter by status",
+    "description": "Verifies that a signed-in user can browse doctors and narrow the list by verification status.",
+    "category": "Doctor Verification",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /doctors"
+      },
+      {
+        "type": "action",
+        "description": "Apply a verification status filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the doctor list is filtered"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC028",
+    "title": "Reject a doctor from the list",
+    "description": "Verifies that a signed-in user can reject a doctor and see the verification state updated in the doctor list.",
+    "category": "Doctor Verification",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /doctors"
+      },
+      {
+        "type": "action",
+        "description": "Select a doctor pending verification"
+      },
+      {
+        "type": "action",
+        "description": "Reject the doctor verification"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the doctor is marked as rejected"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC029",
+    "title": "Create a new service",
+    "description": "A staff member can add a new service and see it appear in the services catalog.",
+    "category": "Services Catalog",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /services"
+      },
+      {
+        "type": "action",
+        "description": "Create a new service with valid details"
+      },
+      {
+        "type": "action",
+        "description": "Save the service"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new service is displayed in the catalog"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC030",
+    "title": "Change a support ticket status",
+    "description": "This test verifies that support staff can change a ticket status from the ticket detail page and see the updated status reflected immediately.",
+    "category": "Support Tickets",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /support/tickets"
+      },
+      {
+        "type": "action",
+        "description": "Open a ticket detail"
+      },
+      {
+        "type": "action",
+        "description": "Change the ticket status"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the ticket status is updated"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated status is visible in the ticket detail"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC031",
+    "title": "Review payment records by status",
+    "description": "This test verifies that a finance staff user can view payment records, filter them by status, and see the matching list update.",
+    "category": "Payments List",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /payments"
+      },
+      {
+        "type": "action",
+        "description": "Select a payment status filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the payment list is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the list reflects the selected status filter"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC032",
+    "title": "Filter users by role and open a user profile",
+    "description": "This verifies that an administrator can narrow the staff list by role and inspect a user detail page.",
+    "category": "User Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the staff user management link"
+      },
+      {
+        "type": "action",
+        "description": "Select a user role filter"
+      },
+      {
+        "type": "action",
+        "description": "Open a staff user profile from the filtered list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user detail page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected user's information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC033",
+    "title": "Open a patient profile and review tabs",
+    "description": "Verifies that a signed-in user can open an existing patient profile and access the medical and insurance information tabs.",
+    "category": "Patient Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /patients"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing patient record"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the patient profile is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify medical and insurance tabs are available"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC034",
+    "title": "Create a financial reconciliation record",
+    "description": "This test verifies that a staff user can add a new financial reconciliation and see it appear in the list.",
+    "category": "Financial Reconciliations",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /reconciliations"
+      },
+      {
+        "type": "action",
+        "description": "Create a new reconciliation record"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the required reconciliation details with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Save the reconciliation record"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new reconciliation record appears in the list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC035",
+    "title": "Update patient information",
+    "description": "Verifies that a signed-in user can edit an existing patient record and see the updated patient details afterward.",
+    "category": "Patient Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /patients"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing patient record"
+      },
+      {
+        "type": "action",
+        "description": "Edit the patient information"
+      },
+      {
+        "type": "action",
+        "description": "Save the changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the patient record shows the updated details"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC036",
+    "title": "Open insurance cases from the dashboard widget",
+    "description": "This verifies that an insurance staff member can use the dashboard entry point to reach the insurance cases workflow.",
+    "category": "Dashboard Overview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the insurance cases entry from the dashboard widget"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the insurance cases list is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify case status information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC037",
+    "title": "Update an existing service",
+    "description": "A staff member can edit a service and see the updated details reflected in the catalog.",
+    "category": "Services Catalog",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /services"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing service"
+      },
+      {
+        "type": "action",
+        "description": "Update the service details with valid changes"
+      },
+      {
+        "type": "action",
+        "description": "Save the changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated service details are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC038",
+    "title": "Update a financial reconciliation record",
+    "description": "This test verifies that a staff user can open an existing reconciliation, change its details, and see the saved updates reflected.",
+    "category": "Financial Reconciliations",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /reconciliations"
+      },
+      {
+        "type": "action",
+        "description": "Open a reconciliation record"
+      },
+      {
+        "type": "action",
+        "description": "Update the reconciliation details with valid changes"
+      },
+      {
+        "type": "action",
+        "description": "Save the reconciliation changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated reconciliation record is shown"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC039",
+    "title": "Approve or reject a review and see the status update",
+    "description": "This verifies that staff can moderate a review and see the review status change in the list.",
+    "category": "Reviews Moderation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /reviews"
+      },
+      {
+        "type": "action",
+        "description": "Open a review"
+      },
+      {
+        "type": "action",
+        "description": "Choose a moderation decision"
+      },
+      {
+        "type": "action",
+        "description": "Save the moderation decision"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the review status is updated"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC040",
+    "title": "Open a doctor profile and view the license",
+    "description": "Verifies that a signed-in user can open a doctor profile and access the license document.",
+    "category": "Doctor Verification",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /doctors"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing doctor record"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the doctor profile is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the license document is available"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC041",
+    "title": "Open a payment record for review",
+    "description": "This test verifies that a finance staff user can open a payment record from the list and review its details.",
+    "category": "Payments List",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /payments"
+      },
+      {
+        "type": "action",
+        "description": "Open a payment record from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the payment detail view is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected payment record details are visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC042",
+    "title": "Update a doctor profile",
+    "description": "Verifies that a signed-in user can edit a doctor profile and see the updated information afterward.",
+    "category": "Doctor Verification",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /doctors"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing doctor record"
+      },
+      {
+        "type": "action",
+        "description": "Edit the doctor profile"
+      },
+      {
+        "type": "action",
+        "description": "Save the changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the doctor record shows the updated details"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC043",
+    "title": "Delete a service",
+    "description": "A staff member can delete a service and see it removed from the services catalog.",
+    "category": "Services Catalog",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /services"
+      },
+      {
+        "type": "action",
+        "description": "Select a service for deletion"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the deletion"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service is no longer displayed in the catalog"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC044",
+    "title": "Update an existing doctor payout record",
+    "description": "This test verifies that a finance staff user can update an existing payout record and see the saved changes in the list.",
+    "category": "Doctor Payouts",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /doctor-payouts"
+      },
+      {
+        "type": "action",
+        "description": "Open a payout record for editing"
+      },
+      {
+        "type": "action",
+        "description": "Update the payout record with valid changes"
+      },
+      {
+        "type": "action",
+        "description": "Save the payout record"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated payout record is displayed in the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the payout details reflect the saved changes"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC045",
+    "title": "Delete a financial reconciliation record",
+    "description": "This test verifies that a staff user can delete a reconciliation and no longer see it in the list.",
+    "category": "Financial Reconciliations",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /reconciliations"
+      },
+      {
+        "type": "action",
+        "description": "Select a reconciliation record for deletion"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the deletion"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the deleted reconciliation record is removed from the list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC046",
+    "title": "Update a system setting value and keep the change",
+    "description": "This verifies that staff can edit an existing system setting and see the updated value persist.",
+    "category": "System Settings",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing setting"
+      },
+      {
+        "type": "action",
+        "description": "Update the setting value"
+      },
+      {
+        "type": "action",
+        "description": "Save the setting changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated setting value is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC047",
+    "title": "Create a speciality",
+    "description": "Verifies that a signed-in user can create a new speciality and see it appear in the speciality list.",
+    "category": "Specialities Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /specialities"
+      },
+      {
+        "type": "action",
+        "description": "Create a new speciality"
+      },
+      {
+        "type": "action",
+        "description": "Save the speciality"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new speciality appears in the list"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC048",
+    "title": "Update a lab test status",
+    "description": "This test verifies that staff can change a lab test status and see the updated status reflected in the list.",
+    "category": "Lab Tests Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /lab-tests"
+      },
+      {
+        "type": "action",
+        "description": "Update a lab test status"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the lab test status is updated"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated status is visible in the list"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC049",
+    "title": "Create a doctor payout record",
+    "description": "This test verifies that a finance staff user can create a doctor payout record and see it appear in the payouts list.",
+    "category": "Doctor Payouts",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /doctor-payouts"
+      },
+      {
+        "type": "action",
+        "description": "Create a new payout record with valid details"
+      },
+      {
+        "type": "action",
+        "description": "Save the payout record"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new payout record is displayed in the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the payouts list is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC050",
+    "title": "Create and edit medical catalog items",
+    "description": "A staff member can open a medical master data section, add or edit an entry, and see the saved catalog item reflected.",
+    "category": "Medical Master Data",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /medical-master-data/diseases"
+      },
+      {
+        "type": "action",
+        "description": "Create or edit a catalog item with valid details"
+      },
+      {
+        "type": "action",
+        "description": "Save the changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the catalog entry is displayed in the section"
+      }
+    ],
+    "priority": "Medium"
+  }
+]

@@ -1,6 +1,3 @@
--- CreateEnum
-CREATE TYPE `NotificationSource` AS ENUM ('SYSTEM_EVENT', 'ADMIN_MANUAL');
-
 -- AlterTable
 ALTER TABLE `notifications` ADD COLUMN `source` ENUM('SYSTEM_EVENT', 'ADMIN_MANUAL') NOT NULL DEFAULT 'SYSTEM_EVENT';
 ALTER TABLE `notifications` ADD COLUMN `targetAudience` VARCHAR(100) NULL;

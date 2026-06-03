@@ -1,0 +1,15 @@
+[
+  {"id": "TC001", "title": "test_doctor_auth_api", "description": "Test POST /api/v1/doctor/auth/login with mobileNumber +966511111111, GET /me, POST logout"},
+  {"id": "TC002", "title": "test_doctor_specializations_api", "description": "Test GET /api/v1/doctor/specializations and /sub-specializations (public)"},
+  {"id": "TC003", "title": "test_doctor_availabilities_api", "description": "Test GET/POST /api/v1/doctor/availabilities"},
+  {"id": "TC004", "title": "test_doctor_appointments_api", "description": "Test GET /api/v1/doctor/appointments, GET /:id, PATCH confirm/reject/cancel"},
+  {"id": "TC005", "title": "test_doctor_patients_api", "description": "Test GET /api/v1/doctor/patients and GET /:id"},
+  {"id": "TC006", "title": "test_doctor_prescriptions_api", "description": "Test POST/GET /api/v1/doctor/prescriptions and /:id/pdf"},
+  {"id": "TC007", "title": "test_doctor_reports_api", "description": "Test POST/GET /api/v1/doctor/reports and /:id/pdf"},
+  {"id": "TC008", "title": "test_doctor_notifications_api", "description": "Test GET /api/v1/doctor/notifications and PATCH /:id/read"},
+  {"id": "TC009", "title": "test_doctor_profile_api", "description": "Test GET/PATCH /api/v1/doctor/profile"},
+  {"id": "TC010", "title": "test_doctor_clinic_details_api", "description": "Test GET/PATCH /api/v1/doctor/clinic-details"},
+  {"id": "TC011", "title": "test_doctor_settings_api", "description": "Test GET/PATCH /api/v1/doctor/settings"},
+  {"id": "TC012", "title": "test_doctor_support_api", "description": "Test GET /api/v1/doctor/support/info and tickets endpoints"},
+  {"id": "TC013", "title": "test_doctor_lab_tests_api", "description": "Test GET/POST /api/v1/doctor/lab-tests, PATCH status, POST results"}
+]

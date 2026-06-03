@@ -481,60 +481,88 @@ class DoctorService {
       }),
     ]);
 
-    return {
-      name: patient.user?.fullName,
-      age: this.calcAge(patient.dateOfBirth),
-      gender: patient.gender,
-      nextAppointment,
-      summary: require('../../shared/utils/doctorAppMappers').mapMedicalProfileSummary(patient.medicalProfile),
-      prescriptions,
-      reports,
-    };
+    const { mapPatientDetail } = require('../../shared/utils/doctorAppMappers');
+    return mapPatientDetail(patient, { nextAppointment, prescriptions, reports });
   }
 
   static async getClinicDetails(userId) {
     const profile = await DoctorRepository.findUnique({
       where: { userId },
-      include: { availability: { where: { isActive: true }, orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }] } },
+      include: {
+        user: { select: { phone: true } },
+        availability: { where: { isActive: true }, orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }] },
+      },
     });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
     return {
-      address: profile.workplace,
+      clinicName: profile.workplace,
+      address: profile.clinicAddress || profile.workplace,
       city: profile.city,
+      phone: profile.user?.phone,
       workingHours: profile.availability,
     };
   }
 
   static async updateClinicDetails(userId, data) {
-    const profile = await DoctorRepository.findUnique({ where: { userId } });
+    const profile = await DoctorRepository.findUnique({
+      where: { userId },
+      include: { user: { select: { id: true, phone: true } } },
+    });
     if (!profile) throw new NotFoundError('Doctor profile not found');
 
-    return DoctorRepository.update({
+    const workplace = data.clinicName ?? data.address ?? profile.workplace;
+
+    await DoctorRepository.update({
       where: { userId },
       data: {
-        workplace: data.address ?? profile.workplace,
+        workplace,
+        clinicAddress: data.address ?? profile.clinicAddress,
         city: data.city ?? profile.city,
       },
     });
+
+    if (data.phone) {
+      await prisma.user.update({ where: { id: userId }, data: { phone: data.phone } });
+    }
+
+    return this.getClinicDetails(userId);
   }
 
   static async getSettings(userId) {
     const { profile } = await resolveDoctorProfile(userId);
     return {
       language: profile.user.preferredLanguage,
-      notificationsEnabled: profile.user.status === 'ACTIVE',
+      notificationsEnabled: profile.isAvailable,
       privacy: {},
       darkModeEnabled: profile.user.darkModeEnabled,
     };
   }
 
   static async updateSettings(userId, data) {
+    const { BadRequestError } = require('../../shared/errors/AppError');
     const update = {};
-    if (data.language) update.preferredLanguage = data.language;
+    const language = data.language ?? data.preferredLanguage;
+    if (language !== undefined) {
+      const normalized = String(language).toLowerCase();
+      if (!['ar', 'en'].includes(normalized)) {
+        throw new BadRequestError('language must be ar or en');
+      }
+      update.preferredLanguage = normalized;
+    }
     if (data.darkModeEnabled !== undefined) update.darkModeEnabled = data.darkModeEnabled;
 
-    await prisma.user.update({ where: { id: userId }, data: update });
+    if (Object.keys(update).length) {
+      await prisma.user.update({ where: { id: userId }, data: update });
+    }
+
+    if (data.notificationsEnabled !== undefined) {
+      await DoctorRepository.update({
+        where: { userId },
+        data: { isAvailable: Boolean(data.notificationsEnabled) },
+      });
+    }
+
     return this.getSettings(userId);
   }
 
@@ -545,9 +573,12 @@ class DoctorService {
     const userData = {};
     if (data.name) userData.fullName = data.name;
     if (data.phoneNumber) userData.phone = data.phoneNumber;
+    if (data.language) userData.preferredLanguage = data.language;
 
     const profileData = {};
     if (data.identityNumber) profileData.licenseNumber = data.identityNumber;
+    if (data.bio !== undefined) profileData.bio = data.bio;
+    if (data.bioAr !== undefined) profileData.bioAr = data.bioAr;
 
     if (Object.keys(userData).length) {
       await prisma.user.update({ where: { id: userId }, data: userData });
@@ -556,7 +587,13 @@ class DoctorService {
       await DoctorRepository.update({ where: { userId }, data: profileData });
     }
 
-    return this.getProfile(userId);
+    const updated = await this.getProfile(userId);
+    return {
+      ...updated,
+      language: updated.user?.preferredLanguage,
+      name: updated.user?.fullName,
+      phoneNumber: updated.user?.phone,
+    };
   }
 }
 

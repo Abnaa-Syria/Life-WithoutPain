@@ -10,9 +10,13 @@ const getProfile = asyncHandler(async (req, res) => {
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
-  const { fullName, gender, dateOfBirth, city, address, identityNumber } = req.body;
-  if (fullName) {
-    await prisma.user.update({ where: { id: req.user.id }, data: { fullName } });
+  const displayName = req.body.fullName || req.body.name;
+  const { gender, dateOfBirth, city, address, identityNumber } = req.body;
+  const userUpdate = {};
+  if (displayName) userUpdate.fullName = displayName;
+  if (req.body.language) userUpdate.preferredLanguage = req.body.language;
+  if (Object.keys(userUpdate).length) {
+    await prisma.user.update({ where: { id: req.user.id }, data: userUpdate });
   }
   await PatientService.updateProfile(req.user.id, {
     gender,

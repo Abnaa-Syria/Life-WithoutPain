@@ -22,7 +22,7 @@ const register = asyncHandler(async (req, res) => {
 const verifyOtp = asyncHandler(async (req, res) => {
   const data = await AuthService.verifyOtpByMobile(req.body);
   return successResponse(res, {
-    data: { token: data.accessToken, doctor: data.user },
+    data: { accessToken: data.accessToken, doctor: data.user },
     message: 'OTP verified',
   });
 });

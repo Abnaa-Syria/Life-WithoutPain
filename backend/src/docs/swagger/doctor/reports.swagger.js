@@ -1,6 +1,23 @@
 /**
  * @swagger
  * /doctor/reports:
+ *   get:
+ *     tags: [Doctor App - Reports]
+ *     summary: List medical reports for the authenticated doctor
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: patientId
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Paginated report list
  *   post:
  *     tags: [Doctor App - Reports]
  *     summary: Create medical report

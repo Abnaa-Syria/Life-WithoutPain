@@ -45,6 +45,32 @@ function mapPatientListItem(p) {
   };
 }
 
+function mapPatientDetail(patient, extras = {}) {
+  const { nextAppointment, prescriptions = [], reports = [] } = extras;
+  return {
+    ...mapPatientListItem({ ...patient, age: calcAge(patient.dateOfBirth) }),
+    gender: patient.gender,
+    medicalProfile: mapMedicalProfileSummary(patient.medicalProfile),
+    nextAppointment: nextAppointment
+      ? {
+          id: String(nextAppointment.id),
+          status: nextAppointment.status,
+          dateTime: nextAppointment.appointmentDate,
+        }
+      : null,
+    prescriptions: prescriptions.map((rx) => ({
+      id: String(rx.id),
+      diagnosis: rx.diagnosis,
+      createdAt: rx.createdAt,
+    })),
+    reports: reports.map((r) => ({
+      id: String(r.id),
+      visitReason: r.visitReason,
+      createdAt: r.createdAt,
+    })),
+  };
+}
+
 function mapNotification(n) {
   return {
     id: String(n.id),
@@ -73,6 +99,7 @@ module.exports = {
   mapAppointmentListItem,
   mapAppointmentDetail,
   mapPatientListItem,
+  mapPatientDetail,
   mapNotification,
   mapSpecializations,
   mapMedicalProfileSummary,

@@ -61,6 +61,7 @@ class CallSessionService {
       return {
         sessionId: existing.sessionId || String(existing.id),
         callUrl: existing.joinUrlPatient,
+        joinUrl: existing.joinUrlPatient,
         status: existing.status,
       };
     }
@@ -75,6 +76,7 @@ class CallSessionService {
     return {
       sessionId: session.sessionId || String(session.id),
       callUrl: session.joinUrlPatient,
+      joinUrl: session.joinUrlPatient,
       status: session.status,
     };
   }

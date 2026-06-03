@@ -3,7 +3,13 @@ const { successResponse } = require('../../shared/responses');
 const { asyncHandler } = require('../../utils/helpers');
 
 const getProfile = asyncHandler(async (req, res) => {
-  const data = await DoctorService.getProfile(req.user.id);
+  const profile = await DoctorService.getProfile(req.user.id);
+  const data = {
+    ...profile,
+    language: profile.user?.preferredLanguage,
+    name: profile.user?.fullName,
+    phoneNumber: profile.user?.phone,
+  };
   return successResponse(res, { data });
 });
 
@@ -18,10 +24,7 @@ const getClinicDetails = asyncHandler(async (req, res) => {
 });
 
 const updateClinicDetails = asyncHandler(async (req, res) => {
-  const data = await DoctorService.updateClinicDetails(req.user.id, {
-    address: req.body.address,
-    city: req.body.city,
-  });
+  const data = await DoctorService.updateClinicDetails(req.user.id, req.body);
   return successResponse(res, { data, message: 'Clinic details updated' });
 });
 

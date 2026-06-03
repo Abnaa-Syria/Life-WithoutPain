@@ -1,6 +1,11 @@
 const ReportService = require('./report.service');
-const { successResponse, createdResponse } = require('../../shared/responses');
+const { successResponse, createdResponse, paginatedResponse } = require('../../shared/responses');
 const { asyncHandler } = require('../../utils/helpers');
+
+const list = asyncHandler(async (req, res) => {
+  const { data, total, page, limit } = await ReportService.listForDoctor(req.user.id, req.query);
+  return paginatedResponse(res, { data, total, page, limit });
+});
 
 const create = asyncHandler(async (req, res) => {
   const data = await ReportService.createForDoctor(req.user.id, req.body);
@@ -17,4 +22,4 @@ const getPdf = asyncHandler(async (req, res) => {
   return successResponse(res, { data: { pdfUrl } });
 });
 
-module.exports = { create, getOne, getPdf };
+module.exports = { list, create, getOne, getPdf };

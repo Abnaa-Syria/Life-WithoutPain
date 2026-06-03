@@ -34,7 +34,7 @@
  *     DoctorLoginResponseDto:
  *       type: object
  *       properties:
- *         token: { type: string, description: JWT access token }
+ *         accessToken: { type: string, description: JWT access token }
  *         refreshToken: { type: string }
  *         doctor:
  *           type: object

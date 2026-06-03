@@ -420,7 +420,7 @@ class AuthService {
 
     return mapPatientLoginResponseDto({
       patientProfile,
-      token: result.accessToken,
+      accessToken: result.accessToken,
       refreshToken: result.refreshToken,
     });
   }
@@ -655,7 +655,7 @@ class AuthService {
 
     return mapPatientLoginResponseDto({
       patientProfile,
-      token: result.accessToken,
+      accessToken: result.accessToken,
       refreshToken: result.refreshToken,
     });
   }
@@ -668,7 +668,7 @@ class AuthService {
     });
 
     return {
-      token: result.accessToken,
+      accessToken: result.accessToken,
       refreshToken: result.refreshToken,
       doctor: doctorProfile,
     };

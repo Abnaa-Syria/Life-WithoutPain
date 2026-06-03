@@ -37,7 +37,7 @@
  *   post:
  *     tags: [Patient App - Auth]
  *     summary: Patient login with mobile number (PATIENT role only)
- *     description: Returns token, refreshToken, and patient profile. Doctor and staff accounts are rejected.
+ *     description: Returns accessToken, refreshToken, and patient profile. Doctor and staff accounts are rejected.
  *     requestBody:
  *       required: true
  *       content:
@@ -76,7 +76,7 @@
  *     summary: Verify OTP
  *     description: |
  *       Use stub code `12345` when OTP provider is mock (until SMS verification is implemented).
- *       On success returns the same shape as login (`token`, `refreshToken`, `patient`).
+ *       On success returns the same shape as login (`accessToken`, `refreshToken`, `patient`).
  *     requestBody:
  *       required: true
  *       content:

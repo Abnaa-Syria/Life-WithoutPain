@@ -116,6 +116,36 @@ async function resetSeededAppointments() {
   await prisma.appointment.deleteMany({ where: { id: { in: ids } } });
 }
 
+async function resetMobileDemoAppointments() {
+  const seeded = await prisma.appointment.findMany({
+    where: { notes: 'Mobile demo appointment' },
+    select: { id: true },
+  });
+  const ids = seeded.map((a) => a.id);
+  if (!ids.length) return;
+
+  const conversations = await prisma.conversation.findMany({
+    where: { appointmentId: { in: ids } },
+    select: { id: true },
+  });
+  if (conversations.length) {
+    await prisma.message.deleteMany({
+      where: { conversationId: { in: conversations.map((c) => c.id) } },
+    });
+  }
+
+  await prisma.labTestRequest.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.prescription.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.medicalReport.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.review.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.claimItem.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.callSession.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.payment.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.doctorPayout.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.conversation.deleteMany({ where: { appointmentId: { in: ids } } });
+  await prisma.appointment.deleteMany({ where: { id: { in: ids } } });
+}
+
 async function main() {
   console.log('Seeding database (full dashboard coverage + RBAC)...');
 
@@ -1171,6 +1201,122 @@ async function main() {
   }
 
   // ─────────────────────────────────────────────────────────────
+  // 14b) Mobile demo appointments (patient@example.com + dr.ahmed)
+  // ─────────────────────────────────────────────────────────────
+  await resetMobileDemoAppointments();
+
+  const mobilePatient = await prisma.patientProfile.findFirst({
+    where: { user: { email: 'patient@example.com', deletedAt: null } },
+    include: { user: true },
+  });
+  const mobileDoctor = await prisma.doctorProfile.findFirst({
+    where: { user: { email: 'dr.ahmed@example.com', deletedAt: null } },
+    include: { user: true },
+  });
+
+  let mobilePendingApptId = null;
+  if (mobilePatient && mobileDoctor) {
+    const mobileTemplates = [
+      { offsetDays: 2, status: 'PENDING', paymentStatus: 'PENDING', insuranceStatus: 'PENDING_VERIFICATION' },
+      { offsetDays: 3, status: 'CONFIRMED', paymentStatus: 'PENDING', insuranceStatus: 'APPROVED' },
+      { offsetDays: -2, status: 'COMPLETED', paymentStatus: 'PAID', insuranceStatus: 'APPROVED' },
+    ];
+
+    for (let i = 0; i < mobileTemplates.length; i++) {
+      const tpl = mobileTemplates[i];
+      const date = toDateOnly(daysFromNow(tpl.offsetDays));
+      const startTime = i % 2 === 0 ? '10:00' : '15:00';
+      const endTime = i % 2 === 0 ? '10:30' : '15:30';
+
+      const appointment = await prisma.appointment.create({
+        data: {
+          patientId: mobilePatient.id,
+          doctorId: mobileDoctor.id,
+          specialityId: mobileDoctor.specialityId,
+          serviceId: serviceRemote.id,
+          appointmentType: 'CONSULTATION',
+          appointmentDate: date,
+          startTime,
+          endTime,
+          status: tpl.status,
+          insuranceStatus: tpl.insuranceStatus,
+          paymentStatus: tpl.paymentStatus,
+          amount: mobileDoctor.consultationFee,
+          requiresInsuranceApproval: tpl.insuranceStatus !== 'NOT_REQUIRED',
+          notes: 'Mobile demo appointment',
+          confirmedAt: ['CONFIRMED', 'COMPLETED'].includes(tpl.status) ? date : null,
+          completedAt: tpl.status === 'COMPLETED' ? date : null,
+          createdBy: mobilePatient.userId,
+        },
+      });
+
+      if (tpl.status === 'PENDING') mobilePendingApptId = appointment.id;
+
+      if (['CONFIRMED', 'COMPLETED'].includes(tpl.status)) {
+        const conversation = await prisma.conversation.create({
+          data: {
+            appointmentId: appointment.id,
+            patientId: mobilePatient.id,
+            doctorId: mobileDoctor.id,
+            isActive: true,
+          },
+        });
+        await prisma.message.createMany({
+          data: [
+            { conversationId: conversation.id, senderId: mobilePatient.userId, messageType: 'TEXT', content: 'مرحباً دكتور', sentAt: now() },
+            { conversationId: conversation.id, senderId: mobileDoctor.userId, messageType: 'TEXT', content: 'مرحباً، كيف يمكنني مساعدتك؟', sentAt: now() },
+          ],
+        });
+      }
+
+      if (tpl.status === 'COMPLETED') {
+        await prisma.callSession.create({
+          data: {
+            appointmentId: appointment.id,
+            patientId: mobilePatient.id,
+            doctorId: mobileDoctor.id,
+            sessionType: 'VIDEO',
+            provider: 'mock',
+            sessionId: `MOBILE-${appointment.id}`,
+            joinUrlPatient: `https://mock-video.example.com/join/MOBILE-${appointment.id}?role=patient`,
+            joinUrlDoctor: `https://mock-video.example.com/join/MOBILE-${appointment.id}?role=doctor`,
+            status: 'COMPLETED',
+            startedAt: now(),
+            endedAt: now(),
+            durationSeconds: 900,
+            metadata: { seeded: true, mobileDemo: true },
+          },
+        });
+      }
+    }
+
+    for (const userId of [mobilePatient.userId, mobileDoctor.userId]) {
+      await prisma.notification.create({
+        data: {
+          userId,
+          titleAr: 'موعد جديد',
+          titleEn: 'New appointment',
+          bodyAr: 'لديك موعد تجريبي في تطبيق الجوال.',
+          bodyEn: 'You have a mobile demo appointment.',
+          type: 'APPOINTMENT',
+          isRead: false,
+        },
+      });
+      await prisma.notification.create({
+        data: {
+          userId,
+          titleAr: 'تنبيه النظام',
+          titleEn: 'System notice',
+          bodyAr: 'مرحباً بك في حياة بلا ألم.',
+          bodyEn: 'Welcome to Haya Bila Alam.',
+          type: 'SYSTEM',
+          isRead: false,
+        },
+      });
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // 15) Reviews (linked to completed appointment)
   // ─────────────────────────────────────────────────────────────
   if (completedAppointment) {
@@ -1240,6 +1386,14 @@ async function main() {
     console.log(`Patient - ${u.fullName}:  ${u.phone} (or ${u.phone.replace(/^\+/, '')})`);
   }
   console.log('\nApproved doctor emails (for /auth/login): dr.ahmed@example.com, dr.sara@example.com');
+  if (mobilePatient && mobileDoctor) {
+    console.log('\nMobile demo (TestSprite):');
+    console.log(`  Patient: ${mobilePatient.user.phone} / Password123 (patient@example.com)`);
+    console.log(`  Doctor:  ${mobileDoctor.user.phone} / Password123 (dr.ahmed@example.com)`);
+    if (mobilePendingApptId) {
+      console.log(`  PENDING appointment id for confirm tests: ${mobilePendingApptId}`);
+    }
+  }
 }
 
 main()

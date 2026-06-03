@@ -1,5 +1,5 @@
 const prisma = require('../../config/database');
-const { NotFoundError } = require('../../shared/errors/AppError');
+const { NotFoundError, BadRequestError } = require('../../shared/errors/AppError');
 const { buildPagination, buildSorting, buildSearchFilter } = require('../../utils/pagination');
 
 class PatientService {
@@ -49,6 +49,38 @@ class PatientService {
   static async deleteMedicalProfileAttachment(userId, attachmentId) {
     const MedicalProfileService = require('../medical-profile/medical-profile.service');
     return MedicalProfileService.deleteAttachmentByUserId(userId, attachmentId);
+  }
+
+  static buildFamilyMemberPayload(body) {
+    const fullName = body.fullName || body.name;
+    const relationType = body.relationType || body.relation || body.relationship;
+    if (!fullName || !relationType) {
+      throw new BadRequestError('fullName (or name) and relationType (or relation) are required');
+    }
+
+    const payload = {
+      fullName: String(fullName).trim(),
+      relationType: String(relationType).trim(),
+      residenceCardNumber: body.residenceCardNumber || undefined,
+      phone: body.phone || undefined,
+      notes: body.notes || undefined,
+    };
+
+    const dob = body.dateOfBirth || body.birthDate;
+    if (dob) payload.dateOfBirth = new Date(dob);
+
+    if (body.gender !== undefined && body.gender !== null && body.gender !== '') {
+      const normalized = String(body.gender).trim().toUpperCase();
+      if (normalized === 'MALE' || ['M', 'MAN', 'BOY'].includes(normalized)) {
+        payload.gender = 'MALE';
+      } else if (normalized === 'FEMALE' || ['F', 'WOMAN', 'GIRL'].includes(normalized)) {
+        payload.gender = 'FEMALE';
+      } else {
+        throw new BadRequestError('gender must be MALE or FEMALE');
+      }
+    }
+
+    return payload;
   }
 
   static async getFamilyMembers(userId) {
@@ -256,15 +288,18 @@ class PatientService {
     const profile = await prisma.patientProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundError('Patient profile not found');
 
-    if (data.preferredLanguage !== undefined || data.fullName !== undefined || data.darkModeEnabled !== undefined) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          preferredLanguage: data.preferredLanguage,
-          darkModeEnabled: data.darkModeEnabled,
-          fullName: data.fullName,
-        },
-      });
+    const language = data.preferredLanguage ?? data.language;
+    if (language !== undefined && !['ar', 'en'].includes(language)) {
+      throw new BadRequestError('language must be ar or en');
+    }
+
+    const userData = {};
+    if (language !== undefined) userData.preferredLanguage = language;
+    if (data.darkModeEnabled !== undefined) userData.darkModeEnabled = data.darkModeEnabled;
+    if (data.fullName !== undefined) userData.fullName = data.fullName;
+
+    if (Object.keys(userData).length) {
+      await prisma.user.update({ where: { id: userId }, data: userData });
     }
 
     if (data.notificationsEnabled !== undefined || data.privacy !== undefined) {

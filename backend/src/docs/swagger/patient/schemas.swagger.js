@@ -397,7 +397,7 @@
  *     PatientLoginResponseDto:
  *       type: object
  *       properties:
- *         token: { type: string, description: JWT access token }
+ *         accessToken: { type: string, description: JWT access token }
  *         refreshToken: { type: string }
  *         patient:
  *           $ref: '#/components/schemas/PatientLoginPatientDto'

@@ -1,5 +1,5 @@
 /**
- * Patient mobile login response — mirrors doctor login shape ({ token, refreshToken, patient }).
+ * Patient mobile login response — mirrors doctor login shape ({ accessToken, refreshToken, patient }).
  */
 function formatDateOnly(value) {
   if (!value) return null;
@@ -8,10 +8,10 @@ function formatDateOnly(value) {
   return d.toISOString().slice(0, 10);
 }
 
-function mapPatientLoginResponseDto({ patientProfile, token, refreshToken }) {
+function mapPatientLoginResponseDto({ patientProfile, accessToken, refreshToken }) {
   const user = patientProfile.user;
   return {
-    token,
+    accessToken,
     refreshToken,
     patient: {
       id: patientProfile.id,
