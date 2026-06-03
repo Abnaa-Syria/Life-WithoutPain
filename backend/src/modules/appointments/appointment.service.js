@@ -7,6 +7,10 @@ const { resolveDoctorProfile, assertDoctorOwnsAppointment } = require('../../sha
 const { resolvePatientProfile, assertPatientOwnsAppointment } = require('../../shared/utils/patientAppContext');
 const { isComingAppointment } = require('../../shared/utils/patientAppMappers');
 
+function appointmentOrderBy(dateDir = 'desc', timeDir = 'desc') {
+  return [{ appointmentDate: dateDir }, { startTime: timeDir }];
+}
+
 class AppointmentService {
   static normalizeBookingBody(data) {
     const body = { ...data };
@@ -137,7 +141,7 @@ class AppointmentService {
     const filter = (query.filter || 'all').toLowerCase();
 
     const where = { patientId };
-    const orderBy = { appointmentDate: 'asc', startTime: 'asc' };
+    let orderBy = appointmentOrderBy('asc', 'asc');
 
     if (filter === 'confirmed') where.status = 'CONFIRMED';
     else if (filter === 'cancelled') where.status = 'CANCELLED';
@@ -145,8 +149,7 @@ class AppointmentService {
     else if (filter === 'coming') {
       where.status = { notIn: ['CANCELLED', 'COMPLETED'] };
     } else if (filter === 'all') {
-      orderBy.appointmentDate = 'desc';
-      orderBy.startTime = 'desc';
+      orderBy = appointmentOrderBy('desc', 'desc');
     }
 
     if (query.startDate || query.endDate) {
@@ -341,7 +344,7 @@ class AppointmentService {
 
     const [data, total] = await Promise.all([
       prisma.appointment.findMany({
-        where, skip, take: limit, orderBy: { appointmentDate: 'desc', startTime: 'desc' },
+        where, skip, take: limit, orderBy: appointmentOrderBy('desc', 'desc'),
         include: {
           patient: { include: { user: { select: { fullName: true, avatarUrl: true } } } },
           doctor: { include: { user: { select: { fullName: true, avatarUrl: true } }, speciality: true } },
@@ -460,7 +463,7 @@ class AppointmentService {
         where,
         skip,
         take: limit,
-        orderBy: { appointmentDate: 'desc', startTime: 'desc' },
+        orderBy: appointmentOrderBy('desc', 'desc'),
         include: {
           patient: { include: { user: { select: { fullName: true, avatarUrl: true } } } },
           service: { select: { nameAr: true, nameEn: true } },

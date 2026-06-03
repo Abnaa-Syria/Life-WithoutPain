@@ -1,7 +1,19 @@
 const rateLimit = require('express-rate-limit');
 const config = require('../config');
 
-const globalLimiter = rateLimit({
+const isProduction = config.env === 'production';
+
+/** No-op in non-production so local/TestSprite runs are not throttled. */
+function devPassthrough(req, res, next) {
+  next();
+}
+
+function createLimiter(options) {
+  if (!isProduction) return devPassthrough;
+  return rateLimit(options);
+}
+
+const globalLimiter = createLimiter({
   windowMs: config.rateLimit.windowMs,
   max: config.rateLimit.maxRequests,
   message: {
@@ -13,7 +25,7 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const authLimiter = rateLimit({
+const authLimiter = createLimiter({
   windowMs: 15 * 60 * 1000,
   max: 20,
   message: {
@@ -25,7 +37,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const otpLimiter = rateLimit({
+const otpLimiter = createLimiter({
   windowMs: 5 * 60 * 1000,
   max: 5,
   message: {
@@ -37,4 +49,4 @@ const otpLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { globalLimiter, authLimiter, otpLimiter };
+module.exports = { globalLimiter, authLimiter, otpLimiter, isProduction };

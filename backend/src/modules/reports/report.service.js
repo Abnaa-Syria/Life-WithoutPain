@@ -1,6 +1,6 @@
 const prisma = require('../../config/database');
 const MedicalReportRepository = require('./report.repository');
-const { NotFoundError } = require('../../shared/errors/AppError');
+const { NotFoundError, BadRequestError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
 const { resolveDoctorProfile, assertDoctorOwnsReport } = require('../../shared/utils/doctorAppContext');
 const PdfGenerator = require('../../shared/pdf/PdfGenerator');
@@ -95,24 +95,57 @@ class ReportService {
     return this.getById(id);
   }
 
+  static async resolveDoctorReportContext(doctorId, body) {
+    let patientId = parseInt(body.patientId, 10);
+    let appointmentId = parseInt(body.appointmentId, 10);
+
+    if (!Number.isFinite(patientId) || !Number.isFinite(appointmentId)) {
+      const where = { doctorId };
+      if (Number.isFinite(patientId)) where.patientId = patientId;
+      const appointment = await prisma.appointment.findFirst({
+        where,
+        orderBy: [{ appointmentDate: 'desc' }, { id: 'desc' }],
+      });
+      if (!appointment) {
+        throw new BadRequestError('No appointment found for this doctor to attach the report');
+      }
+      patientId = appointment.patientId;
+      appointmentId = appointment.id;
+    }
+
+    const appointment = await prisma.appointment.findFirst({
+      where: { id: appointmentId, doctorId, patientId },
+    });
+    if (!appointment) {
+      throw new BadRequestError('Appointment not found for this doctor and patient');
+    }
+
+    return { patientId, appointmentId };
+  }
+
   static async createForDoctor(userId, body) {
     const { doctorId } = await resolveDoctorProfile(userId);
     const { doctorId: _omit, tests, clinicalExamination, attachments, ...rest } = body;
+    const { patientId, appointmentId } = await this.resolveDoctorReportContext(doctorId, rest);
+
+    const visitReason =
+      rest.visitReason || rest.title || rest.description || 'General consultation';
+    const diagnosis = rest.diagnosis || visitReason;
 
     const reportData = {
-      patientId: rest.patientId,
-      appointmentId: rest.appointmentId,
+      patientId,
+      appointmentId,
       doctorId,
-      prescriptionId: rest.prescriptionId,
-      visitReason: rest.visitReason,
+      ...(rest.prescriptionId ? { prescriptionId: parseInt(rest.prescriptionId, 10) } : {}),
+      visitReason,
       symptoms: rest.symptoms,
       clinicalFindings: rest.clinicalFindings,
       clinicalExam: clinicalExamination || rest.clinicalExam,
       resultSummary: rest.resultSummary,
-      resultsList: rest.resultsList,
+      resultsList: rest.resultsList || (Array.isArray(tests) ? tests : undefined),
       nextAppointmentDate: rest.nextAppointmentDate ? new Date(rest.nextAppointmentDate) : undefined,
-      diagnosis: rest.diagnosis || rest.visitReason,
-      summary: rest.summary,
+      diagnosis,
+      summary: rest.summary || rest.description,
     };
 
     if (attachments && Array.isArray(attachments)) {

@@ -65,14 +65,24 @@ function initNotificationListeners() {
 
       const dateLabel = appointmentDateLabel(appointment);
       const statusAr = statusLabelAr(appointment.status);
+      const isConfirmed = appointment.status === 'CONFIRMED';
+
+      const titleAr = isConfirmed ? 'تم تأكيد الموعد' : 'تحديث الموعد';
+      const titleEn = isConfirmed ? 'Appointment confirmed' : 'Appointment updated';
+      const bodyAr = isConfirmed
+        ? `تم تأكيد موعدك${dateLabel ? ` في ${dateLabel}` : ''}`
+        : `الحالة: ${statusAr}${dateLabel ? ` — ${dateLabel}` : ''}${previousStatus ? ` (كانت ${statusLabelAr(previousStatus)})` : ''}`;
+      const bodyEn = isConfirmed
+        ? `Your appointment has been confirmed${dateLabel ? ` on ${dateLabel}` : ''}`
+        : `Status: ${appointment.status}${dateLabel ? ` — ${dateLabel}` : ''}`;
 
       await NotificationService.createBulk(
         [...targets].map((userId) => ({
           userId,
-          titleAr: 'تحديث الموعد',
-          titleEn: 'Appointment updated',
-          bodyAr: `الحالة: ${statusAr}${dateLabel ? ` — ${dateLabel}` : ''}${previousStatus ? ` (كانت ${statusLabelAr(previousStatus)})` : ''}`,
-          bodyEn: `Status: ${appointment.status}${dateLabel ? ` — ${dateLabel}` : ''}`,
+          titleAr,
+          titleEn,
+          bodyAr,
+          bodyEn,
           type: 'APPOINTMENT',
           relatedEntityType: 'Appointment',
           relatedEntityId: appointment.id,

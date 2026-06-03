@@ -6,7 +6,20 @@ const {
 } = require('../../socket/notification.emit');
 
 class NotificationService {
-  static async create({ userId, titleAr, titleEn, bodyAr, bodyEn, type, relatedEntityType, relatedEntityId }) {
+  static async create({
+    userId,
+    titleAr,
+    titleEn,
+    bodyAr,
+    bodyEn,
+    type,
+    relatedEntityType,
+    relatedEntityId,
+    source = 'SYSTEM_EVENT',
+    targetAudience = null,
+    createdByAdminId = null,
+    batchId = null,
+  }) {
     try {
       const notification = await prisma.notification.create({
         data: {
@@ -16,6 +29,10 @@ class NotificationService {
           bodyAr,
           bodyEn,
           type,
+          source,
+          targetAudience,
+          createdByAdminId,
+          batchId,
           relatedEntityType: relatedEntityType || null,
           relatedEntityId: relatedEntityId || null,
         },
@@ -41,6 +58,10 @@ class NotificationService {
               bodyAr: n.bodyAr,
               bodyEn: n.bodyEn,
               type: n.type,
+              source: n.source || 'SYSTEM_EVENT',
+              targetAudience: n.targetAudience || null,
+              createdByAdminId: n.createdByAdminId || null,
+              batchId: n.batchId || null,
               relatedEntityType: n.relatedEntityType || null,
               relatedEntityId: n.relatedEntityId || null,
             },

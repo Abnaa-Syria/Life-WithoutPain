@@ -21,7 +21,8 @@ model User {
   doctorProfile   DoctorProfile?
   otpCodes        OtpCode[]
   refreshTokens   RefreshToken[]
-  notifications   Notification[]
+  notifications              Notification[]
+  adminManualNotifications   Notification[] @relation("AdminManualNotifications")
   auditLogs       AuditLog[]       @relation("AuditActor")
   reviewsGiven    Review[]         @relation("ReviewPatient")
   sentMessages    Message[]        @relation("MessageSender")

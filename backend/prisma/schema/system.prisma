@@ -64,6 +64,11 @@ enum NotificationType {
   USER
 }
 
+enum NotificationSource {
+  SYSTEM_EVENT
+  ADMIN_MANUAL
+}
+
 enum SettingType {
   STRING
   NUMBER
@@ -206,23 +211,30 @@ model DoctorPayout {
 // Notification Model
 
 model Notification {
-  id                Int              @id @default(autoincrement())
+  id                Int                @id @default(autoincrement())
   userId            Int
-  titleAr           String           @db.VarChar(500)
-  titleEn           String           @db.VarChar(500)
-  bodyAr            String           @db.Text
-  bodyEn            String           @db.Text
+  titleAr           String             @db.VarChar(500)
+  titleEn           String             @db.VarChar(500)
+  bodyAr            String             @db.Text
+  bodyEn            String             @db.Text
   type              NotificationType
-  isRead            Boolean          @default(false)
+  source            NotificationSource @default(SYSTEM_EVENT)
+  targetAudience    String?            @db.VarChar(100)
+  createdByAdminId  Int?
+  batchId           String?            @db.VarChar(36)
+  isRead            Boolean            @default(false)
   readAt            DateTime?
-  relatedEntityType String?          @db.VarChar(50)
+  relatedEntityType String?            @db.VarChar(50)
   relatedEntityId   Int?
-  createdAt         DateTime         @default(now())
+  createdAt         DateTime           @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdByAdmin  User? @relation("AdminManualNotifications", fields: [createdByAdminId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([isRead])
+  @@index([source])
+  @@index([batchId])
   @@map("notifications")
 }
 

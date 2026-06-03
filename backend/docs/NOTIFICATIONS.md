@@ -2,6 +2,24 @@
 
 In-app notifications are stored in `notifications` and delivered in real time via Socket.IO (`notification:new` on room `notifications:user:{userId}`).
 
+## Admin dashboard UX split
+
+| Surface | API | Content |
+|---------|-----|---------|
+| **Bell dropdown (topbar)** | `GET /api/v1/notifications` | Personal inbox: all types the signed-in staff user may see (permission-filtered) |
+| **Sidebar Notifications page** | `GET /api/v1/admin/notifications/manual` | **Custom admin sends only** (`source = ADMIN_MANUAL`), with target audience metadata |
+
+Manual send: `POST /api/v1/admin/notifications/send` (uses `NotificationService` + socket). Resend: `POST /api/v1/admin/notifications/manual/:id/resend`. User search: `GET /api/v1/admin/notifications/users/search?q=`.
+
+Automated rows (`source = SYSTEM_EVENT`) are never listed on the manual page; they appear only in each user's inbox.
+
+## Notification sources
+
+| `source` | Created by | Fields |
+|----------|------------|--------|
+| `SYSTEM_EVENT` | Domain event listeners (default) | — |
+| `ADMIN_MANUAL` | Super admin send UI | `targetAudience`, `createdByAdminId`, optional `batchId` |
+
 ## Types and staff visibility
 
 Staff users (admin dashboard) only **see** notification types they have permission for. End users (patients, doctors) see all notifications addressed to them.
@@ -29,7 +47,7 @@ Staff users (admin dashboard) only **see** notification types they have permissi
 | `verification.doctor_submitted` | `auth.service` (doctor register) | `verification.listener.js` |
 | `verification.doctor_approved` / `rejected` | `doctor.admin.controller` | `verification.listener.js` |
 | `appointment.created` | `appointment.service` | `notification.listener.js` |
-| `appointment.status_changed` | `appointment.service` `updateStatus` | `notification.listener.js` |
+| `appointment.status_changed` | `appointment.service` `updateStatus` | `notification.listener.js` (CONFIRMED uses dedicated copy) |
 | `insurance.case_created` / `case_updated` | insurance orchestrator / service | `insurance.listener.js` |
 | `support.ticket.created` | `supportTicket.service` | `support.listener.js` |
 | `support.user.replied` | `supportTicket.service` (non-staff message) | `support.listener.js` |
@@ -41,14 +59,25 @@ Staff users (admin dashboard) only **see** notification types they have permissi
 | `report.created` | `report.service` | `notification.listener.js` |
 | `review.created` | `review.service` | `notification.listener.js` |
 
+**Admin appointment actions** must use `PATCH /api/v1/admin/appointments/:id/status` (delegates to `AppointmentService.updateStatus`) so events fire. Direct Prisma updates bypass notifications.
+
+### Coverage gaps (optional future work)
+
+| Domain | Status |
+|--------|--------|
+| Home service requests | No notification event yet |
+| Push (FCM/APNs) | Not implemented |
+
 ## API
 
-- Staff dashboard: `GET /api/v1/notifications` (permission-filtered types)
+- Staff inbox: `GET /api/v1/notifications` (permission-filtered types)
+- Admin manual campaigns: `/api/v1/admin/notifications/manual`, `/send`, `/manual/:id/resend`
 - Patient app: `GET /api/v1/patient/notifications` (all types for user)
 - Doctor app: `GET /api/v1/doctor/notifications` (all types for user)
 
 ## Related code
 
 - `backend/src/shared/notifications/NotificationService.js` — persist + socket emit
+- `backend/src/modules/notifications/notifications.admin.service.js` — manual send/resend
 - `backend/src/shared/notifications/notificationPermissions.js` — type ↔ permission map
 - `backend/src/shared/notifications/notificationRecipients.js` — resolve staff user IDs by permission

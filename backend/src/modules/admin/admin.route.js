@@ -6,7 +6,7 @@ const { successResponse, createdResponse, paginatedResponse } = require('../../s
 const { buildPagination } = require('../../utils/pagination');
 const prisma = require('../../config/database');
 const { ROLES } = require('../../constants');
-const { NotFoundError } = require('../../shared/errors/AppError');
+const { NotFoundError, BadRequestError } = require('../../shared/errors/AppError');
 const { createAuditLog } = require('../../middlewares/auditLog');
 const bcrypt = require('bcryptjs');
 const MedicalProfileService = require('../medical-profile/medical-profile.service');
@@ -192,6 +192,14 @@ router.get('/patients/:id', guard('patients.read', ...MEDICAL, ROLES.SUPPORT_STA
         },
         orderBy: { requestedAt: 'desc' },
       },
+      appointments: {
+        include: {
+          doctor: { include: { user: { select: { fullName: true } }, speciality: { select: { nameAr: true } } } },
+          service: { select: { nameAr: true, nameEn: true } },
+        },
+        orderBy: { appointmentDate: 'desc' },
+        take: 50,
+      },
       medicalFiles: true
     } 
   });
@@ -297,6 +305,8 @@ router.get('/appointments', guard('appointments.list', ...MEDICAL), asyncHandler
   const { page, limit, skip } = buildPagination(req.query);
   const where = {};
   if (req.query.status) where.status = req.query.status;
+  if (req.query.patientId) where.patientId = parseInt(req.query.patientId, 10);
+  if (req.query.doctorId) where.doctorId = parseInt(req.query.doctorId, 10);
   if (req.query.date) where.appointmentDate = new Date(req.query.date);
   if (req.query.search) where.OR = [{ patient: { user: { fullName: { contains: req.query.search } } } }, { doctor: { user: { fullName: { contains: req.query.search } } } }];
   const [data, total] = await Promise.all([
@@ -321,14 +331,33 @@ router.get('/appointments/:id', guard('appointments.read', ...MEDICAL, ROLES.SUP
   if (!data) throw new NotFoundError('Appointment not found');
   return successResponse(res, { data });
 }));
+router.patch('/appointments/:id/status', guard('appointments.update', ...MEDICAL), asyncHandler(async (req, res) => {
+  const AppointmentService = require('../appointments/appointment.service');
+  const { status, reason, newDate, newStartTime, newEndTime } = req.body;
+  if (!status) throw new BadRequestError('status is required');
+  const data = await AppointmentService.updateStatus(
+    req.params.id,
+    status,
+    req.user.id,
+    { reason, newDate, newStartTime, newEndTime },
+  );
+  createAuditLog({ actorId: req.user.id, entityType: 'Appointment', entityId: data.id, action: 'STATUS_CHANGE', newValues: { status }, req });
+  return successResponse(res, { data });
+}));
 router.put('/appointments/:id', guard('appointments.update', ...MEDICAL), asyncHandler(async (req, res) => {
   const data = await prisma.appointment.update({ where: { id: parseInt(req.params.id) }, data: req.body });
   createAuditLog({ actorId: req.user.id, entityType: 'Appointment', entityId: data.id, action: 'UPDATE', newValues: req.body, req });
   return successResponse(res, { data });
 }));
 router.delete('/appointments/:id', guard('appointments.delete', ...SUPER), asyncHandler(async (req, res) => {
-  await prisma.appointment.update({ where: { id: parseInt(req.params.id) }, data: { status: 'CANCELLED', cancellationReason: 'Cancelled by admin' } });
-  createAuditLog({ actorId: req.user.id, entityType: 'Appointment', entityId: parseInt(req.params.id), action: 'DELETE', req });
+  const AppointmentService = require('../appointments/appointment.service');
+  const data = await AppointmentService.updateStatus(
+    req.params.id,
+    'CANCELLED',
+    req.user.id,
+    { reason: 'Cancelled by admin' },
+  );
+  createAuditLog({ actorId: req.user.id, entityType: 'Appointment', entityId: data.id, action: 'DELETE', req });
   return successResponse(res, { data: null, message: 'Appointment cancelled' });
 }));
 
@@ -430,7 +459,11 @@ const labCrud = crud('labTestRequest', {
     appointment: APPOINTMENT_PREVIEW_INCLUDE,
     results: true,
   },
-  filterFn: (q) => ({ ...(q.status ? { status: q.status } : {}) }),
+  filterFn: (q) => ({
+    ...(q.status ? { status: q.status } : {}),
+    ...(q.patientId ? { patientId: parseInt(q.patientId, 10) } : {}),
+    ...(q.doctorId ? { doctorId: parseInt(q.doctorId, 10) } : {}),
+  }),
 });
 router.get('/lab-tests', guard('lab-tests.list', ...MEDICAL), labCrud.list);
 router.get('/lab-tests/:id', guard('lab-tests.read', ...MEDICAL), labCrud.getOne);
@@ -546,6 +579,10 @@ const reportCrud = crud('medicalReport', {
     attachments: true,
   },
   entityLabel: 'MedicalReport',
+  filterFn: (q) => ({
+    ...(q.patientId ? { patientId: parseInt(q.patientId, 10) } : {}),
+    ...(q.doctorId ? { doctorId: parseInt(q.doctorId, 10) } : {}),
+  }),
 });
 router.get('/reports', guard('reports.admin.list', ...MEDICAL), reportCrud.list);
 router.get('/reports/:id', guard('reports.admin.list', ...MEDICAL), reportCrud.getOne);
@@ -563,6 +600,10 @@ const rxCrud = crud('prescription', {
     appointment: APPOINTMENT_PREVIEW_INCLUDE,
   },
   entityLabel: 'Prescription',
+  filterFn: (q) => ({
+    ...(q.patientId ? { patientId: parseInt(q.patientId, 10) } : {}),
+    ...(q.doctorId ? { doctorId: parseInt(q.doctorId, 10) } : {}),
+  }),
 });
 router.get('/prescriptions', guard('prescriptions.admin.list', ...MEDICAL), rxCrud.list);
 router.get('/prescriptions/:id', guard('prescriptions.admin.list', ...MEDICAL), rxCrud.getOne);
@@ -570,20 +611,16 @@ router.put('/prescriptions/:id', guard('prescriptions.admin.update', ...MEDICAL)
 router.delete('/prescriptions/:id', guard('prescriptions.admin.delete', ...SUPER), rxCrud.remove);
 
 // ═══════════════════════════════════════════
-//  NOTIFICATIONS – full CRUD
+//  NOTIFICATIONS – manual admin campaigns only
 // ═══════════════════════════════════════════
-const notifCrud = crud('notification', { entityLabel: 'Notification' });
-const NotificationController = require('../notifications/notification.controller');
+const NotificationsAdminController = require('../notifications/notifications.admin.controller');
 
-router.get('/notifications/unread-count', guard('notifications.admin.manage', ...SUPER), NotificationController.unreadCount);
-router.patch('/notifications/read-all', guard('notifications.admin.manage', ...SUPER), NotificationController.markAllRead);
-router.patch('/notifications/:id/read', guard('notifications.admin.manage', ...SUPER), NotificationController.markRead);
-
-router.get('/notifications', guard('notifications.admin.manage', ...SUPER), notifCrud.list);
-router.get('/notifications/:id', guard('notifications.admin.manage', ...SUPER), notifCrud.getOne);
-router.post('/notifications', guard('notifications.admin.send', ...SUPER), notifCrud.create);
-router.put('/notifications/:id', guard('notifications.admin.manage', ...SUPER), notifCrud.update);
-router.delete('/notifications/:id', guard('notifications.admin.manage', ...SUPER), notifCrud.remove);
+router.get('/notifications/users/search', guard('notifications.admin.send', ...SUPER), NotificationsAdminController.searchUsers);
+router.get('/notifications/manual', guard('notifications.admin.manage', ...SUPER), NotificationsAdminController.listManual);
+router.get('/notifications/manual/:id', guard('notifications.admin.manage', ...SUPER), NotificationsAdminController.getManual);
+router.post('/notifications/send', guard('notifications.admin.send', ...SUPER), NotificationsAdminController.sendManual);
+router.post('/notifications/manual/:id/resend', guard('notifications.admin.send', ...SUPER), NotificationsAdminController.resendManual);
+router.delete('/notifications/manual/:id', guard('notifications.admin.manage', ...SUPER), NotificationsAdminController.deleteManual);
 
 // ═══════════════════════════════════════════
 //  REVIEWS – full CRUD

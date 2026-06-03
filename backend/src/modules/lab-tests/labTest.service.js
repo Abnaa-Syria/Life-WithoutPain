@@ -1,8 +1,10 @@
+const prisma = require('../../config/database');
 const LabTestRepository = require('./labTest.repository');
 const LabResultRepository = require('./labResult.repository');
-const { NotFoundError } = require('../../shared/errors/AppError');
+const { NotFoundError, BadRequestError, ForbiddenError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
 const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
+const { resolveDoctorProfile, assertDoctorOwnsAppointment } = require('../../shared/utils/doctorAppContext');
 
 class LabTestService {
   static async create(body) {
@@ -52,7 +54,93 @@ class LabTestService {
   }
 
   static async updateStatus(id, status) {
-    return LabTestRepository.update({ where: { id: parseInt(id) }, data: { status } });
+    const normalized = String(status || '').trim().toUpperCase();
+    const allowed = ['REQUESTED', 'SAMPLE_COLLECTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+    if (!allowed.includes(normalized)) {
+      throw new BadRequestError(`Invalid lab test status: ${status}`);
+    }
+    return LabTestRepository.update({ where: { id: parseInt(id) }, data: { status: normalized } });
+  }
+
+  static async resolveDoctorLabTestContext(doctorId, body) {
+    let patientId = parseInt(body.patientId, 10);
+    let appointmentId = parseInt(body.appointmentId, 10);
+
+    if (!Number.isFinite(patientId) || !Number.isFinite(appointmentId)) {
+      const where = { doctorId };
+      if (Number.isFinite(patientId)) where.patientId = patientId;
+      const appointment = await prisma.appointment.findFirst({
+        where,
+        orderBy: [{ appointmentDate: 'desc' }, { id: 'desc' }],
+      });
+      if (!appointment) {
+        throw new BadRequestError('No appointment found for this doctor to attach the lab test');
+      }
+      patientId = appointment.patientId;
+      appointmentId = appointment.id;
+    }
+
+    await assertDoctorOwnsAppointment(doctorId, appointmentId);
+    return { patientId, appointmentId };
+  }
+
+  static async createForDoctor(userId, body) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    const { patientId, appointmentId } = await this.resolveDoctorLabTestContext(doctorId, body);
+    const tests = body.tests;
+    const title =
+      body.title
+      || (Array.isArray(tests) && tests.length ? tests.join(', ') : null)
+      || 'Lab test request';
+
+    return this.create({
+      appointmentId,
+      patientId,
+      doctorId,
+      title: String(title).slice(0, 255),
+      notes: body.notes || null,
+    });
+  }
+
+  static async listForDoctor(userId, query) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    return this.list({ ...query, doctorId });
+  }
+
+  static async getByIdForDoctor(userId, id) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    const labTest = await this.getById(id);
+    if (labTest.doctorId !== doctorId) {
+      throw new ForbiddenError('You do not have access to this lab test');
+    }
+    return labTest;
+  }
+
+  static async updateStatusForDoctor(userId, id, status) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    const labTest = await this.getById(id);
+    if (labTest.doctorId !== doctorId) {
+      throw new ForbiddenError('You do not have access to this lab test');
+    }
+    return this.updateStatus(id, status);
+  }
+
+  static async uploadResultForDoctor(userId, labTestRequestId, fileUrl, notes) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    const labTest = await this.getById(labTestRequestId);
+    if (labTest.doctorId !== doctorId) {
+      throw new ForbiddenError('You do not have access to this lab test');
+    }
+    return this.uploadResult(labTestRequestId, userId, fileUrl, notes);
+  }
+
+  static async getResultsForDoctor(userId, labTestRequestId) {
+    const { doctorId } = await resolveDoctorProfile(userId);
+    const labTest = await this.getById(labTestRequestId);
+    if (labTest.doctorId !== doctorId) {
+      throw new ForbiddenError('You do not have access to this lab test');
+    }
+    return this.getResults(labTestRequestId);
   }
 
   static async uploadResult(labTestRequestId, uploadedBy, fileUrl, notes) {

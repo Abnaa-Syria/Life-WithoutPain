@@ -706,7 +706,30 @@ class AuthService {
 
     const { getEffectivePermissions } = require('../rbac/permission.service');
     const permissions = await getEffectivePermissions(userId, user.role);
-    return { ...user, permissions };
+    const profile = { ...user, permissions };
+
+    if (user.role === 'DOCTOR') {
+      const doctor = await prisma.doctorProfile.findUnique({
+        where: { userId },
+        select: { id: true, verificationStatus: true, specialityId: true },
+      });
+      if (doctor) {
+        profile.profileId = doctor.id;
+        profile.doctorProfileId = doctor.id;
+        profile.verificationStatus = doctor.verificationStatus;
+      }
+    } else if (user.role === 'PATIENT') {
+      const patient = await prisma.patientProfile.findUnique({
+        where: { userId },
+        select: { id: true },
+      });
+      if (patient) {
+        profile.profileId = patient.id;
+        profile.patientProfileId = patient.id;
+      }
+    }
+
+    return profile;
   }
 
   static async deleteAccount(userId) {
