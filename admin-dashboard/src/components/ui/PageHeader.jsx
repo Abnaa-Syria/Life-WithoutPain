@@ -3,7 +3,7 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 
-const PageHeader = ({ title, breadcrumbs = [], action }) => {
+const PageHeader = ({ title, subtitle, breadcrumbs = [], action }) => {
   const { isRTL } = useLanguage();
   const Icon = isRTL ? ChevronLeft : ChevronRight;
 
@@ -21,6 +21,7 @@ const PageHeader = ({ title, breadcrumbs = [], action }) => {
           ))}
         </nav>
         <h1 className="text-page-title">{title}</h1>
+        {subtitle && <p className="text-body text-[var(--text-muted)] mt-1">{subtitle}</p>}
       </div>
       {action && <div className="flex shrink-0">{action}</div>}
     </div>

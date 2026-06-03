@@ -14,7 +14,7 @@ export function getNotificationLink(notification) {
     case 'Claim':
       return `/claims`;
     case 'DoctorProfile':
-      return `/doctors/${id}`;
+      return `/doctors/${id}/summary`;
     case 'User':
       return `/users/${id}`;
     case 'Conversation':

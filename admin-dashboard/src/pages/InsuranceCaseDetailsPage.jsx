@@ -91,12 +91,7 @@ export default function InsuranceCaseDetailsPage() {
         title={`${t('sidebar.insurance_cases')} #${icase.id}`}
         subtitle={icase.caseType}
         backPath="/insurance-cases"
-        badges={[
-          {
-            label: t(`status.${icase.status?.toLowerCase()}`) || icase.status,
-            className: 'bg-primary-100 text-primary-700',
-          },
-        ]}
+        badges={icase.status ? [{ status: icase.status }] : []}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +7,7 @@ import DetailsHeader from '../components/ui/DetailsHeader';
 import DetailsSection from '../components/ui/DetailsSection';
 import DetailItem from '../components/ui/DetailItem';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
-import Badge from '../components/ui/Badge';
+import StatusBadge from '../components/ui/StatusBadge';
 import { Info, FileText, Clock, Settings } from 'lucide-react';
 
 const GenericDetailsPage = ({ 
@@ -22,6 +22,8 @@ const GenericDetailsPage = ({
   const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const resolvedBackPath = backPath || searchParams.get('back') || undefined;
 
   const { data: response, isLoading, error } = useQuery({
     queryKey: [entityName, id],
@@ -40,8 +42,8 @@ const GenericDetailsPage = ({
       <DetailsHeader 
         title={data[titleField] || `#${id}`}
         subtitle={entityName}
-        backPath={backPath}
-        badges={data.status ? [{ label: t(`status.${data.status.toLowerCase()}`) || data.status, className: 'bg-primary-100 text-primary-700' }] : []}
+        backPath={resolvedBackPath}
+        badges={data.status ? [{ status: data.status }] : []}
       />
 
       <div className="space-y-6">

@@ -9,6 +9,7 @@ import { ROUTE_PERMISSIONS as P } from '../../auth/permissions';
 import DetailsSection from '../ui/DetailsSection';
 import DetailItem from '../ui/DetailItem';
 import Badge from '../ui/Badge';
+import StatusBadge from '../ui/StatusBadge';
 import DataTable from '../ui/DataTable';
 import { Shield, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -71,19 +72,7 @@ export default function PatientInsuranceTab({ patientId }) {
     {
       header: t('common.status'),
       accessorKey: 'status',
-      cell: ({ row }) => (
-        <Badge
-          variant={
-            row.original.status === 'APPROVED'
-              ? 'success'
-              : row.original.status === 'REJECTED'
-                ? 'danger'
-                : 'warning'
-          }
-        >
-          {t(`status.${row.original.status?.toLowerCase()}`) || row.original.status}
-        </Badge>
-      ),
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
       meta: {
         exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
       },

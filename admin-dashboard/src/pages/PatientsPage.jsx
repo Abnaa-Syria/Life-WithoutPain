@@ -134,7 +134,7 @@ export default function PatientsPage() {
             });
           }}
           onEdit={openEdit}
-          onView={(item) => navigate(`/patients/${item.id}`)}
+          onView={(item) => navigate(`/patients/${item.id}/summary`)}
           onDelete={handleDelete}
           searchPlaceholder={t('patients.search_placeholder') || 'Search by name or email...'}
         />

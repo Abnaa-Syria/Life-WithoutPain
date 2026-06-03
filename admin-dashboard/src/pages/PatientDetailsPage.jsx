@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { useParams } from 'react-router-dom';
+﻿import React, { useMemo } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
@@ -7,22 +7,34 @@ import DetailsHeader from '../components/ui/DetailsHeader';
 import DetailsSection from '../components/ui/DetailsSection';
 import DetailItem from '../components/ui/DetailItem';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
-import { User, Activity, Shield, Users, FileText, Pill, ClipboardList, Paperclip, Clock, HeartPulse, AlertTriangle, FlaskConical } from 'lucide-react';
+import {
+  User, Activity, Shield, Users, Paperclip, HeartPulse, AlertTriangle,
+  Pill, ClipboardList, FlaskConical, Calendar,
+} from 'lucide-react';
 import Tabs from '../components/ui/Tabs';
 import FilePreviewer from '../components/ui/FilePreviewer';
-import RelatedRecordCard from '../components/ui/RelatedRecordCard';
-import { resolveUploadUrl } from '../utils/uploads';
 import MedicalProfileCatalogTab from '../components/medical/MedicalProfileCatalogTab';
 import MedicalProfileAttachments from '../components/medical/MedicalProfileAttachments';
 import PatientInsuranceTab from '../components/patients/PatientInsuranceTab';
+import EntityMedicalRecordsTab from '../components/medical/EntityMedicalRecordsTab';
 import { useAuth } from '../hooks/useAuth';
 import { canAccess, ROUTE_PERMISSIONS as P } from '../auth/permissions';
+import {
+  DEFAULT_PATIENT_SECTION,
+  PATIENT_DETAIL_SECTIONS,
+  isValidPatientSection,
+} from '../config/patientDetailSections';
+
+const SECTION_ICONS = {
+  Activity, Shield, HeartPulse, Pill, AlertTriangle, Calendar, ClipboardList, FlaskConical, Paperclip,
+};
 
 export default function PatientDetailsPage() {
   const { t } = useTranslation();
-  const { id } = useParams();
+  const navigate = useNavigate();
+  const { id, section: sectionParam } = useParams();
+  const activeSection = sectionParam || DEFAULT_PATIENT_SECTION;
   const { permissions, role } = useAuth();
-  const [activeTab, setActiveTab] = React.useState('summary');
   const showInsuranceTab = canAccess(
     { permissions, role },
     { permission: P.patientsInsurance, anyOf: [P.patients] },
@@ -30,31 +42,31 @@ export default function PatientDetailsPage() {
 
   const { data: response, isLoading } = useQuery({
     queryKey: ['patient', id],
-    queryFn: () => api.get(`/admin/patients/${id}`).then(res => res.data),
+    queryFn: () => api.get(`/admin/patients/${id}`).then((res) => res.data),
   });
+
+  const tabs = useMemo(() => PATIENT_DETAIL_SECTIONS
+    .filter((s) => (s.id !== 'insurance' || showInsuranceTab))
+    .map((s) => ({
+      id: s.id,
+      label: t(s.translationKey),
+      icon: SECTION_ICONS[s.icon],
+    })), [t, showInsuranceTab]);
+
+  if (!isValidPatientSection(activeSection) || (activeSection === 'insurance' && !showInsuranceTab)) {
+    return <Navigate to={`/patients/${id}/${DEFAULT_PATIENT_SECTION}`} replace />;
+  }
 
   if (isLoading) return <LoadingSkeleton type="table" />;
   const patient = response?.data;
-
   if (!patient) return <div className="p-8 text-center">{t('common.not_found')}</div>;
 
   const mp = patient.medicalProfile;
-
-  const tabs = [
-    { id: 'summary', label: t('common.summary') || 'Summary', icon: Activity },
-    ...(showInsuranceTab ? [{ id: 'insurance', label: t('patients.tab_insurance') || 'Insurance', icon: Shield }] : []),
-    { id: 'diseases', label: t('patients.tab_diseases') || 'Diseases', icon: HeartPulse },
-    { id: 'medications', label: t('patients.tab_medications') || 'Medications', icon: Pill },
-    { id: 'allergies', label: t('patients.tab_allergies') || 'Allergies', icon: AlertTriangle },
-    { id: 'prescriptions', label: t('medical.prescriptions') || 'Prescriptions', icon: Pill },
-    { id: 'reports', label: t('medical.reports') || 'Reports', icon: ClipboardList },
-    { id: 'lab_tests', label: t('medical.test_requests') || 'Test requests', icon: FlaskConical },
-    { id: 'files', label: t('common.attachments') || 'Attachments', icon: Paperclip },
-  ];
+  const backBasePath = `/patients/${id}`;
 
   const renderSummary = () => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <DetailsSection title={t('patients.personal_info') || 'Personal Information'} icon={User}>
+      <DetailsSection title={t('patients.personal_info')} icon={User}>
         <DetailItem label={t('patients.full_name')} value={patient.user?.fullName} />
         <DetailItem label={t('patients.email')} value={patient.user?.email} />
         <DetailItem label={t('patients.phone')} value={patient.user?.phone} />
@@ -62,32 +74,26 @@ export default function PatientDetailsPage() {
         <DetailItem label={t('patients.city')} value={patient.city} />
         <DetailItem label={t('patients.address')} value={patient.address} fullWidth />
       </DetailsSection>
-
-      <DetailsSection title={t('patients.medical_profile') || 'Medical Profile'} icon={Activity}>
+      <DetailsSection title={t('patients.medical_profile')} icon={Activity}>
         <DetailItem label={t('patients.blood_type')} value={patient.bloodType} />
         <DetailItem label={t('patients.height')} value={`${patient.height} cm`} />
         <DetailItem label={t('patients.weight')} value={`${patient.weight} kg`} />
-        <DetailItem label={t('medical.summary') || 'Notes'} value={mp?.notes || '—'} fullWidth />
-        <DetailItem label={t('medical.clinical_findings') || 'Surgeries'} value={mp?.surgeries || '—'} fullWidth />
-        <DetailItem label={t('patients.family_members') || 'Family History'} value={mp?.familyHistory || '—'} fullWidth />
+        <DetailItem label={t('medical.summary')} value={mp?.notes || '—'} fullWidth />
+        <DetailItem label={t('medical.clinical_findings')} value={mp?.surgeries || '—'} fullWidth />
+        <DetailItem label={t('patients.family_members')} value={mp?.familyHistory || '—'} fullWidth />
       </DetailsSection>
-
       <div className="lg:col-span-2">
-        <DetailsSection title={t('patients.report_attachments') || 'Medical Report Attachments'} icon={Paperclip}>
+        <DetailsSection title={t('patients.report_attachments')} icon={Paperclip}>
           <div className="col-span-full">
-            <MedicalProfileAttachments
-              patientId={patient.id}
-              attachments={mp?.reportAttachments || []}
-            />
+            <MedicalProfileAttachments patientId={patient.id} attachments={mp?.reportAttachments || []} />
           </div>
         </DetailsSection>
       </div>
-
-      <DetailsSection title={t('patients.family_members') || 'Family Members'} icon={Users}>
+      <DetailsSection title={t('patients.family_members')} icon={Users}>
         {patient.familyMembers?.length > 0 ? patient.familyMembers.map((member, idx) => (
           <React.Fragment key={idx}>
             <DetailItem label={t('common.name')} value={member.fullName} />
-            <DetailItem label={t('common.relationship') || 'Relationship'} value={member.relationType || member.relationship} />
+            <DetailItem label={t('common.relationship')} value={member.relationType || member.relationship} />
             <DetailItem label={t('patients.phone')} value={member.phone} />
           </React.Fragment>
         )) : <div className="col-span-full text-center text-[var(--text-muted)] py-4">{t('common.no_data')}</div>}
@@ -95,108 +101,25 @@ export default function PatientDetailsPage() {
     </div>
   );
 
-  const renderPrescriptions = () => (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {patient.prescriptions?.length > 0 ? patient.prescriptions.map((px) => (
-        <RelatedRecordCard
-          key={px.id}
-          title={px.diagnosis}
-          subtitle={`${new Date(px.createdAt).toLocaleDateString()} • ${px.doctor?.user?.fullName}`}
-          detailPath={`/prescriptions/${px.id}`}
-          appointment={px.appointment}
-          appointmentId={px.appointmentId}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {px.items?.map((item) => (
-              <div key={item.id} className="p-3 bg-primary-50/80 rounded-xl border border-primary-100">
-                <p className="font-bold text-primary-700">{item.medicineName}</p>
-                <p className="text-xs text-[var(--text-muted)]">{item.dosage} • {item.frequency} • {item.duration}</p>
-              </div>
-            ))}
-          </div>
-          {px.pdfUrl && (
-            <a href={resolveUploadUrl(px.pdfUrl)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 mt-3 btn btn-secondary py-1.5 px-3 text-xs">
-              <FileText size={14} /> PDF
-            </a>
-          )}
-        </RelatedRecordCard>
-      )) : <div className="p-12 text-center bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] text-[var(--text-muted)]">{t('common.no_data')}</div>}
-    </div>
-  );
-
-  const renderReports = () => (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {patient.reports?.length > 0 ? patient.reports.map((report) => (
-        <RelatedRecordCard
-          key={report.id}
-          title={report.visitReason}
-          subtitle={`${new Date(report.createdAt).toLocaleDateString()} • ${report.doctor?.user?.fullName}`}
-          detailPath={`/reports/${report.id}`}
-          appointment={report.appointment}
-          appointmentId={report.appointmentId}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="text-sm font-bold text-[var(--text-muted)] mb-2">{t('medical.symptoms') || 'Symptoms'}</h4>
-              <p className="text-sm">{report.symptoms}</p>
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-[var(--text-muted)] mb-2">{t('medical.diagnosis') || 'Diagnosis'}</h4>
-              <p className="text-sm">{report.diagnosis}</p>
-            </div>
-            <div className="md:col-span-2">
-              <h4 className="text-sm font-bold text-[var(--text-muted)] mb-2">{t('medical.summary') || 'Summary'}</h4>
-              <p className="text-sm">{report.summary}</p>
-            </div>
-          </div>
-          {report.pdfUrl && (
-            <a href={resolveUploadUrl(report.pdfUrl)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 mt-3 btn btn-secondary py-1.5 px-3 text-xs">
-              <FileText size={14} /> PDF
-            </a>
-          )}
-        </RelatedRecordCard>
-      )) : <div className="p-12 text-center bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] text-[var(--text-muted)]">{t('common.no_data')}</div>}
-    </div>
-  );
-
-  const renderLabTests = () => (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {patient.labTests?.length > 0 ? patient.labTests.map((test) => (
-        <RelatedRecordCard
-          key={test.id}
-          title={test.title}
-          subtitle={`${new Date(test.requestedAt || test.createdAt).toLocaleDateString()} • ${test.doctor?.user?.fullName}`}
-          status={test.status}
-          detailPath={`/lab-tests/${test.id}`}
-          appointment={test.appointment}
-          appointmentId={test.appointmentId}
-          meta={test.notes}
-        />
-      )) : <div className="p-12 text-center bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] text-[var(--text-muted)]">{t('common.no_data')}</div>}
-    </div>
-  );
-
-  const renderFiles = () => (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <FilePreviewer files={patient.medicalFiles?.map(f => ({ url: f.fileUrl, name: f.title, type: f.category, mimeType: f.mimeType })) || []} height="600px" />
-    </div>
-  );
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <DetailsHeader 
+      <DetailsHeader
         title={patient.user?.fullName}
         subtitle={patient.user?.email}
         backPath="/patients"
-        badges={[{ label: t('sidebar.patients'), className: 'bg-primary-100 text-primary-700' }]}
+        badges={[{ label: t('sidebar.patients'), className: 'badge-info' }]}
       />
 
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      <Tabs
+        tabs={tabs}
+        activeTab={activeSection}
+        onChange={(tabId) => navigate(`/patients/${id}/${tabId}`)}
+      />
 
       <div className="pb-8">
-        {activeTab === 'summary' && renderSummary()}
-        {activeTab === 'insurance' && showInsuranceTab && <PatientInsuranceTab patientId={patient.id} />}
-        {activeTab === 'diseases' && (
+        {activeSection === 'summary' && renderSummary()}
+        {activeSection === 'insurance' && showInsuranceTab && <PatientInsuranceTab patientId={patient.id} />}
+        {activeSection === 'diseases' && (
           <MedicalProfileCatalogTab
             patientId={patient.id}
             catalogEndpoint="/admin/chronic-diseases"
@@ -206,7 +129,7 @@ export default function PatientDetailsPage() {
             title={t('patients.tab_diseases')}
           />
         )}
-        {activeTab === 'medications' && (
+        {activeSection === 'medications' && (
           <MedicalProfileCatalogTab
             patientId={patient.id}
             catalogEndpoint="/admin/medications"
@@ -216,7 +139,7 @@ export default function PatientDetailsPage() {
             title={t('patients.tab_medications')}
           />
         )}
-        {activeTab === 'allergies' && (
+        {activeSection === 'allergies' && (
           <MedicalProfileCatalogTab
             patientId={patient.id}
             catalogEndpoint="/admin/allergies"
@@ -226,10 +149,50 @@ export default function PatientDetailsPage() {
             title={t('patients.tab_allergies')}
           />
         )}
-        {activeTab === 'prescriptions' && renderPrescriptions()}
-        {activeTab === 'reports' && renderReports()}
-        {activeTab === 'lab_tests' && renderLabTests()}
-        {activeTab === 'files' && renderFiles()}
+        {activeSection === 'appointments' && (
+          <EntityMedicalRecordsTab
+            type="appointments"
+            entityKind="patient"
+            entityId={patient.id}
+            embeddedItems={patient.appointments || []}
+            backBasePath={backBasePath}
+          />
+        )}
+        {activeSection === 'prescriptions' && (
+          <EntityMedicalRecordsTab
+            type="prescriptions"
+            entityKind="patient"
+            entityId={patient.id}
+            embeddedItems={patient.prescriptions || []}
+            backBasePath={backBasePath}
+          />
+        )}
+        {activeSection === 'reports' && (
+          <EntityMedicalRecordsTab
+            type="reports"
+            entityKind="patient"
+            entityId={patient.id}
+            embeddedItems={patient.reports || []}
+            backBasePath={backBasePath}
+          />
+        )}
+        {activeSection === 'lab-tests' && (
+          <EntityMedicalRecordsTab
+            type="lab-tests"
+            entityKind="patient"
+            entityId={patient.id}
+            embeddedItems={patient.labTests || []}
+            backBasePath={backBasePath}
+          />
+        )}
+        {activeSection === 'files' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <FilePreviewer
+              files={patient.medicalFiles?.map((f) => ({ url: f.fileUrl, name: f.title, type: f.category, mimeType: f.mimeType })) || []}
+              height="600px"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

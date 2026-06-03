@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import Badge from './Badge';
+import StatusBadge from './StatusBadge';
 import { Calendar, Clock, ExternalLink } from 'lucide-react';
 import { formatAppointmentDateTime } from '../../utils/appointment';
 
@@ -35,9 +35,7 @@ export default function RelatedRecordCard({
             </p>
           )}
         </div>
-        {status && (
-          <Badge variant="secondary">{t(`status.${status?.toLowerCase()}`) || status}</Badge>
-        )}
+        {status && <StatusBadge status={status} />}
       </div>
 
       {meta && <p className="text-sm text-[var(--text-muted)] mb-3">{meta}</p>}

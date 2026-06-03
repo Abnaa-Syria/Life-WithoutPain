@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useLanguage from '../../hooks/useLanguage';
+import StatusBadge from './StatusBadge';
 
 const DetailsHeader = ({ title, subtitle, badges = [], onEdit, onDelete, backPath, actions = [] }) => {
   const { t } = useTranslation();
@@ -23,9 +24,13 @@ const DetailsHeader = ({ title, subtitle, badges = [], onEdit, onDelete, backPat
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-page-title">{title}</h1>
             {badges.map((badge, idx) => (
-              <span key={idx} className={`badge ${badge.className}`}>
-                {badge.label}
-              </span>
+              badge.status ? (
+                <StatusBadge key={idx} status={badge.status} />
+              ) : (
+                <span key={idx} className={`badge ${badge.className || 'badge-info'}`}>
+                  {badge.label}
+                </span>
+              )
             ))}
           </div>
           {subtitle && <p className="text-body text-[var(--text-muted)] mt-2">{subtitle}</p>}

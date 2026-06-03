@@ -5,6 +5,7 @@ import api from '../../services/api';
 import DataTable from '../ui/DataTable';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
+import StatusBadge from '../ui/StatusBadge';
 import { useTranslation } from 'react-i18next';
 
 export default function SupportTicketsTab() {
@@ -78,11 +79,7 @@ export default function SupportTicketsTab() {
     {
       header: t('common.status'),
       accessorKey: 'status',
-      cell: ({ row }) => {
-        const s = row.original.status;
-        const variants = { OPEN: 'primary', IN_PROGRESS: 'warning', RESOLVED: 'success', CLOSED: 'secondary' };
-        return <Badge variant={variants[s] || 'secondary'}>{t(`status.${s?.toLowerCase()}`) || s}</Badge>;
-      },
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
       meta: {
         exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
       },

@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,8 @@ import { formatCurrency } from '../utils/formatCurrency';
 export default function AppointmentDetailsPage() {
   const { t } = useTranslation();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const backPath = searchParams.get('back') || '/appointments';
 
   const { data: response, isLoading } = useQuery({
     queryKey: ['appointment', id],
@@ -38,10 +40,8 @@ export default function AppointmentDetailsPage() {
       <DetailsHeader 
         title={`${t('appointments.appointment')} #${appt.id}`}
         subtitle={formatAppointmentDateTime(appt)}
-        backPath="/appointments"
-        badges={[
-          { label: t(`status.${appt.status?.toLowerCase()}`), className: 'bg-primary-100 text-primary-700' }
-        ]}
+        backPath={backPath}
+        badges={appt.status ? [{ status: appt.status }] : []}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

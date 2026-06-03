@@ -9,6 +9,7 @@ import Modal from '../components/ui/Modal';
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
+import StatusBadge from '../components/ui/StatusBadge';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { canAccess, ROUTE_PERMISSIONS as P } from '../auth/permissions';
@@ -107,19 +108,7 @@ export default function InsuranceCasesPage() {
     {
       header: t('common.status'),
       accessorKey: 'status',
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const variants = {
-          OPEN: 'primary',
-          UNDER_REVIEW: 'warning',
-          APPROVED: 'success',
-          REJECTED: 'danger',
-          CLOSED: 'secondary',
-          ESCALATED: 'danger',
-          MORE_INFO_REQUESTED: 'warning',
-        };
-        return <Badge variant={variants[status]}>{t(`status.${status.toLowerCase()}`) || status}</Badge>;
-      },
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
       meta: {
         exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
       },

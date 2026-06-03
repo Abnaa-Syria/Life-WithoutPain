@@ -9,6 +9,7 @@ import Modal from '../components/ui/Modal';
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
+import StatusBadge from '../components/ui/StatusBadge';
 import { useTranslation } from 'react-i18next';
 import { Headphones, MessageCircle, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import useConfirmDelete from '../hooks/useConfirmDelete';
@@ -62,11 +63,7 @@ export default function SupportCasesPage() {
     {
       header: t('common.status'),
       accessorKey: 'status',
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const variants = { OPEN: 'primary', PENDING: 'warning', RESOLVED: 'success', CLOSED: 'secondary' };
-        return <Badge variant={variants[status]}>{t(`status.${status.toLowerCase()}`) || status}</Badge>;
-      },
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
       meta: {
         exportValue: (row) => t(`status.${row.status?.toLowerCase()}`) || row.status,
       },

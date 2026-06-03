@@ -134,7 +134,7 @@ export default function SupportTicketDetailsPage() {
         subtitle={`${t('support.case')} #${ticket.id}`}
         backPath="/support/tickets"
         badges={[
-          { label: t(`status.${ticket.status?.toLowerCase()}`) || ticket.status, className: 'bg-primary-100 text-primary-700' },
+          { status: ticket.status },
           { label: ticket.priority, className: ticket.priority === 'HIGH' ? 'bg-red-100 text-red-700' : 'bg-[var(--surface-secondary)] text-[var(--text-muted)]' },
           ticket.unreadCount > 0 ? { label: `${ticket.unreadCount} ${t('support.unread')}`, className: 'bg-amber-100 text-amber-800' } : null,
         ].filter(Boolean)}

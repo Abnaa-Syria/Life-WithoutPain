@@ -32,8 +32,8 @@ export default function SupportCaseDetailsPage() {
         subtitle={`${t('support.case')} #${scase.id}`}
         backPath="/support-cases"
         badges={[
-          { label: t(`status.${scase.status?.toLowerCase()}`), className: 'bg-primary-100 text-primary-700' },
-          { label: scase.priority, className: scase.priority === 'HIGH' ? 'bg-red-100 text-red-700' : 'bg-[var(--surface-secondary)] text-[var(--text-muted)]' }
+          ...(scase.status ? [{ status: scase.status }] : []),
+          { label: scase.priority, className: scase.priority === 'HIGH' ? 'badge-danger' : 'badge-secondary' },
         ]}
       />
 

@@ -30,6 +30,7 @@ import AppointmentDetailsPage from '../pages/AppointmentDetailsPage';
 import InsuranceCaseDetailsPage from '../pages/InsuranceCaseDetailsPage';
 import SupportTicketDetailsPage from '../pages/SupportTicketDetailsPage';
 import AuditLogDetailsPage from '../pages/AuditLogDetailsPage';
+import NotificationsManagePage from '../pages/NotificationsManagePage';
 import MedicalMasterDataPage from '../pages/MedicalMasterDataPage';
 import RolesPage from '../pages/RolesPage';
 import RoleDetailsPage from '../pages/RoleDetailsPage';
@@ -64,9 +65,11 @@ function AppRoutes() {
         
         <Route path="patients" element={<ProtectedRoute permission={P.patients} roles={[...ADMIN_MED, 'SUPPORT_STAFF']}><PatientsPage /></ProtectedRoute>} />
         <Route path="patients/:id" element={<ProtectedRoute permission={P.patients} roles={[...ADMIN_MED, 'SUPPORT_STAFF']}><PatientDetailsPage /></ProtectedRoute>} />
+        <Route path="patients/:id/:section" element={<ProtectedRoute permission={P.patients} roles={[...ADMIN_MED, 'SUPPORT_STAFF']}><PatientDetailsPage /></ProtectedRoute>} />
         
         <Route path="doctors" element={<ProtectedRoute permission={P.doctors} roles={ADMIN_MED}><DoctorsPage /></ProtectedRoute>} />
         <Route path="doctors/:id" element={<ProtectedRoute permission={P.doctors} roles={ADMIN_MED}><DoctorDetailsPage /></ProtectedRoute>} />
+        <Route path="doctors/:id/:section" element={<ProtectedRoute permission={P.doctors} roles={ADMIN_MED}><DoctorDetailsPage /></ProtectedRoute>} />
         
         
         <Route path="specialities" element={<ProtectedRoute permission={P.specialities} roles={ADMIN_MED}><SpecialitiesPage /></ProtectedRoute>} />
@@ -87,7 +90,7 @@ function AppRoutes() {
                 { key: 'nameAr', label: t('common.name_ar') },
                 { key: 'nameEn', label: t('common.name_en') },
                 { key: 'type', label: t('services.type') },
-                { key: 'isActive', label: t('common.status'), render: (row) => row.isActive ? <span className="badge-success">{t('common.active')}</span> : <span className="badge-warning">{t('common.inactive')}</span> },
+                { key: 'isActive', label: t('common.status'), render: (row) => <StatusBadge status={row.isActive ? 'ACTIVE' : 'INACTIVE'} /> },
               ]}
               formFields={[
                 { name: 'nameAr', label: t('common.name_ar'), required: true },
@@ -141,7 +144,7 @@ function AppRoutes() {
                 { key: 'nameEn', label: t('common.name_en') },
                 { key: 'code', label: t('insurance.code') },
                 { key: 'apiMode', label: t('insurance.api_mode') },
-                { key: 'isActive', label: t('common.status'), render: (row) => row.isActive ? <span className="badge-success">{t('common.active')}</span> : <span className="badge-warning">{t('common.inactive')}</span> },
+                { key: 'isActive', label: t('common.status'), render: (row) => <StatusBadge status={row.isActive ? 'ACTIVE' : 'INACTIVE'} /> },
               ]}
               formFields={[
                 { name: 'nameAr', label: t('common.name_ar'), required: true },
@@ -484,47 +487,10 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
-        {/* Notifications – admin CRUD */}
+        {/* Notifications – manual admin campaigns */}
         <Route path="notifications" element={
           <ProtectedRoute permission={P.notifications} roles={['SUPER_ADMIN']}>
-            <CrudPage
-              title={t('sidebar.notifications')} subtitle={t('notifications.manage')} endpoint="/admin/notifications" queryKey="admin-notifications"
-              detailPath="/notifications"
-              columns={[
-                { key: 'id', label: '#' },
-                { key: 'titleAr', label: t('common.title_ar') },
-                { key: 'titleEn', label: t('common.title_en') },
-                { key: 'type', label: t('common.type') },
-                { key: 'isRead', label: t('notifications.is_read'), render: (row) => row.isRead ? t('common.yes') : t('common.no') },
-                { key: 'date', label: t('common.created_at'), render: (row) => new Date(row.createdAt).toLocaleDateString() },
-              ]}
-              formFields={[
-                { name: 'userId', label: t('notifications.user_id'), type: 'number', required: true },
-                { name: 'titleAr', label: t('common.title_ar'), required: true },
-                { name: 'titleEn', label: t('common.title_en'), required: true },
-                { name: 'bodyAr', label: t('common.body_ar'), type: 'textarea', required: true },
-                { name: 'bodyEn', label: t('common.body_en'), type: 'textarea', required: true },
-                { name: 'type', label: t('common.type'), type: 'select', required: true, options: [{ value: 'SYSTEM', label: t('notifications.types.system') }, { value: 'APPOINTMENT', label: t('notifications.types.appointment') }, { value: 'PAYMENT', label: t('notifications.types.payment') }, { value: 'INSURANCE', label: t('notifications.types.insurance') }, { value: 'VERIFICATION', label: t('notifications.types.verification') }] },
-              ]}
-              createLabel={t('notifications.send')} editLabel={t('common.edit')}
-            />
-          </ProtectedRoute>
-        } />
-        <Route path="notifications/:id" element={
-          <ProtectedRoute permission={P.notifications} roles={['SUPER_ADMIN']}>
-            <GenericDetailsPage
-              entityName={t('sidebar.notifications')} endpoint="/admin/notifications" titleField="titleAr"
-              sections={[
-                { title: t('notifications.content'), icon: Bell, fields: [
-                  { label: t('common.title_ar'), key: 'titleAr' },
-                  { label: t('common.title_en'), key: 'titleEn' },
-                  { label: t('common.type'), key: 'type' },
-                  { label: t('notifications.is_read'), key: 'isRead', render: (v) => v ? t('common.yes') : t('common.no') },
-                  { label: t('common.body_ar'), key: 'bodyAr', fullWidth: true },
-                  { label: t('common.body_en'), key: 'bodyEn', fullWidth: true },
-                ]},
-              ]}
-            />
+            <NotificationsManagePage />
           </ProtectedRoute>
         } />
 

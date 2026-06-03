@@ -9,6 +9,7 @@ import Modal from '../components/ui/Modal';
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
+import StatusBadge from '../components/ui/StatusBadge';
 import { useTranslation } from 'react-i18next';
 import { Stethoscope, CheckCircle, XCircle, Clock, Star, IdCard } from 'lucide-react';
 import MedicalLicensePreview from '../components/doctors/MedicalLicensePreview';
@@ -100,11 +101,7 @@ export default function DoctorsPage() {
     {
       header: t('common.status'),
       accessorKey: 'verificationStatus',
-      cell: ({ row }) => {
-        const status = row.original.verificationStatus;
-        const variants = { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' };
-        return <Badge variant={variants[status]}>{t(`status.${status.toLowerCase()}`) || status}</Badge>;
-      },
+      cell: ({ row }) => <StatusBadge status={row.original.verificationStatus} />,
       meta: {
         exportValue: (row) =>
           t(`status.${row.verificationStatus?.toLowerCase()}`) || row.verificationStatus,
@@ -173,7 +170,7 @@ export default function DoctorsPage() {
             });
           }}
           onEdit={openEdit}
-          onView={(item) => navigate(`/doctors/${item.id}`)}
+          onView={(item) => navigate(`/doctors/${item.id}/summary`)}
           onDelete={async (doc) => {
             if (await confirmDelete({ text: doc.user?.fullName })) deleteMutation.mutate(doc.id);
           }}
