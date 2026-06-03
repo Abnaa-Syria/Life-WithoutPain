@@ -5,8 +5,14 @@ const logger = require('./config/logger');
 const prisma = require('./config/database');
 const { initSocket } = require('./socket');
 
+const { initI18n } = require('./i18n');
+const { configureZodErrorMap } = require('./i18n/zodErrorMap');
+
 const startServer = async () => {
   try {
+    await initI18n();
+    configureZodErrorMap();
+
     await prisma.$connect();
     logger.info({ msg: 'Database connected successfully' });
 

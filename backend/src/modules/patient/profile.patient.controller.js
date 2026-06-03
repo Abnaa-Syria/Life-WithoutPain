@@ -26,7 +26,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     identityNumber,
   });
   const updated = await PatientService.getProfile(req.user.id);
-  return successResponse(res, { data: mapPatientProfile(updated), message: 'Profile updated' });
+  return successResponse(res, { data: mapPatientProfile(updated), messageKey: 'PROFILE_UPDATED' });
 });
 
 module.exports = { getProfile, updateProfile };

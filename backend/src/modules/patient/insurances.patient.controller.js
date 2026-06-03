@@ -31,12 +31,12 @@ const update = asyncHandler(async (req, res) => {
     attachmentUrl,
     isPrimary: req.body.isPrimary,
   });
-  return successResponse(res, { data: mapInsurance(data), message: 'Insurance updated' });
+  return successResponse(res, { data: mapInsurance(data), messageKey: 'INSURANCE_UPDATED' });
 });
 
 const remove = asyncHandler(async (req, res) => {
   await PatientService.deleteInsurance(req.user.id, parseInt(req.params.id, 10));
-  return successResponse(res, { message: 'Insurance removed' });
+  return successResponse(res, { messageKey: 'INSURANCE_REMOVED' });
 });
 
 module.exports = { list, create, update, remove };

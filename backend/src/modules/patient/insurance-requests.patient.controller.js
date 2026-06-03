@@ -21,7 +21,7 @@ class InsuranceRequestsPatientController {
     const row = await InsuranceCaseService.getById(req.params.id);
     if (row.patientId !== patientId) {
       const { NotFoundError } = require('../../shared/errors/AppError');
-      throw new NotFoundError('Insurance request not found');
+      throw new NotFoundError('INSURANCE_REQUEST_NOT_FOUND');
     }
     return successResponse(res, { data: mapInsuranceCase(row, { detailed: true }) });
   });

@@ -19,7 +19,7 @@ const fileFilter = (allowedTypes) => (req, file, cb) => {
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new BadRequestError(`File type ${file.mimetype} is not allowed`), false);
+    cb(new BadRequestError('FILE_TYPE_NOT_ALLOWED', { mimetype: file.mimetype }), false);
   }
 };
 

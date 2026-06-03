@@ -20,12 +20,12 @@ const getById = asyncHandler(async (req, res) => {
 
 const create = asyncHandler(async (req, res) => {
   const data = await HomeServiceService.createForPatient(req.user.id, req.body);
-  return createdResponse(res, { data: mapHomeServiceRequestDetail(data), message: 'Home service request submitted' });
+  return createdResponse(res, { data: mapHomeServiceRequestDetail(data), messageKey: 'HOME_SERVICE_SUBMITTED' });
 });
 
 const cancel = asyncHandler(async (req, res) => {
   const data = await HomeServiceService.cancelForPatient(req.user.id, req.params.id, req.body);
-  return successResponse(res, { data: mapHomeServiceRequestDetail(data), message: 'Home service request cancelled' });
+  return successResponse(res, { data: mapHomeServiceRequestDetail(data), messageKey: 'HOME_SERVICE_CANCELLED' });
 });
 
 module.exports = { list, getById, create, cancel };

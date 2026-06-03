@@ -10,7 +10,7 @@ router.get('/', asyncHandler(async (req, res) => {
 
 router.patch('/', asyncHandler(async (req, res) => {
   const data = await PatientService.updateSettings(req.user.id, req.body);
-  return successResponse(res, { data, message: 'Settings updated' });
+  return successResponse(res, { data, messageKey: 'SETTINGS_UPDATED' });
 }));
 
 module.exports = router;

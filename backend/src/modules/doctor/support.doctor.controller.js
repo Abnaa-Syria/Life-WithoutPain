@@ -34,7 +34,7 @@ const createTicket = asyncHandler(async (req, res) => {
   });
   return createdResponse(res, {
     data: mapTicketDetail(ticket, 0),
-    message: 'Support ticket created',
+    messageKey: 'SUPPORT_TICKET_CREATED',
   });
 });
 
@@ -55,7 +55,7 @@ const addMessage = asyncHandler(async (req, res) => {
     body: req.body,
     files: req.files,
   });
-  return createdResponse(res, { data: mapMessage(data), message: 'Message sent' });
+  return createdResponse(res, { data: mapMessage(data), messageKey: 'MESSAGE_SENT' });
 });
 
 module.exports = {

@@ -3,6 +3,8 @@ const prisma = require('../../config/database');
 const { ROLES, ADMIN_ROLES } = require('../../constants');
 const { BadRequestError, NotFoundError } = require('../../shared/errors/AppError');
 const NotificationService = require('../../shared/notifications/NotificationService');
+const TranslationRepository = require('../../i18n/TranslationRepository');
+const { pickLocalized } = require('../../i18n/mapLocalized');
 const { buildPagination } = require('../../utils/pagination');
 
 const AUDIENCE_PATIENT = 'PATIENT';
@@ -15,12 +17,12 @@ async function resolveRecipientUserIds({ userId, targetAudience }) {
       where: { id: parseInt(userId, 10), deletedAt: null },
       select: { id: true },
     });
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError('USER_NOT_FOUND');
     return { userIds: [user.id], audience: `USER:${user.id}` };
   }
 
   if (!targetAudience) {
-    throw new BadRequestError('Provide userId or targetAudience');
+    throw new BadRequestError('NOTIFICATION_TARGET_REQUIRED');
   }
 
   if (targetAudience === AUDIENCE_PATIENT) {
@@ -50,7 +52,7 @@ async function resolveRecipientUserIds({ userId, targetAudience }) {
   if (targetAudience.startsWith('ROLE:')) {
     const role = targetAudience.slice(5);
     if (!Object.values(ROLES).includes(role)) {
-      throw new BadRequestError('Invalid role in targetAudience');
+      throw new BadRequestError('NOTIFICATION_TARGET_AUDIENCE_INVALID');
     }
     const users = await prisma.user.findMany({
       where: { role, deletedAt: null, status: 'ACTIVE' },
@@ -59,7 +61,7 @@ async function resolveRecipientUserIds({ userId, targetAudience }) {
     return { userIds: users.map((u) => u.id), audience: targetAudience };
   }
 
-  throw new BadRequestError('Invalid targetAudience');
+  throw new BadRequestError('INVALID_TARGET_AUDIENCE');
 }
 
 class NotificationsAdminService {
@@ -79,7 +81,8 @@ class NotificationsAdminService {
     });
 
     const total = await prisma.notification.count({ where });
-    return { data: rows, total, page, limit };
+    const data = await NotificationService.enrichNotifications(rows);
+    return { data, total, page, limit };
   }
 
   static async getManual(id) {
@@ -90,8 +93,8 @@ class NotificationsAdminService {
         createdByAdmin: { select: { id: true, fullName: true } },
       },
     });
-    if (!notification) throw new NotFoundError('Manual notification not found');
-    return notification;
+    if (!notification) throw new NotFoundError('MANUAL_NOTIFICATION_NOT_FOUND');
+    return NotificationService.enrichNotification(notification);
   }
 
   static async sendManual(adminId, body) {
@@ -106,12 +109,12 @@ class NotificationsAdminService {
     } = body;
 
     if (!titleAr || !titleEn || !bodyAr || !bodyEn) {
-      throw new BadRequestError('Bilingual title and body are required');
+      throw new BadRequestError('NOTIFICATION_BILINGUAL_REQUIRED');
     }
 
     const { userIds, audience } = await resolveRecipientUserIds({ userId, targetAudience });
     if (!userIds.length) {
-      throw new BadRequestError('No recipients found for the selected audience');
+      throw new BadRequestError('NOTIFICATION_NO_RECIPIENTS');
     }
 
     const batchId = randomUUID();
@@ -139,19 +142,27 @@ class NotificationsAdminService {
       : { id: original.id };
 
     const siblings = await prisma.notification.findMany({ where });
+    const translationMap = await TranslationRepository.loadForEntities(
+      'notification',
+      siblings.map((n) => n.id),
+    );
     const batchId = randomUUID();
-    const payloads = siblings.map((n) => ({
-      userId: n.userId,
-      titleAr: n.titleAr,
-      titleEn: n.titleEn,
-      bodyAr: n.bodyAr,
-      bodyEn: n.bodyEn,
-      type: n.type,
-      source: 'ADMIN_MANUAL',
-      targetAudience: n.targetAudience,
-      createdByAdminId: adminId,
-      batchId,
-    }));
+    const payloads = siblings.map((n) => {
+      const tr = translationMap.get(n.id) || {};
+      return {
+        userId: n.userId,
+        translations: tr,
+        titleAr: pickLocalized(tr, 'ar', 'title'),
+        titleEn: pickLocalized(tr, 'en', 'title'),
+        bodyAr: pickLocalized(tr, 'ar', 'body'),
+        bodyEn: pickLocalized(tr, 'en', 'body'),
+        type: n.type,
+        source: 'ADMIN_MANUAL',
+        targetAudience: n.targetAudience,
+        createdByAdminId: adminId,
+        batchId,
+      };
+    });
 
     const result = await NotificationService.createBulk(payloads);
     return { batchId, count: result?.count ?? 0 };

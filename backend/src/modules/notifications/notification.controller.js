@@ -15,12 +15,12 @@ class NotificationController {
 
   static markRead = asyncHandler(async (req, res) => {
     await NotificationService.markRead(req.params.id, req.user.id);
-    return successResponse(res, { data: null, message: 'Notification marked as read' });
+    return successResponse(res, { data: null, messageKey: 'NOTIFICATION_READ' });
   });
 
   static markAllRead = asyncHandler(async (req, res) => {
     await NotificationService.markAllRead(req.user.id, req.user.permissions, req.user.role);
-    return successResponse(res, { data: null, message: 'All notifications marked as read' });
+    return successResponse(res, { data: null, messageKey: 'NOTIFICATIONS_READ_ALL' });
   });
 
   static unreadCount = asyncHandler(async (req, res) => {

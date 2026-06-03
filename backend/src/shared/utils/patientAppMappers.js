@@ -1,4 +1,5 @@
 const config = require('../../config');
+const { mapEntityForApi, pickLocalized } = require('../../i18n/mapLocalized');
 
 function getAppointmentDateTime(appointment) {
   const date = new Date(appointment.appointmentDate);
@@ -36,7 +37,11 @@ function mapInsurance(insurance) {
   return {
     id: insurance.id,
     insuranceCompany: insurance.provider
-      ? { id: insurance.provider.id, nameAr: insurance.provider.nameAr, nameEn: insurance.provider.nameEn, logoUrl: insurance.provider.logoUrl }
+      ? {
+          id: insurance.provider.id,
+          name: insurance.provider.name ?? insurance.provider.code ?? null,
+          logoUrl: insurance.provider.logoUrl,
+        }
       : null,
     labelNumber: insurance.policyNumber || insurance.memberId,
     memberId: insurance.memberId,
@@ -59,7 +64,10 @@ function mapInsuranceCase(insuranceCase, options = {}) {
     approvedAmount: approval?.approvedAmount ?? null,
     approvalStatus: approval?.approvalStatus ?? null,
     provider: insuranceCase.provider
-      ? { id: insuranceCase.provider.id, nameAr: insuranceCase.provider.nameAr, nameEn: insuranceCase.provider.nameEn }
+      ? {
+          id: insuranceCase.provider.id,
+          name: insuranceCase.provider.name ?? insuranceCase.provider.code ?? null,
+        }
       : null,
     submittedAt: insuranceCase.submittedAt,
     resolvedAt: insuranceCase.resolvedAt,
@@ -95,14 +103,13 @@ function mapInsuranceCase(insuranceCase, options = {}) {
   };
 }
 
-function mapSubSpecializationItem(item) {
+function mapSubSpecializationItem(item, locale = 'en', translationMap = null) {
+  const translations = translationMap?.get?.(item.id) || {};
   return {
     id: item.id,
     specialityId: item.specialityId,
-    nameAr: item.nameAr,
-    nameEn: item.nameEn,
-    descriptionAr: item.descriptionAr ?? null,
-    descriptionEn: item.descriptionEn ?? null,
+    name: item.name ?? pickLocalized(translations, locale, 'name'),
+    description: item.description ?? pickLocalized(translations, locale, 'description'),
   };
 }
 
@@ -110,18 +117,18 @@ function mapSpecialization(speciality) {
   if (!speciality) return null;
   return {
     id: speciality.id,
-    nameAr: speciality.nameAr,
-    nameEn: speciality.nameEn,
-    descriptionAr: speciality.descriptionAr ?? null,
-    descriptionEn: speciality.descriptionEn ?? null,
+    name: speciality.name ?? null,
+    description: speciality.description ?? null,
     iconUrl: speciality.iconUrl ?? null,
   };
 }
 
-function mapSpecializationWithSubs(speciality) {
+function mapSpecializationWithSubs(speciality, locale = 'en', subTranslationMap = null) {
   return {
     ...mapSpecialization(speciality),
-    subSpecializations: (speciality.subSpecialities || []).map(mapSubSpecializationItem),
+    subSpecializations: (speciality.subSpecialities || []).map((sub) =>
+      mapSubSpecializationItem(sub, locale, subTranslationMap),
+    ),
   };
 }
 
@@ -185,7 +192,7 @@ function mapAppointmentListItem(appointment) {
     paymentStatus: appointment.paymentStatus,
     doctorName: doctor?.user?.fullName || null,
     specializations: speciality
-      ? [{ id: speciality.id, nameAr: speciality.nameAr, nameEn: speciality.nameEn }]
+      ? [{ id: speciality.id, name: speciality.name ?? null }]
       : [],
     appointmentDate: appointment.appointmentDate,
     startTime: appointment.startTime,
@@ -194,7 +201,7 @@ function mapAppointmentListItem(appointment) {
     status: appointment.status,
     isComing: isComingAppointment(appointment),
     service: appointment.service
-      ? { id: appointment.service.id, nameAr: appointment.service.nameAr, nameEn: appointment.service.nameEn, type: appointment.service.type }
+      ? { id: appointment.service.id, name: appointment.service.name ?? null, type: appointment.service.type }
       : null,
     familyMemberId: appointment.familyMemberId,
   };
@@ -380,11 +387,10 @@ function mapTimelineItem(recordType, item) {
 }
 
 function mapNotificationForPatient(notification, language = 'ar') {
-  const useAr = language === 'ar';
   return {
     id: notification.id,
-    title: useAr ? notification.titleAr : notification.titleEn,
-    body: useAr ? notification.bodyAr : notification.bodyEn,
+    title: notification.title ?? pickLocalized(notification._translations, language, 'title'),
+    body: notification.body ?? pickLocalized(notification._translations, language, 'body'),
     type: notification.type,
     isRead: notification.isRead,
     createdAt: notification.createdAt,
@@ -399,9 +405,9 @@ function mapBookingListItem(item) {
 function mapCatalogItem(item) {
   return {
     id: item.id,
-    nameAr: item.nameAr,
-    nameEn: item.nameEn,
+    name: item.name ?? null,
     description: item.description ?? null,
+    category: item.category ?? null,
   };
 }
 
@@ -426,8 +432,7 @@ function mapHomeServiceRequestListItem(request) {
     service: request.service
       ? {
           id: request.service.id,
-          nameAr: request.service.nameAr,
-          nameEn: request.service.nameEn,
+          name: request.service.name ?? null,
           type: request.service.type,
         }
       : null,

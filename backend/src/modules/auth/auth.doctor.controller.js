@@ -23,28 +23,28 @@ const verifyOtp = asyncHandler(async (req, res) => {
   const data = await AuthService.verifyOtpByMobile(req.body);
   return successResponse(res, {
     data: { accessToken: data.accessToken, doctor: data.user },
-    message: 'OTP verified',
+    messageKey: 'OTP_VERIFIED',
   });
 });
 
 const login = asyncHandler(async (req, res) => {
   const data = await AuthService.loginByMobile(req.body, req);
-  return successResponse(res, { data, message: 'Login successful' });
+  return successResponse(res, { data, messageKey: 'LOGIN_SUCCESS' });
 });
 
 const getMe = asyncHandler(async (req, res) => {
   const result = await AuthService.getProfile(req.user.id);
-  return successResponse(res, { data: result, message: 'Profile fetched successfully' });
+  return successResponse(res, { data: result, messageKey: 'PROFILE_FETCHED' });
 });
 
 const deleteAccount = asyncHandler(async (req, res) => {
   const result = await AuthService.deleteAccount(req.user.id);
-  return successResponse(res, { data: result, message: 'Account deleted successfully' });
+  return successResponse(res, { data: result, messageKey: 'ACCOUNT_DELETED' });
 });
 
 const logout = asyncHandler(async (req, res) => {
   const result = await AuthService.logout(req.user.id, req.body.refreshToken);
-  return successResponse(res, { data: result, message: 'Logged out successfully' });
+  return successResponse(res, { data: result, messageKey: 'LOGOUT_SUCCESS' });
 });
 
 module.exports = { register, verifyOtp, login, getMe, deleteAccount, logout };

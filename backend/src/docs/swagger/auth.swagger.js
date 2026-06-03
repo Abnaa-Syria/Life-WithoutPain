@@ -150,4 +150,27 @@
  *     responses:
  *       200:
  *         description: Current user profile
+ *
+ * /auth/preferred-language:
+ *   patch:
+ *     tags: [Auth]
+ *     summary: Update preferred language for the authenticated user
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Accept-Language
+ *         schema: { type: string, example: ar }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [preferredLanguage]
+ *             properties:
+ *               preferredLanguage: { type: string, enum: [ar, en] }
+ *     responses:
+ *       200:
+ *         description: Preferred language updated
  */

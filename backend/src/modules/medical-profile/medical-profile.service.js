@@ -5,12 +5,13 @@
 const prisma = require('../../config/database');
 const { NotFoundError, BadRequestError } = require('../../shared/errors/AppError');
 const { mapMedicalProfile, mapMedicalProfileAttachment } = require('../../shared/utils/patientAppMappers');
+const { enrichMedicalProfile } = require('../../i18n/enrichRelations');
 const { deleteStoredFile } = require('./medical-profile.storage');
 
 const MEDICAL_PROFILE_INCLUDE = {
-  chronicDiseases: { where: { isActive: true }, orderBy: { nameEn: 'asc' } },
-  medications: { where: { isActive: true }, orderBy: { nameEn: 'asc' } },
-  allergies: { where: { isActive: true }, orderBy: { nameEn: 'asc' } },
+  chronicDiseases: { where: { isActive: true }, orderBy: { id: 'asc' } },
+  medications: { where: { isActive: true }, orderBy: { id: 'asc' } },
+  allergies: { where: { isActive: true }, orderBy: { id: 'asc' } },
   attachments: { orderBy: { createdAt: 'desc' } },
 };
 
@@ -32,7 +33,7 @@ async function validateCatalogIds(ids, model, label) {
     where: { id: { in: uniqueIds }, isActive: true },
   });
   if (count !== uniqueIds.length) {
-    throw new BadRequestError(`One or more ${label} IDs are invalid or inactive`);
+    throw new BadRequestError('CATALOG_IDS_INVALID', { label });
   }
 }
 
@@ -57,6 +58,11 @@ function mapAttachmentRows(attachments) {
   return attachments.map(mapMedicalProfileAttachment);
 }
 
+async function mapLocalizedMedicalProfile(profilePromise) {
+  const profile = await profilePromise;
+  return mapMedicalProfile(await enrichMedicalProfile(profile));
+}
+
 class MedicalProfileService {
   static async ensureMedicalProfile(patientId) {
     let profile = await prisma.medicalProfile.findUnique({
@@ -74,22 +80,20 @@ class MedicalProfileService {
 
   static async getByUserId(userId) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
-    const profile = await this.ensureMedicalProfile(patient.id);
-    return mapMedicalProfile(profile);
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
+    return mapLocalizedMedicalProfile(this.ensureMedicalProfile(patient.id));
   }
 
   static async getByPatientId(patientId) {
     const patient = await prisma.patientProfile.findUnique({ where: { id: patientId } });
-    if (!patient) throw new NotFoundError('Patient not found');
-    const profile = await this.ensureMedicalProfile(patientId);
-    return mapMedicalProfile(profile);
+    if (!patient) throw new NotFoundError('PATIENT_NOT_FOUND');
+    return mapLocalizedMedicalProfile(this.ensureMedicalProfile(patientId));
   }
 
   static async updateByUserId(userId, data) {
     rejectLegacyFields(data);
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     return this.updateByPatientId(patient.id, data);
   }
 
@@ -110,12 +114,12 @@ class MedicalProfileService {
       create: { patientId, ...relationUpdate },
     });
 
-    return mapMedicalProfile(await this.ensureMedicalProfile(patientId));
+    return mapLocalizedMedicalProfile(this.ensureMedicalProfile(patientId));
   }
 
   static async listAttachmentsByUserId(userId) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     return this.listAttachmentsByPatientId(patient.id);
   }
 
@@ -130,12 +134,12 @@ class MedicalProfileService {
 
   static async addAttachmentsByUserId(userId, files, titles = []) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     return this.addAttachmentsByPatientId(patient.id, files, titles);
   }
 
   static async addAttachmentsByPatientId(patientId, files, titles = []) {
-    if (!files?.length) throw new BadRequestError('At least one file is required');
+    if (!files?.length) throw new BadRequestError('FILES_REQUIRED');
 
     const profile = await this.ensureMedicalProfile(patientId);
 
@@ -157,13 +161,13 @@ class MedicalProfileService {
 
   static async deleteAttachmentByUserId(userId, attachmentId) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     return this.deleteAttachmentByPatientId(patient.id, attachmentId);
   }
 
   static async addCatalogItemByUserId(userId, field, catalogId) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     return this.addCatalogItemByPatientId(patient.id, field, catalogId);
   }
 
@@ -175,25 +179,25 @@ class MedicalProfileService {
       medications: { model: 'medication', connect: 'medications' },
     };
     const config = modelMap[field];
-    if (!config) throw new BadRequestError('Invalid catalog field');
+    if (!config) throw new BadRequestError('INVALID_CATALOG_FIELD');
 
     await validateCatalogIds([id], config.model, field.slice(0, -1));
 
     const existing = profile[config.connect] || [];
     if (existing.some((item) => item.id === id)) {
-      return mapMedicalProfile(await this.ensureMedicalProfile(patientId));
+      return mapLocalizedMedicalProfile(this.ensureMedicalProfile(patientId));
     }
 
     await prisma.medicalProfile.update({
       where: { id: profile.id },
       data: { [config.connect]: { connect: { id } } },
     });
-    return mapMedicalProfile(await this.ensureMedicalProfile(patientId));
+    return mapLocalizedMedicalProfile(this.ensureMedicalProfile(patientId));
   }
 
   static async removeCatalogItemByUserId(userId, field, catalogId) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     return this.removeCatalogItemByPatientId(patient.id, field, catalogId);
   }
 
@@ -202,23 +206,23 @@ class MedicalProfileService {
     const id = parseInt(catalogId, 10);
     const connectMap = { chronicDiseases: 'chronicDiseases', medications: 'medications' };
     const connect = connectMap[field];
-    if (!connect) throw new BadRequestError('Invalid catalog field');
+    if (!connect) throw new BadRequestError('INVALID_CATALOG_FIELD');
 
     await prisma.medicalProfile.update({
       where: { id: profile.id },
       data: { [connect]: { disconnect: { id } } },
     });
-    return mapMedicalProfile(await this.ensureMedicalProfile(patientId));
+    return mapLocalizedMedicalProfile(this.ensureMedicalProfile(patientId));
   }
 
   static async deleteAttachmentByPatientId(patientId, attachmentId) {
     const profile = await prisma.medicalProfile.findUnique({ where: { patientId } });
-    if (!profile) throw new NotFoundError('Medical profile not found');
+    if (!profile) throw new NotFoundError('MEDICAL_PROFILE_NOT_FOUND');
 
     const attachment = await prisma.medicalProfileAttachment.findFirst({
       where: { id: attachmentId, medicalProfileId: profile.id },
     });
-    if (!attachment) throw new NotFoundError('Attachment not found');
+    if (!attachment) throw new NotFoundError('ATTACHMENT_NOT_FOUND');
 
     await deleteStoredFile(attachment.fileUrl);
     await prisma.medicalProfileAttachment.delete({ where: { id: attachmentId } });

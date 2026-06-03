@@ -4,7 +4,7 @@ const { asyncHandler } = require('../../utils/helpers');
 
 const create = asyncHandler(async (req, res) => {
   const data = await PrescriptionService.createForDoctor(req.user.id, req.body);
-  return createdResponse(res, { data, message: 'Prescription created' });
+  return createdResponse(res, { data, messageKey: 'PRESCRIPTION_CREATED' });
 });
 
 const getOne = asyncHandler(async (req, res) => {

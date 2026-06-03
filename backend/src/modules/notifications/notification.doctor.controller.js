@@ -18,7 +18,7 @@ const list = asyncHandler(async (req, res) => {
 
 const markRead = asyncHandler(async (req, res) => {
   const data = await NotificationService.markRead(req.params.id, req.user.id);
-  return successResponse(res, { data, message: 'Notification marked as read' });
+  return successResponse(res, { data, messageKey: 'NOTIFICATION_READ' });
 });
 
 module.exports = { list, markRead };

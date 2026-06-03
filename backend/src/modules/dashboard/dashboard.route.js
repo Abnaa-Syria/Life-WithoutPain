@@ -50,12 +50,11 @@ router.get('/', guard('dashboard.view', ...ADMIN_ROLES), asyncHandler(async (req
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().split('T')[0];
-    const name = d.toLocaleDateString('en-US', { weekday: 'short' });
     const count = recentAppts.filter(a => {
       if (!a.appointmentDate) return false;
       return a.appointmentDate.toISOString().split('T')[0] === dateStr;
     }).length;
-    appointmentData.push({ name, value: count });
+    appointmentData.push({ periodStart: dateStr, count });
   }
 
   const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
@@ -66,11 +65,11 @@ router.get('/', guard('dashboard.view', ...ADMIN_ROLES), asyncHandler(async (req
   const revenueData = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-    const name = d.toLocaleDateString('en-US', { month: 'short' });
+    const periodStart = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
     const sum = recentPayments
       .filter(p => p.paidAt && p.paidAt.getFullYear() === d.getFullYear() && p.paidAt.getMonth() === d.getMonth())
       .reduce((acc, curr) => acc + Number(curr.amount), 0);
-    revenueData.push({ name, value: sum });
+    revenueData.push({ periodStart, amount: sum });
   }
 
   return successResponse(res, {

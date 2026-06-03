@@ -20,7 +20,7 @@ async function resolveDoctorProfile(userId) {
       speciality: true,
     },
   });
-  if (!profile) throw new NotFoundError('Doctor profile not found');
+  if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
   return { doctorId: profile.id, profile };
 }
 
@@ -28,27 +28,27 @@ async function assertDoctorOwnsAppointment(doctorId, appointmentId) {
   const appointment = await prisma.appointment.findUnique({
     where: { id: parseInt(appointmentId) },
   });
-  if (!appointment) throw new NotFoundError('Appointment not found');
+  if (!appointment) throw new NotFoundError('APPOINTMENT_NOT_FOUND');
   if (appointment.doctorId !== doctorId) {
-    throw new ForbiddenError('You do not have access to this appointment');
+    throw new ForbiddenError('APPOINTMENT_ACCESS_DENIED');
   }
   return appointment;
 }
 
 async function assertDoctorOwnsPrescription(doctorId, prescriptionId) {
   const rx = await prisma.prescription.findUnique({ where: { id: parseInt(prescriptionId) } });
-  if (!rx) throw new NotFoundError('Prescription not found');
+  if (!rx) throw new NotFoundError('PRESCRIPTION_NOT_FOUND');
   if (rx.doctorId !== doctorId) {
-    throw new ForbiddenError('You do not have access to this prescription');
+    throw new ForbiddenError('PRESCRIPTION_ACCESS_DENIED');
   }
   return rx;
 }
 
 async function assertDoctorOwnsReport(doctorId, reportId) {
   const report = await prisma.medicalReport.findUnique({ where: { id: parseInt(reportId) } });
-  if (!report) throw new NotFoundError('Report not found');
+  if (!report) throw new NotFoundError('REPORT_NOT_FOUND');
   if (report.doctorId !== doctorId) {
-    throw new ForbiddenError('You do not have access to this report');
+    throw new ForbiddenError('REPORT_ACCESS_DENIED');
   }
   return report;
 }
@@ -57,7 +57,7 @@ async function assertDoctorHasPatient(doctorId, patientId) {
   const link = await prisma.appointment.findFirst({
     where: { doctorId, patientId: parseInt(patientId, 10) },
   });
-  if (!link) throw new ForbiddenError('You do not have access to this patient');
+  if (!link) throw new ForbiddenError('PATIENT_ACCESS_DENIED');
 }
 
 async function resolveDoctorAppointmentContext(doctorId, body) {
@@ -87,7 +87,7 @@ async function resolveDoctorAppointmentContext(doctorId, body) {
       });
     }
     if (!appointment) {
-      throw new BadRequestError('No appointment found for this doctor to attach the record');
+      throw new BadRequestError('DOCTOR_ATTACH_NO_APPOINTMENT');
     }
     patientId = appointment.patientId;
     appointmentId = appointment.id;
@@ -97,7 +97,7 @@ async function resolveDoctorAppointmentContext(doctorId, body) {
     where: { id: appointmentId, doctorId, patientId },
   });
   if (!appointment) {
-    throw new BadRequestError('Appointment not found for this doctor and patient');
+    throw new BadRequestError('DOCTOR_PATIENT_APPOINTMENT_NOT_FOUND');
   }
 
   return { patientId, appointmentId, appointment };

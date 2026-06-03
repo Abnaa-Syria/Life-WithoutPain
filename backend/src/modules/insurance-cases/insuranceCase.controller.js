@@ -20,27 +20,27 @@ class InsuranceCaseController {
 
   static approve = asyncHandler(async (req, res) => {
     const data = await InsuranceCaseService.approve(req.params.id, req.body, req.user.id, req);
-    return successResponse(res, { data, message: 'Insurance case approved' });
+    return successResponse(res, { data, messageKey: 'INSURANCE_CASE_APPROVED' });
   });
 
   static reject = asyncHandler(async (req, res) => {
     const data = await InsuranceCaseService.reject(req.params.id, req.body, req.user.id, req);
-    return successResponse(res, { data, message: 'Insurance case rejected' });
+    return successResponse(res, { data, messageKey: 'INSURANCE_CASE_REJECTED' });
   });
 
   static requestInfo = asyncHandler(async (req, res) => {
     const data = await InsuranceCaseService.requestInfo(req.params.id, req.body, req.user.id, req);
-    return successResponse(res, { data, message: 'More information requested' });
+    return successResponse(res, { data, messageKey: 'INSURANCE_MORE_INFO' });
   });
 
   static updateApproval = asyncHandler(async (req, res) => {
     const data = await InsuranceCaseService.updateApproval(req.params.id, req.body, req.user.id, req);
-    return successResponse(res, { data, message: 'Insurance approval updated' });
+    return successResponse(res, { data, messageKey: 'INSURANCE_APPROVAL_UPDATED' });
   });
 
   static escalate = asyncHandler(async (req, res) => {
     const data = await InsuranceCaseService.escalate(req.params.id, req.body, req.user.id, req);
-    return successResponse(res, { data, message: 'Case escalated' });
+    return successResponse(res, { data, messageKey: 'CASE_ESCALATED' });
   });
 
   static addNote = asyncHandler(async (req, res) => {

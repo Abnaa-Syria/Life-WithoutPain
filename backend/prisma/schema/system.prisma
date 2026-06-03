@@ -213,10 +213,6 @@ model DoctorPayout {
 model Notification {
   id                Int                @id @default(autoincrement())
   userId            Int
-  titleAr           String             @db.VarChar(500)
-  titleEn           String             @db.VarChar(500)
-  bodyAr            String             @db.Text
-  bodyEn            String             @db.Text
   type              NotificationType
   source            NotificationSource @default(SYSTEM_EVENT)
   targetAudience    String?            @db.VarChar(100)

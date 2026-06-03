@@ -31,7 +31,7 @@ class SettingController {
 
   static delete = asyncHandler(async (req, res) => {
     await SettingService.delete(req.params.id);
-    return successResponse(res, { data: null, message: 'Setting deleted' });
+    return successResponse(res, { data: null, messageKey: 'SETTING_DELETED' });
   });
 }
 

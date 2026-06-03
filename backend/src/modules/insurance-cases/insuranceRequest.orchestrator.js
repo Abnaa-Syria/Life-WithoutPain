@@ -51,8 +51,7 @@ function mapRequestType(appointmentType, serviceType) {
 }
 
 function procedureLabel(appointment, service) {
-  if (service?.nameEn) return service.nameEn;
-  if (service?.nameAr) return service.nameAr;
+  if (service?.name) return service.name;
   return appointment?.appointmentType || 'Consultation';
 }
 

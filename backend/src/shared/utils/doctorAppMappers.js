@@ -74,7 +74,7 @@ function mapPatientDetail(patient, extras = {}) {
 function mapNotification(n) {
   return {
     id: String(n.id),
-    title: n.titleAr || n.titleEn || n.title,
+    title: n.title ?? n.titleAr ?? n.titleEn,
     type: n.type,
     createdAt: n.createdAt,
     isRead: n.isRead,
@@ -84,7 +84,7 @@ function mapNotification(n) {
 function mapSpecializations(items) {
   return items.map((s) => ({
     id: String(s.id),
-    name: s.nameEn || s.nameAr,
+    name: s.name ?? s.nameEn ?? s.nameAr,
   }));
 }
 

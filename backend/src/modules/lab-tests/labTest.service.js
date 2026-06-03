@@ -49,7 +49,7 @@ class LabTestService {
         doctor: { include: { user: { select: { fullName: true } } } },
       },
     });
-    if (!data) throw new NotFoundError('Lab test not found');
+    if (!data) throw new NotFoundError('LAB_TEST_NOT_FOUND');
     return data;
   }
 
@@ -57,7 +57,7 @@ class LabTestService {
     const normalized = String(status || '').trim().toUpperCase();
     const allowed = ['REQUESTED', 'SAMPLE_COLLECTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
     if (!allowed.includes(normalized)) {
-      throw new BadRequestError(`Invalid lab test status: ${status}`);
+      throw new BadRequestError('LAB_TEST_STATUS_INVALID', { status });
     }
     return LabTestRepository.update({ where: { id: parseInt(id) }, data: { status: normalized } });
   }
@@ -74,7 +74,7 @@ class LabTestService {
         orderBy: [{ appointmentDate: 'desc' }, { id: 'desc' }],
       });
       if (!appointment) {
-        throw new BadRequestError('No appointment found for this doctor to attach the lab test');
+        throw new BadRequestError('LAB_TEST_ATTACH_NO_APPOINTMENT');
       }
       patientId = appointment.patientId;
       appointmentId = appointment.id;
@@ -111,7 +111,7 @@ class LabTestService {
     const { doctorId } = await resolveDoctorProfile(userId);
     const labTest = await this.getById(id);
     if (labTest.doctorId !== doctorId) {
-      throw new ForbiddenError('You do not have access to this lab test');
+      throw new ForbiddenError('LAB_TEST_ACCESS_DENIED');
     }
     return labTest;
   }
@@ -120,7 +120,7 @@ class LabTestService {
     const { doctorId } = await resolveDoctorProfile(userId);
     const labTest = await this.getById(id);
     if (labTest.doctorId !== doctorId) {
-      throw new ForbiddenError('You do not have access to this lab test');
+      throw new ForbiddenError('LAB_TEST_ACCESS_DENIED');
     }
     return this.updateStatus(id, status);
   }
@@ -129,7 +129,7 @@ class LabTestService {
     const { doctorId } = await resolveDoctorProfile(userId);
     const labTest = await this.getById(labTestRequestId);
     if (labTest.doctorId !== doctorId) {
-      throw new ForbiddenError('You do not have access to this lab test');
+      throw new ForbiddenError('LAB_TEST_ACCESS_DENIED');
     }
     return this.uploadResult(labTestRequestId, userId, fileUrl, notes);
   }
@@ -138,7 +138,7 @@ class LabTestService {
     const { doctorId } = await resolveDoctorProfile(userId);
     const labTest = await this.getById(labTestRequestId);
     if (labTest.doctorId !== doctorId) {
-      throw new ForbiddenError('You do not have access to this lab test');
+      throw new ForbiddenError('LAB_TEST_ACCESS_DENIED');
     }
     return this.getResults(labTestRequestId);
   }
@@ -166,7 +166,7 @@ class LabTestService {
   static async getPdfForPatient(labTestRequestId) {
     const results = await this.getResults(labTestRequestId);
     const latest = results.find((r) => r.fileUrl);
-    if (!latest?.fileUrl) throw new NotFoundError('Lab test PDF not available');
+    if (!latest?.fileUrl) throw new NotFoundError('LAB_TEST_PDF_NOT_AVAILABLE');
     return latest.fileUrl;
   }
 }

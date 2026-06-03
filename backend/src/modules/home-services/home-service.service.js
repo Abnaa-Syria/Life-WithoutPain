@@ -2,6 +2,7 @@ const prisma = require('../../config/database');
 const { NotFoundError, BadRequestError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
 const { resolvePatientProfile } = require('../../shared/utils/patientAppContext');
+const { enrichHomeServiceRequests } = require('../../i18n/enrichRelations');
 
 const HOME_SERVICE_INCLUDE = {
   service: true,
@@ -18,9 +19,9 @@ class HomeServiceService {
     const request = await prisma.homeServiceRequest.findUnique({
       where: { id: parseInt(requestId, 10) },
     });
-    if (!request) throw new NotFoundError('Home service request not found');
+    if (!request) throw new NotFoundError('HOME_SERVICE_NOT_FOUND');
     if (request.patientId !== patientId) {
-      throw new NotFoundError('Home service request not found');
+      throw new NotFoundError('HOME_SERVICE_NOT_FOUND');
     }
     return request;
   }
@@ -28,10 +29,10 @@ class HomeServiceService {
   static async validateHomeService(serviceId) {
     const service = await prisma.service.findUnique({ where: { id: serviceId } });
     if (!service || !service.isActive) {
-      throw new NotFoundError('Service not found');
+      throw new NotFoundError('SERVICE_NOT_FOUND');
     }
     if (service.type !== 'HOME') {
-      throw new BadRequestError('Service must be a home visit type. Use POST /patient/appointments for clinic or remote visits.');
+      throw new BadRequestError('SERVICE_NOT_HOME_VISIT');
     }
     return service;
   }
@@ -44,13 +45,13 @@ class HomeServiceService {
     if (requiresInsuranceApproval) {
       const policyCount = await prisma.patientInsurance.count({ where: { patientId } });
       if (!policyCount) {
-        throw new BadRequestError('Add an insurance policy before booking with medical insurance.');
+        throw new BadRequestError('INSURANCE_REQUIRED_BEFORE_BOOKING');
       }
     }
 
     const preferredDate = new Date(data.preferredDate);
     if (Number.isNaN(preferredDate.getTime())) {
-      throw new BadRequestError('Invalid preferredDate');
+      throw new BadRequestError('INVALID_PREFERRED_DATE');
     }
 
     const homeRequest = await prisma.homeServiceRequest.create({
@@ -72,16 +73,17 @@ class HomeServiceService {
         { ...homeRequest, service },
         { patientInsuranceId: data.patientInsuranceId },
       );
-      return prisma.homeServiceRequest.findUnique({
+      const created = await prisma.homeServiceRequest.findUnique({
         where: { id: homeRequest.id },
         include: {
           ...HOME_SERVICE_INCLUDE,
           insuranceCase: { include: { approvals: { orderBy: { createdAt: 'desc' }, take: 1 } } },
         },
       });
+      return enrichHomeServiceRequests(created);
     }
 
-    return homeRequest;
+    return enrichHomeServiceRequests(homeRequest);
   }
 
   static async listForPatient(userId, query) {
@@ -100,7 +102,7 @@ class HomeServiceService {
       }),
       prisma.homeServiceRequest.count({ where }),
     ]);
-    return { data, total, page, limit };
+    return { data: await enrichHomeServiceRequests(data), total, page, limit };
   }
 
   static async getByIdForPatient(userId, id) {
@@ -110,21 +112,21 @@ class HomeServiceService {
       where: { id: parseInt(id, 10) },
       include: HOME_SERVICE_INCLUDE,
     });
-    if (!request) throw new NotFoundError('Home service request not found');
-    return request;
+    if (!request) throw new NotFoundError('HOME_SERVICE_NOT_FOUND');
+    return enrichHomeServiceRequests(request);
   }
 
   static async cancelForPatient(userId, id, data = {}) {
     const { patientId } = await resolvePatientProfile(userId);
     const request = await this.assertPatientOwnsRequest(patientId, id);
     if (request.status === 'CANCELLED') {
-      throw new BadRequestError('Request is already cancelled');
+      throw new BadRequestError('HOME_SERVICE_ALREADY_CANCELLED');
     }
     if (request.status === 'COMPLETED') {
-      throw new BadRequestError('Cannot cancel a completed request');
+      throw new BadRequestError('HOME_SERVICE_CANNOT_CANCEL_COMPLETED');
     }
 
-    return prisma.homeServiceRequest.update({
+    const updated = await prisma.homeServiceRequest.update({
       where: { id: parseInt(id, 10) },
       data: {
         status: 'CANCELLED',
@@ -134,6 +136,7 @@ class HomeServiceService {
       },
       include: HOME_SERVICE_INCLUDE,
     });
+    return enrichHomeServiceRequests(updated);
   }
 }
 

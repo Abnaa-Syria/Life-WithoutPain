@@ -74,8 +74,6 @@ enum ReconciliationStatus {
 
 model InsuranceProvider {
   id        Int             @id @default(autoincrement())
-  nameAr    String          @db.VarChar(255)
-  nameEn    String          @db.VarChar(255)
   code      String          @unique @db.VarChar(50)
   logoUrl   String?         @db.VarChar(500)
   apiMode   InsuranceApiMode @default(MANUAL)

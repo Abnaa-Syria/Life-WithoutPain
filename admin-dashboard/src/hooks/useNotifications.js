@@ -53,8 +53,20 @@ export default function useNotifications() {
     (notification, field) => {
       const arKey = `${field}Ar`;
       const enKey = `${field}En`;
-      if (language === 'ar') return notification[arKey] || notification[enKey];
-      return notification[enKey] || notification[arKey];
+      const fromFlat = language === 'ar'
+        ? notification[arKey] || notification[enKey]
+        : notification[enKey] || notification[arKey];
+      if (fromFlat) return fromFlat;
+
+      const tr = notification.translations || notification._translations;
+      if (tr) {
+        const localized = language === 'ar'
+          ? tr.ar?.[field] || tr.en?.[field]
+          : tr.en?.[field] || tr.ar?.[field];
+        if (localized) return localized;
+      }
+
+      return notification[field] || '';
     },
     [language],
   );

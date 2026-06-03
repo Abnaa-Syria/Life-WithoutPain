@@ -1,16 +1,12 @@
 // Medical Services and Specialities Models
 
 model Speciality {
-  id            Int      @id @default(autoincrement())
-  nameAr        String   @db.VarChar(255)
-  nameEn        String   @db.VarChar(255)
-  descriptionAr String?  @db.Text
-  descriptionEn String?  @db.Text
-  iconUrl       String?  @db.VarChar(500)
-  isActive      Boolean  @default(true)
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  iconUrl   String?  @db.VarChar(500)
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   doctors          DoctorProfile[]
   appointments     Appointment[]   @relation("SpecialityAppointments")
@@ -20,16 +16,12 @@ model Speciality {
 }
 
 model SubSpeciality {
-  id            Int      @id @default(autoincrement())
-  specialityId  Int
-  nameAr        String   @db.VarChar(255)
-  nameEn        String   @db.VarChar(255)
-  descriptionAr String?  @db.Text
-  descriptionEn String?  @db.Text
-  isActive      Boolean  @default(true)
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  specialityId Int
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   speciality Speciality      @relation(fields: [specialityId], references: [id], onDelete: Cascade)
   doctors    DoctorProfile[] @relation("DoctorSubSpecialities")
@@ -39,16 +31,12 @@ model SubSpeciality {
 }
 
 model Service {
-  id            Int         @id @default(autoincrement())
-  nameAr        String      @db.VarChar(255)
-  nameEn        String      @db.VarChar(255)
-  descriptionAr String?     @db.Text
-  descriptionEn String?     @db.Text
-  type          ServiceType
-  isActive      Boolean     @default(true)
-  sortOrder     Int         @default(0)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id        Int         @id @default(autoincrement())
+  type      ServiceType
+  isActive  Boolean     @default(true)
+  sortOrder Int         @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   doctorServices      DoctorService[]
   appointments        Appointment[]        @relation("ServiceAppointments")
@@ -71,19 +59,19 @@ model DoctorService {
 }
 
 model DoctorAvailability {
-  id                  Int        @id @default(autoincrement())
-  doctorId            Int
-  dayOfWeek           DayOfWeek
-  periodType          PeriodType
-  startDate           DateTime?  @db.Date
-  endDate             DateTime?  @db.Date
-  startTime           String     @db.VarChar(5)
-  endTime             String     @db.VarChar(5)
-  slotDurationMinutes Int        @default(30)
-  breakDurationMinutes Int       @default(5)
-  isActive            Boolean    @default(true)
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  id                   Int        @id @default(autoincrement())
+  doctorId             Int
+  dayOfWeek            DayOfWeek
+  periodType           PeriodType
+  startDate            DateTime?  @db.Date
+  endDate              DateTime?  @db.Date
+  startTime            String     @db.VarChar(5)
+  endTime              String     @db.VarChar(5)
+  slotDurationMinutes  Int        @default(30)
+  breakDurationMinutes Int        @default(5)
+  isActive             Boolean    @default(true)
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
 
   doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 

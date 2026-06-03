@@ -8,10 +8,10 @@ function getUserPermissions(req) {
 const requirePermission = (permission) => {
   return (req, res, next) => {
     if (!req.user) {
-      return next(new UnauthorizedError('Authentication required'));
+      return next(new UnauthorizedError('AUTHENTICATION_REQUIRED'));
     }
     if (!checkPerm(getUserPermissions(req), permission)) {
-      return next(new ForbiddenError('You do not have permission to perform this action'));
+      return next(new ForbiddenError('PERMISSION_ACTION_DENIED'));
     }
     next();
   };
@@ -20,11 +20,11 @@ const requirePermission = (permission) => {
 const requireAnyPermission = (...permissions) => {
   return (req, res, next) => {
     if (!req.user) {
-      return next(new UnauthorizedError('Authentication required'));
+      return next(new UnauthorizedError('AUTHENTICATION_REQUIRED'));
     }
     const userPerms = getUserPermissions(req);
     if (!permissions.some((p) => checkPerm(userPerms, p))) {
-      return next(new ForbiddenError('You do not have permission to perform this action'));
+      return next(new ForbiddenError('PERMISSION_ACTION_DENIED'));
     }
     next();
   };
@@ -33,23 +33,20 @@ const requireAnyPermission = (...permissions) => {
 const requireAllPermissions = (...permissions) => {
   return (req, res, next) => {
     if (!req.user) {
-      return next(new UnauthorizedError('Authentication required'));
+      return next(new UnauthorizedError('AUTHENTICATION_REQUIRED'));
     }
     const userPerms = getUserPermissions(req);
     if (!permissions.every((p) => checkPerm(userPerms, p))) {
-      return next(new ForbiddenError('You do not have permission to perform this action'));
+      return next(new ForbiddenError('PERMISSION_ACTION_DENIED'));
     }
     next();
   };
 };
 
-/**
- * Migration helper: pass if user has DB permission OR legacy enum role.
- */
 const requirePermissionOrLegacy = (permission, ...legacyRoles) => {
   return (req, res, next) => {
     if (!req.user) {
-      return next(new UnauthorizedError('Authentication required'));
+      return next(new UnauthorizedError('AUTHENTICATION_REQUIRED'));
     }
     if (checkPerm(getUserPermissions(req), permission)) {
       return next();
@@ -57,7 +54,7 @@ const requirePermissionOrLegacy = (permission, ...legacyRoles) => {
     if (legacyRoles.length && legacyRoles.includes(req.user.role)) {
       return next();
     }
-    return next(new ForbiddenError('You do not have permission to perform this action'));
+    return next(new ForbiddenError('PERMISSION_ACTION_DENIED'));
   };
 };
 

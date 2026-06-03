@@ -20,12 +20,12 @@ class SupportCaseController {
 
   static assign = asyncHandler(async (req, res) => {
     const data = await SupportCaseService.assign(req.params.id, req.body.assignedTo);
-    return successResponse(res, { data, message: 'Case assigned' });
+    return successResponse(res, { data, messageKey: 'CASE_ASSIGNED' });
   });
 
   static updateStatus = asyncHandler(async (req, res) => {
     const data = await SupportCaseService.updateStatus(req.params.id, req.body);
-    return successResponse(res, { data, message: 'Status updated' });
+    return successResponse(res, { data, messageKey: 'STATUS_UPDATED' });
   });
 
   static getMessages = asyncHandler(async (req, res) => {

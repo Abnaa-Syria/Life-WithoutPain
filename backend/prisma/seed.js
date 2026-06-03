@@ -21,32 +21,123 @@ function phone(n) {
   return `+9665${String(n).padStart(8, '0')}`;
 }
 
-async function upsertCatalogByNameEn(model, items) {
+function buildTranslationsFromItem(item) {
+  const en = {};
+  const ar = {};
+  if (item.nameEn) en.name = item.nameEn;
+  if (item.nameAr) ar.name = item.nameAr;
+  if (item.descriptionEn) en.description = item.descriptionEn;
+  if (item.descriptionAr) ar.description = item.descriptionAr;
+  if (item.description && !en.description) {
+    en.description = item.description;
+    ar.description = item.description;
+  }
+  if (item.categoryEn) en.category = item.categoryEn;
+  if (item.categoryAr) ar.category = item.categoryAr;
+  if (item.titleEn) en.title = item.titleEn;
+  if (item.titleAr) ar.title = item.titleAr;
+  if (item.bodyEn) en.body = item.bodyEn;
+  if (item.bodyAr) ar.body = item.bodyAr;
+  if (item.bioEn) en.bio = item.bioEn;
+  if (item.bioAr) ar.bio = item.bioAr;
+  return { en, ar };
+}
+
+async function seedNotification(data) {
+  const { titleAr, titleEn, bodyAr, bodyEn, ...rest } = data;
+  const notification = await prisma.notification.create({ data: rest });
+  await upsertTranslations('notification', notification.id, { titleAr, titleEn, bodyAr, bodyEn });
+  return notification;
+}
+
+function stripBilingualFields(item) {
+  const {
+    nameAr,
+    nameEn,
+    descriptionAr,
+    descriptionEn,
+    categoryAr,
+    categoryEn,
+    ...rest
+  } = item;
+  return rest;
+}
+
+async function upsertTranslations(entityType, entityId, item) {
+  const translations = buildTranslationsFromItem(item);
+  const ops = [];
+  for (const locale of ['en', 'ar']) {
+    for (const [fieldKey, value] of Object.entries(translations[locale] || {})) {
+      if (value == null || value === '') continue;
+      ops.push(
+        prisma.entityTranslation.upsert({
+          where: {
+            entityType_entityId_locale_fieldKey: {
+              entityType,
+              entityId,
+              locale,
+              fieldKey,
+            },
+          },
+          create: { entityType, entityId, locale, fieldKey, value: String(value) },
+          update: { value: String(value) },
+        }),
+      );
+    }
+  }
+  if (ops.length) await prisma.$transaction(ops);
+}
+
+async function findEntityIdByEnName(entityType, nameEn) {
+  const row = await prisma.entityTranslation.findFirst({
+    where: { entityType, locale: 'en', fieldKey: 'name', value: nameEn },
+  });
+  return row?.entityId ?? null;
+}
+
+async function getTranslatedName(entityType, entityId, fallback, locale = 'en') {
+  const row = await prisma.entityTranslation.findFirst({
+    where: { entityType, entityId, locale, fieldKey: 'name' },
+  });
+  return row?.value ?? fallback;
+}
+
+async function upsertCatalogByNameEn(model, entityType, items) {
   const map = {};
   for (const item of items) {
-    const existing = await prisma[model].findFirst({ where: { nameEn: item.nameEn } });
-    const record = existing
-      ? await prisma[model].update({ where: { id: existing.id }, data: item })
-      : await prisma[model].create({ data: item });
+    const data = stripBilingualFields(item);
+    let existingId = await findEntityIdByEnName(entityType, item.nameEn);
+    const record = existingId
+      ? await prisma[model].update({ where: { id: existingId }, data })
+      : await prisma[model].create({ data });
+    await upsertTranslations(entityType, record.id, item);
     map[item.nameEn] = record;
   }
   return map;
 }
 
 async function upsertSubSpeciality(sub) {
-  const existing = await prisma.subSpeciality.findFirst({
-    where: { specialityId: sub.specialityId, nameEn: sub.nameEn },
-  });
-  if (existing) {
-    return prisma.subSpeciality.update({ where: { id: existing.id }, data: sub });
-  }
-  return prisma.subSpeciality.create({ data: sub });
+  const data = stripBilingualFields(sub);
+  let existingId = await findEntityIdByEnName('sub_speciality', sub.nameEn);
+  const existing = existingId
+    ? await prisma.subSpeciality.findUnique({ where: { id: existingId } })
+    : null;
+  const record = existing
+    ? await prisma.subSpeciality.update({ where: { id: existing.id }, data })
+    : await prisma.subSpeciality.create({ data });
+  await upsertTranslations('sub_speciality', record.id, sub);
+  return record;
 }
 
 async function connectDoctorSubSpecialities(profileId, specialityId, subNameEns) {
   if (!subNameEns?.length) return;
+  const subIds = [];
+  for (const nameEn of subNameEns) {
+    const id = await findEntityIdByEnName('sub_speciality', nameEn);
+    if (id) subIds.push(id);
+  }
   const subs = await prisma.subSpeciality.findMany({
-    where: { specialityId, nameEn: { in: subNameEns }, isActive: true },
+    where: { specialityId, id: { in: subIds }, isActive: true },
   });
   if (!subs.length) return;
   await prisma.doctorProfile.update({
@@ -184,7 +275,9 @@ async function main() {
   ];
 
   for (const s of specialitiesSeed) {
-    await prisma.speciality.upsert({ where: { id: s.id }, update: s, create: s });
+    const data = stripBilingualFields(s);
+    const record = await prisma.speciality.upsert({ where: { id: s.id }, update: data, create: data });
+    await upsertTranslations('speciality', record.id, s);
   }
 
   const subSpecialitiesSeed = [
@@ -211,7 +304,7 @@ async function main() {
   // ─────────────────────────────────────────────────────────────
   // 2b) Medical master data catalogs (dashboard preview)
   // ─────────────────────────────────────────────────────────────
-  const chronicDiseaseCatalog = await upsertCatalogByNameEn('chronicDisease', [
+  const chronicDiseaseCatalog = await upsertCatalogByNameEn('chronicDisease', 'chronic_disease', [
     { nameAr: 'ارتفاع ضغط الدم', nameEn: 'Hypertension', description: 'High blood pressure', isActive: true },
     { nameAr: 'السكري من النوع الثاني', nameEn: 'Diabetes Type 2', description: 'Type 2 diabetes mellitus', isActive: true },
     { nameAr: 'الربو', nameEn: 'Asthma', description: 'Chronic respiratory condition', isActive: true },
@@ -219,7 +312,7 @@ async function main() {
     { nameAr: 'ارتفاع الكolesterol', nameEn: 'Hyperlipidemia', description: 'High cholesterol', isActive: true },
   ]);
 
-  const medicationCatalog = await upsertCatalogByNameEn('medication', [
+  const medicationCatalog = await upsertCatalogByNameEn('medication', 'medication', [
     { nameAr: 'فيتامين د', nameEn: 'Vitamin D', description: 'Vitamin D supplement', isActive: true },
     { nameAr: 'ميتفورمين', nameEn: 'Metformin', description: 'Diabetes medication', isActive: true },
     { nameAr: 'أملوديبين', nameEn: 'Amlodipine', description: 'Blood pressure medication', isActive: true },
@@ -227,14 +320,14 @@ async function main() {
     { nameAr: 'باراسيتامول', nameEn: 'Paracetamol', description: 'Pain reliever', isActive: true },
   ]);
 
-  const allergyCatalog = await upsertCatalogByNameEn('allergy', [
+  const allergyCatalog = await upsertCatalogByNameEn('allergy', 'allergy', [
     { nameAr: 'بنسلين', nameEn: 'Penicillin', description: 'Penicillin allergy', isActive: true },
     { nameAr: 'الفول السوداني', nameEn: 'Peanuts', description: 'Peanut allergy', isActive: true },
     { nameAr: 'اللاكتوز', nameEn: 'Lactose', description: 'Lactose intolerance', isActive: true },
     { nameAr: 'الغبار', nameEn: 'Dust', description: 'Dust allergy', isActive: true },
   ]);
 
-  await upsertCatalogByNameEn('medicalTest', [
+  await upsertCatalogByNameEn('medicalTest', 'medical_test', [
     { nameAr: 'تحليل دم شامل', nameEn: 'Complete Blood Count', categoryAr: 'دم', categoryEn: 'Blood', description: 'CBC panel', isActive: true },
     { nameAr: 'سكر صائم', nameEn: 'Fasting Blood Sugar', categoryAr: 'دم', categoryEn: 'Blood', description: 'FBS test', isActive: true },
     { nameAr: 'وظائف الكلى', nameEn: 'Kidney Function Test', categoryAr: 'دم', categoryEn: 'Blood', description: 'Renal function panel', isActive: true },
@@ -249,7 +342,9 @@ async function main() {
     { id: 3, nameAr: 'زيارة العيادة', nameEn: 'Clinic Visit', descriptionAr: 'زيارة داخل العيادة', descriptionEn: 'Clinic appointment', type: 'CLINIC', sortOrder: 3, isActive: true },
   ];
   for (const s of servicesSeed) {
-    await prisma.service.upsert({ where: { id: s.id }, update: s, create: s });
+    const data = stripBilingualFields(s);
+    const record = await prisma.service.upsert({ where: { id: s.id }, update: data, create: data });
+    await upsertTranslations('service', record.id, s);
   }
 
   const providersSeed = [
@@ -262,11 +357,13 @@ async function main() {
 
   const insuranceProviders = [];
   for (const p of providersSeed) {
+    const data = stripBilingualFields(p);
     const provider = await prisma.insuranceProvider.upsert({
       where: { code: p.code },
-      update: p,
-      create: { ...p },
+      update: data,
+      create: { ...data },
     });
+    await upsertTranslations('insurance_provider', provider.id, p);
     insuranceProviders.push(provider);
   }
 
@@ -296,8 +393,6 @@ async function main() {
     const profile = await ensureDoctorProfile(user, {
       specialityId: d.specialityId,
       title: 'استشاري',
-      bio: 'Board-certified specialist with extensive clinical experience.',
-      bioAr: 'طبيب استشاري بخبرة سريرية واسعة في تخصصه.',
       yearsOfExperience: d.years,
       licenseNumber: d.licenseNumber,
       licenseExpiryDate: new Date('2028-06-01'),
@@ -314,6 +409,10 @@ async function main() {
     });
 
     await connectDoctorSubSpecialities(profile.id, d.specialityId, d.subSpecializations);
+    await upsertTranslations('doctor_profile', profile.id, {
+      bioEn: 'Board-certified specialist with extensive clinical experience.',
+      bioAr: 'طبيب استشاري بخبرة سريرية واسعة في تخصصه.',
+    });
 
     await prisma.doctorVerificationDocument.deleteMany({ where: { doctorId: profile.id } });
     const docCount = d.verificationStatus === 'PENDING' ? 2 : 3;
@@ -811,7 +910,7 @@ async function main() {
       await prisma.insuranceApproval.create({
         data: {
           insuranceCaseId: homeCase.id,
-          requestedProcedure: homeService.nameEn,
+          requestedProcedure: await getTranslatedName('service', homeService.id, 'Home Visit'),
           approvalStatus: 'PENDING',
           requestedAmount: 350,
         },
@@ -853,7 +952,7 @@ async function main() {
       await prisma.insuranceApproval.create({
         data: {
           insuranceCaseId: approvedHomeCase.id,
-          requestedProcedure: homeService.nameEn,
+          requestedProcedure: await getTranslatedName('service', homeService.id, 'Home Visit'),
           approvalStatus: 'APPROVED',
           requestedAmount: 400,
           approvedAmount: 320,
@@ -874,21 +973,23 @@ async function main() {
     select: { userId: true },
   });
 
+  const supportContactData = {
+    id: 1,
+    supportPhones: ['+966500000000', '+966112345678'],
+    supportEmail: 'support@hayabilaalam.com',
+    whatsappNumber: '+966500000000',
+    whatsappLink: 'https://wa.me/966500000000',
+    socialLinks: { facebook: 'https://facebook.com/hayabilaalam', instagram: '', twitter: '' },
+    workingHours: { ar: 'الأحد - الخميس: 9:00 - 17:00', en: 'Sun - Thu: 9:00 AM - 5:00 PM' },
+    descriptionAr: 'فريق الدعم متاح لمساعدتك في أي استفسار.',
+    descriptionEn: 'Our support team is here to help with any inquiry.',
+  };
   await prisma.supportContactInfo.upsert({
     where: { id: 1 },
-    update: {},
-    create: {
-      id: 1,
-      supportPhones: ['+966500000000', '+966112345678'],
-      supportEmail: 'support@hayabilaalam.com',
-      whatsappNumber: '+966500000000',
-      whatsappLink: 'https://wa.me/966500000000',
-      socialLinks: { facebook: 'https://facebook.com/hayabilaalam', instagram: '', twitter: '' },
-      workingHours: { ar: 'الأحد - الخميس: 9:00 - 17:00', en: 'Sun - Thu: 9:00 AM - 5:00 PM' },
-      descriptionAr: 'فريق الدعم متاح لمساعدتك في أي استفسار.',
-      descriptionEn: 'Our support team is here to help with any inquiry.',
-    },
+    update: stripBilingualFields(supportContactData),
+    create: stripBilingualFields(supportContactData),
   });
+  await upsertTranslations('support_contact_info', 1, supportContactData);
 
   const supportCase1 = await prisma.supportCase.create({
     data: {
@@ -1186,17 +1287,15 @@ async function main() {
   // ─────────────────────────────────────────────────────────────
   const notifyUsers = [superAdmin, medicalAdmin, insuranceStaff, supportStaff, accountant, ...patientsUsers, ...doctorsUsers];
   for (const u of notifyUsers.slice(0, 12)) {
-    await prisma.notification.create({
-      data: {
-        userId: u.id,
-        titleAr: 'إشعار تجريبي',
-        titleEn: 'Seed Notification',
-        bodyAr: 'هذا إشعار تجريبي للتأكد من عمل لوحة التحكم.',
-        bodyEn: 'This is a seeded notification for dashboard verification.',
-        type: 'SYSTEM',
-        isRead: u.role === 'SUPER_ADMIN',
-        readAt: u.role === 'SUPER_ADMIN' ? now() : null,
-      },
+    await seedNotification({
+      userId: u.id,
+      titleAr: 'إشعار تجريبي',
+      titleEn: 'Seed Notification',
+      bodyAr: 'هذا إشعار تجريبي للتأكد من عمل لوحة التحكم.',
+      bodyEn: 'This is a seeded notification for dashboard verification.',
+      type: 'SYSTEM',
+      isRead: u.role === 'SUPER_ADMIN',
+      readAt: u.role === 'SUPER_ADMIN' ? now() : null,
     });
   }
 
@@ -1291,27 +1390,23 @@ async function main() {
     }
 
     for (const userId of [mobilePatient.userId, mobileDoctor.userId]) {
-      await prisma.notification.create({
-        data: {
-          userId,
-          titleAr: 'موعد جديد',
-          titleEn: 'New appointment',
-          bodyAr: 'لديك موعد تجريبي في تطبيق الجوال.',
-          bodyEn: 'You have a mobile demo appointment.',
-          type: 'APPOINTMENT',
-          isRead: false,
-        },
+      await seedNotification({
+        userId,
+        titleAr: 'موعد جديد',
+        titleEn: 'New appointment',
+        bodyAr: 'لديك موعد تجريبي في تطبيق الجوال.',
+        bodyEn: 'You have a mobile demo appointment.',
+        type: 'APPOINTMENT',
+        isRead: false,
       });
-      await prisma.notification.create({
-        data: {
-          userId,
-          titleAr: 'تنبيه النظام',
-          titleEn: 'System notice',
-          bodyAr: 'مرحباً بك في حياة بلا ألم.',
-          bodyEn: 'Welcome to Haya Bila Alam.',
-          type: 'SYSTEM',
-          isRead: false,
-        },
+      await seedNotification({
+        userId,
+        titleAr: 'تنبيه النظام',
+        titleEn: 'System notice',
+        bodyAr: 'مرحباً بك في حياة بلا ألم.',
+        bodyEn: 'Welcome to Haya Bila Alam.',
+        type: 'SYSTEM',
+        isRead: false,
       });
     }
   }

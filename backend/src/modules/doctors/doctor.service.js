@@ -1,4 +1,5 @@
 const prisma = require('../../config/database');
+const { enrichDoctorsForPatient } = require('../../i18n/enrichRelations');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
 const { resolveDoctorProfile, assertDoctorHasPatient } = require('../../shared/utils/doctorAppContext');
@@ -50,15 +51,15 @@ class DoctorService {
         orderBy: query.sortBy === 'rating' ? { ratingAverage: 'desc' } : query.sortBy === 'fee' ? { consultationFee: 'asc' } : { createdAt: 'desc' },
         include: {
           user: { select: { id: true, fullName: true, avatarUrl: true } },
-          speciality: { select: { id: true, nameAr: true, nameEn: true, descriptionAr: true, descriptionEn: true, iconUrl: true } },
+          speciality: { select: { id: true, iconUrl: true } },
           subSpecialities: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
-          doctorServices: { include: { service: { select: { id: true, nameAr: true, nameEn: true, type: true } } } },
+          doctorServices: { include: { service: { select: { id: true, type: true } } } },
         },
       }),
       DoctorRepository.count({ where }),
     ]);
 
-    const enriched = await Promise.all(
+    const withCounts = await Promise.all(
       data.map(async (doctor) => {
         const totalAppointmentsCount = await prisma.appointment.count({
           where: { doctorId: doctor.id, status: 'COMPLETED' },
@@ -67,7 +68,7 @@ class DoctorService {
       }),
     );
 
-    return { data: enriched, total, page, limit };
+    return { data: await enrichDoctorsForPatient(withCounts), total, page, limit };
   }
 
   static async getById(doctorId) {
@@ -87,11 +88,11 @@ class DoctorService {
         reviews: { where: { isVisible: true }, take: 10, orderBy: { createdAt: 'desc' }, include: { patient: { include: { user: { select: { fullName: true } } } } } },
       },
     });
-    if (!doctor) throw new NotFoundError('Doctor not found');
+    if (!doctor) throw new NotFoundError('DOCTOR_NOT_FOUND');
     const totalAppointmentsCount = await prisma.appointment.count({
       where: { doctorId: doctor.id, status: 'COMPLETED' },
     });
-    return { ...doctor, totalAppointmentsCount };
+    return enrichDoctorsForPatient({ ...doctor, totalAppointmentsCount });
   }
 
   static async getAvailabilityForPatient(doctorId, query = {}) {
@@ -102,7 +103,7 @@ class DoctorService {
       },
     });
     if (!doctor || doctor.verificationStatus !== 'APPROVED' || !doctor.isPubliclyBookable) {
-      throw new NotFoundError('Doctor not found');
+      throw new NotFoundError('DOCTOR_NOT_FOUND');
     }
 
     const dateFilter = query.date ? new Date(query.date) : null;
@@ -147,7 +148,7 @@ class DoctorService {
         };
       }),
     );
-    return { ...result, data };
+    return { ...result, data: await enrichDoctorsForPatient(data) };
   }
 
   static async getProfile(userId) {
@@ -159,20 +160,20 @@ class DoctorService {
         doctorServices: { include: { service: true } },
       },
     });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
     return profile;
   }
 
   static async updateProfile(userId, data) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     return DoctorRepository.update({ where: { userId }, data, include: { speciality: true } });
   }
 
   static async uploadVerificationDocument(userId, fileData) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     return DoctorVerificationDocumentRepository.create({
       data: { doctorId: profile.id, ...fileData },
@@ -184,7 +185,7 @@ class DoctorService {
       where: { userId },
       select: { id: true, verificationStatus: true, isPubliclyBookable: true },
     });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     const documents = await DoctorVerificationDocumentRepository.findMany({
       where: { doctorId: profile.id },
@@ -200,7 +201,7 @@ class DoctorService {
 
   static async getAvailability(userId) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     return DoctorAvailabilityRepository.findMany({
       where: { doctorId: profile.id },
@@ -210,14 +211,14 @@ class DoctorService {
 
   static async createAvailability(userId, data) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     return DoctorAvailabilityRepository.create({ data: { doctorId: profile.id, ...data } });
   }
 
   static async createAvailabilityBulk(userId, payload) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     const dayMap = {
       sunday: 'SUNDAY', monday: 'MONDAY', tuesday: 'TUESDAY', wednesday: 'WEDNESDAY',
@@ -270,27 +271,27 @@ class DoctorService {
 
   static async updateAvailability(userId, availabilityId, data) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     const slot = await DoctorAvailabilityRepository.findFirst({ where: { id: availabilityId, doctorId: profile.id } });
-    if (!slot) throw new NotFoundError('Availability slot not found');
+    if (!slot) throw new NotFoundError('AVAILABILITY_SLOT_NOT_FOUND');
 
     return DoctorAvailabilityRepository.update({ where: { id: availabilityId }, data });
   }
 
   static async deleteAvailability(userId, availabilityId) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     const slot = await DoctorAvailabilityRepository.findFirst({ where: { id: availabilityId, doctorId: profile.id } });
-    if (!slot) throw new NotFoundError('Availability slot not found');
+    if (!slot) throw new NotFoundError('AVAILABILITY_SLOT_NOT_FOUND');
 
     return DoctorAvailabilityRepository.delete({ where: { id: availabilityId } });
   }
 
   static async getDashboardSummary(userId) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -314,7 +315,7 @@ class DoctorService {
 
   static async getAppointments(userId, query) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     const { page, limit, skip } = buildPagination(query);
     const where = { doctorId: profile.id };
@@ -326,8 +327,8 @@ class DoctorService {
         where, skip, take: limit, orderBy: { appointmentDate: 'desc' },
         include: {
           patient: { include: { user: { select: { fullName: true, avatarUrl: true } } } },
-          speciality: { select: { nameAr: true, nameEn: true } },
-          service: { select: { nameAr: true, nameEn: true, type: true } },
+          speciality: true,
+          service: true,
         },
       }),
       AppointmentRepository.count({ where }),
@@ -338,7 +339,7 @@ class DoctorService {
 
   static async getPatients(userId) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     const appointments = await AppointmentRepository.findMany({
       where: { doctorId: profile.id },
@@ -356,7 +357,7 @@ class DoctorService {
 
   static async getPerformance(userId) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
@@ -372,7 +373,7 @@ class DoctorService {
 
   static async getFinancialSummary(userId) {
     const profile = await DoctorRepository.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     const [totalPaid, totalPending, recentPayouts] = await Promise.all([
       DoctorPayoutRepository.aggregateForDoctor(profile.id, { where: { status: 'PAID' }, _sum: { netAmount: true } }),
@@ -389,7 +390,7 @@ class DoctorService {
 
   static async approveDoctor(id) {
     const doctor = await DoctorRepository.findUnique({ where: { id: parseInt(id) } });
-    if (!doctor) throw new NotFoundError('Doctor not found');
+    if (!doctor) throw new NotFoundError('DOCTOR_NOT_FOUND');
 
     return DoctorRepository.update({
       where: { id: parseInt(id) },
@@ -402,7 +403,7 @@ class DoctorService {
 
   static async rejectDoctor(id, notes) {
     const doctor = await DoctorRepository.findUnique({ where: { id: parseInt(id) } });
-    if (!doctor) throw new NotFoundError('Doctor not found');
+    if (!doctor) throw new NotFoundError('DOCTOR_NOT_FOUND');
 
     return DoctorRepository.update({
       where: { id: parseInt(id) },
@@ -448,15 +449,15 @@ class DoctorService {
         user: { select: { fullName: true } },
         medicalProfile: {
           include: {
-            chronicDiseases: { where: { isActive: true }, orderBy: { nameEn: 'asc' } },
-            medications: { where: { isActive: true }, orderBy: { nameEn: 'asc' } },
-            allergies: { where: { isActive: true }, orderBy: { nameEn: 'asc' } },
+            chronicDiseases: { where: { isActive: true }, orderBy: { id: 'asc' } },
+            medications: { where: { isActive: true }, orderBy: { id: 'asc' } },
+            allergies: { where: { isActive: true }, orderBy: { id: 'asc' } },
             attachments: { orderBy: { createdAt: 'desc' } },
           },
         },
       },
     });
-    if (!patient) throw new NotFoundError('Patient not found');
+    if (!patient) throw new NotFoundError('PATIENT_NOT_FOUND');
 
     const [nextAppointment, prescriptions, reports] = await Promise.all([
       AppointmentRepository.findFirst({
@@ -493,7 +494,7 @@ class DoctorService {
         availability: { where: { isActive: true }, orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }] },
       },
     });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     return {
       clinicName: profile.workplace,
@@ -509,7 +510,7 @@ class DoctorService {
       where: { userId },
       include: { user: { select: { id: true, phone: true } } },
     });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     const workplace = data.clinicName ?? data.address ?? profile.workplace;
 
@@ -546,7 +547,7 @@ class DoctorService {
     if (language !== undefined) {
       const normalized = String(language).toLowerCase();
       if (!['ar', 'en'].includes(normalized)) {
-        throw new BadRequestError('language must be ar or en');
+        throw new BadRequestError('LANGUAGE_INVALID');
       }
       update.preferredLanguage = normalized;
     }
@@ -568,7 +569,7 @@ class DoctorService {
 
   static async updateProfileForDoctor(userId, data) {
     const profile = await DoctorRepository.findUnique({ where: { userId }, include: { user: true } });
-    if (!profile) throw new NotFoundError('Doctor profile not found');
+    if (!profile) throw new NotFoundError('DOCTOR_PROFILE_NOT_FOUND');
 
     const userData = {};
     if (data.name) userData.fullName = data.name;

@@ -1,6 +1,7 @@
 const prisma = require('../../config/database');
 const { NotFoundError, BadRequestError } = require('../../shared/errors/AppError');
 const { buildPagination, buildSorting, buildSearchFilter } = require('../../utils/pagination');
+const { enrichInsuranceProvidersOnRecords, enrichAppointments } = require('../../i18n/enrichRelations');
 
 class PatientService {
   static async getProfile(userId) {
@@ -11,13 +12,13 @@ class PatientService {
         medicalProfile: true,
       },
     });
-    if (!profile) throw new NotFoundError('Patient profile not found');
+    if (!profile) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     return profile;
   }
 
   static async updateProfile(userId, data) {
     const profile = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Patient profile not found');
+    if (!profile) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     return prisma.patientProfile.update({
       where: { userId },
@@ -55,7 +56,7 @@ class PatientService {
     const fullName = body.fullName || body.name;
     const relationType = body.relationType || body.relation || body.relationship;
     if (!fullName || !relationType) {
-      throw new BadRequestError('fullName (or name) and relationType (or relation) are required');
+      throw new BadRequestError('FAMILY_MEMBER_FIELDS_REQUIRED');
     }
 
     const payload = {
@@ -76,7 +77,7 @@ class PatientService {
       } else if (normalized === 'FEMALE' || ['F', 'WOMAN', 'GIRL'].includes(normalized)) {
         payload.gender = 'FEMALE';
       } else {
-        throw new BadRequestError('gender must be MALE or FEMALE');
+        throw new BadRequestError('GENDER_INVALID');
       }
     }
 
@@ -85,78 +86,88 @@ class PatientService {
 
   static async getFamilyMembers(userId) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     return prisma.familyMember.findMany({ where: { patientId: patient.id }, orderBy: { createdAt: 'desc' } });
   }
 
   static async createFamilyMember(userId, data) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     return prisma.familyMember.create({ data: { patientId: patient.id, ...data } });
   }
 
   static async updateFamilyMember(userId, memberId, data) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const member = await prisma.familyMember.findFirst({ where: { id: memberId, patientId: patient.id } });
-    if (!member) throw new NotFoundError('Family member not found');
+    if (!member) throw new NotFoundError('FAMILY_MEMBER_NOT_FOUND');
 
     return prisma.familyMember.update({ where: { id: memberId }, data });
   }
 
   static async deleteFamilyMember(userId, memberId) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const member = await prisma.familyMember.findFirst({ where: { id: memberId, patientId: patient.id } });
-    if (!member) throw new NotFoundError('Family member not found');
+    if (!member) throw new NotFoundError('FAMILY_MEMBER_NOT_FOUND');
 
     return prisma.familyMember.delete({ where: { id: memberId } });
   }
 
-  static async getInsurances(userId) {
-    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
-
-    return prisma.patientInsurance.findMany({
-      where: { patientId: patient.id },
-      include: { provider: { select: { id: true, nameAr: true, nameEn: true, code: true, logoUrl: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
+  static withLocalizedProviders(insurances, locale) {
+    return enrichInsuranceProvidersOnRecords(insurances, locale);
   }
 
-  static async createInsurance(userId, data) {
+  static async getInsurances(userId, options = {}) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
+
+    const insurances = await prisma.patientInsurance.findMany({
+      where: { patientId: patient.id },
+      include: { provider: { select: { id: true, code: true, logoUrl: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    return PatientService.withLocalizedProviders(insurances, options.locale);
+  }
+
+  static async createInsurance(userId, data, options = {}) {
+    const patient = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const insurance = await prisma.patientInsurance.create({
       data: { patientId: patient.id, ...data },
-      include: { provider: true },
+      include: { provider: { select: { id: true, code: true, logoUrl: true } } },
     });
 
     await prisma.patientProfile.update({ where: { id: patient.id }, data: { insuranceLinked: true } });
-    return insurance;
+    return PatientService.withLocalizedProviders(insurance, options.locale);
   }
 
-  static async updateInsurance(userId, insuranceId, data) {
+  static async updateInsurance(userId, insuranceId, data, options = {}) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const insurance = await prisma.patientInsurance.findFirst({ where: { id: insuranceId, patientId: patient.id } });
-    if (!insurance) throw new NotFoundError('Insurance not found');
+    if (!insurance) throw new NotFoundError('INSURANCE_NOT_FOUND');
 
-    return prisma.patientInsurance.update({ where: { id: insuranceId }, data, include: { provider: true } });
+    const updated = await prisma.patientInsurance.update({
+      where: { id: insuranceId },
+      data,
+      include: { provider: { select: { id: true, code: true, logoUrl: true } } },
+    });
+    return PatientService.withLocalizedProviders(updated, options.locale);
   }
 
   static async deleteInsurance(userId, insuranceId) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const insurance = await prisma.patientInsurance.findFirst({ where: { id: insuranceId, patientId: patient.id } });
-    if (!insurance) throw new NotFoundError('Insurance not found');
+    if (!insurance) throw new NotFoundError('INSURANCE_NOT_FOUND');
 
     await prisma.patientInsurance.delete({ where: { id: insuranceId } });
 
@@ -168,7 +179,7 @@ class PatientService {
 
   static async getMedicalFiles(userId, query) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const { page, limit, skip } = buildPagination(query);
     const where = { patientId: patient.id };
@@ -184,7 +195,7 @@ class PatientService {
 
   static async uploadMedicalFile(userId, fileData) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     return prisma.medicalFile.create({
       data: { patientId: patient.id, uploadedBy: userId, ...fileData },
@@ -193,7 +204,7 @@ class PatientService {
 
   static async getDashboardSummary(userId) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const [upcomingCount, completedCount, unreadNotifications, insuranceCount] = await Promise.all([
       prisma.appointment.count({
@@ -209,7 +220,7 @@ class PatientService {
 
   static async getUpcomingAppointments(userId, query) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const { page, limit, skip } = buildPagination(query);
     const where = {
@@ -229,12 +240,13 @@ class PatientService {
       prisma.appointment.count({ where }),
     ]);
 
-    return { data, total, page, limit };
+    const enriched = await enrichAppointments(data);
+    return { data: enriched, total, page, limit };
   }
 
   static async getAppointmentHistory(userId, query) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const { page, limit, skip } = buildPagination(query);
     const where = { patientId: patient.id };
@@ -251,18 +263,22 @@ class PatientService {
       prisma.appointment.count({ where }),
     ]);
 
-    return { data, total, page, limit };
+    const enriched = await enrichAppointments(data);
+    return { data: enriched, total, page, limit };
   }
 
-  static async getNotifications(userId, query) {
+  static async getNotifications(userId, query, locale = 'en') {
     const { page, limit, skip } = buildPagination(query);
     const where = { userId };
     if (query.isRead !== undefined) where.isRead = query.isRead === 'true';
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       prisma.notification.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
       prisma.notification.count({ where }),
     ]);
+
+    const NotificationService = require('../../shared/notifications/NotificationService');
+    const data = await NotificationService.loadTranslationsForNotifications(rows);
 
     return { data, total, page, limit };
   }
@@ -274,7 +290,7 @@ class PatientService {
         user: { select: { preferredLanguage: true, darkModeEnabled: true, fullName: true } },
       },
     });
-    if (!profile) throw new NotFoundError('Patient profile not found');
+    if (!profile) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     return {
       language: profile.user.preferredLanguage,
       darkModeEnabled: profile.user.darkModeEnabled,
@@ -286,11 +302,11 @@ class PatientService {
 
   static async updateSettings(userId, data) {
     const profile = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError('Patient profile not found');
+    if (!profile) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const language = data.preferredLanguage ?? data.language;
     if (language !== undefined && !['ar', 'en'].includes(language)) {
-      throw new BadRequestError('language must be ar or en');
+      throw new BadRequestError('LANGUAGE_INVALID');
     }
 
     const userData = {};
@@ -317,14 +333,14 @@ class PatientService {
 
   static async listMyPrescriptions(userId, query) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     const PrescriptionService = require('../prescriptions/prescription.service');
     return PrescriptionService.list({ ...query, patientId: patient.id });
   }
 
   static async listMyReports(userId, query) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     const ReportService = require('../reports/report.service');
     return ReportService.list({ ...query, patientId: patient.id });
   }
@@ -335,7 +351,7 @@ class PatientService {
 
   static async getMedicalTimeline(userId, query) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const { mapTimelineItem } = require('../../shared/utils/patientAppMappers');
     const PrescriptionService = require('../prescriptions/prescription.service');

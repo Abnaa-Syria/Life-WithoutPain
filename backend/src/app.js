@@ -18,6 +18,12 @@ const {
 const { DOCTOR_APP_SUBMODULES, PATIENT_APP_SUBMODULES } = require('./docs/swagger/app-doc-tags');
 const errorHandler = require('./middlewares/errorHandler');
 const { globalLimiter } = require('./middlewares/rateLimiter');
+const {
+  parseAcceptLanguageMiddleware,
+  bindLocaleMiddleware,
+  localeMiddleware,
+} = require('./middlewares/locale');
+const { translateError } = require('./i18n');
 const logger = require('./config/logger');
 
 const loadRoutes = require('./utils/routeLoader');
@@ -32,9 +38,13 @@ const corsOptions = {
   origin: config.env === 'development' ? '*' : config.cors.origin,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept-Language'],
 };
 app.use(cors(corsOptions));
+
+app.use(parseAcceptLanguageMiddleware);
+app.use(bindLocaleMiddleware);
+app.use(localeMiddleware);
 
 app.use(compression());
 
@@ -241,12 +251,21 @@ app.use(`${api}/admin`, adminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ success: true, message: 'Haya Bila Alam API is running', timestamp: new Date().toISOString() });
+  res.json({
+    success: true,
+    message: translateError('API_RUNNING', {}, req.locale),
+    errorCode: 'API_RUNNING',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found', errorCode: 'ROUTE_NOT_FOUND' });
+  res.status(404).json({
+    success: false,
+    message: translateError('ROUTE_NOT_FOUND', {}, req.locale),
+    errorCode: 'ROUTE_NOT_FOUND',
+  });
 });
 
 // Error handler

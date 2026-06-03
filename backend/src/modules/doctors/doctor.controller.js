@@ -19,7 +19,7 @@ const getProfile = asyncHandler(async (req, res) => {
 
 const updateProfile = asyncHandler(async (req, res) => {
   const data = await DoctorService.updateProfile(req.user.id, req.body);
-  return successResponse(res, { data, message: 'Profile updated' });
+  return successResponse(res, { data, messageKey: 'PROFILE_UPDATED' });
 });
 
 const uploadVerificationDocument = asyncHandler(async (req, res) => {

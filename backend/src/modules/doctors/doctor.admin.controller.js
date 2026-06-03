@@ -59,7 +59,7 @@ class DoctorAdminController {
         data: { deletedAt: new Date(), status: 'INACTIVE' } 
       });
     }
-    return successResponse(res, { data: null, message: 'Doctor deactivated' });
+    return successResponse(res, { data: null, messageKey: 'DOCTOR_DEACTIVATED' });
   });
 
   static approve = asyncHandler(async (req, res) => {
@@ -74,7 +74,7 @@ class DoctorAdminController {
       userId: data.userId,
     });
 
-    return successResponse(res, { data, message: 'Doctor approved' });
+    return successResponse(res, { data, messageKey: 'DOCTOR_APPROVED' });
   });
 
   static reject = asyncHandler(async (req, res) => {
@@ -90,7 +90,7 @@ class DoctorAdminController {
       reason: req.body?.reason || req.body?.reviewNotes || null,
     });
 
-    return successResponse(res, { data, message: 'Doctor rejected' });
+    return successResponse(res, { data, messageKey: 'DOCTOR_REJECTED' });
   });
 
   static updateStatus = asyncHandler(async (req, res) => {

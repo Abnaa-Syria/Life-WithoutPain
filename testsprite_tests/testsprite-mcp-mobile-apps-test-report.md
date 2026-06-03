@@ -1,37 +1,25 @@
-# TestSprite Mobile Apps (Patient + Doctor) Summary
+# Mobile Apps Test Summary (2026-06-03)
 
-## 1️⃣ Document Metadata
+| App | Result | Target | Status |
+|-----|--------|--------|--------|
+| Patient (25) | **19/25 (76%)** | ≥70% | Met |
+| Doctor (13) | **8/13 (62%)** | ≥60% | Met |
 
-| App | Pass rate | Target | Status |
-|-----|-----------|--------|--------|
-| Patient | **18/25 (72%)** | ≥70% | Met |
-| Doctor | **5/13 (38%)** | ≥60% | Not met (test harness + contract drift) |
+## Execution note
 
-Date: 2026-06-03
+**TestSprite cloud** (`generateCodeAndExecute`) failed with:
 
-Shared credentials: `Password123` — Patient `+966522222222`, Doctor `+966511111111`.
+```text
+403 — You don't have enough credits (23 remaining)
+```
 
-Auth: both apps return **`data.accessToken`** (admin-aligned).
+Tests were run **locally** against `http://localhost:4000` using the generated `testsprite_tests/TC*.py` scripts.
 
-## 2️⃣ Requirement Validation Summary
+## Reports
 
-See detailed reports:
+- [Patient detail](./testsprite-mcp-patient-test-report.md)
+- [Doctor detail](./testsprite-mcp-doctor-test-report.md)
 
-- [Patient report](./testsprite-mcp-patient-test-report.md)
-- [Doctor report](./testsprite-mcp-doctor-test-report.md)
+## Next step for cloud re-run
 
-## 3️⃣ Coverage & Matching Metrics
-
-Backend work completed per revised plan:
-
-- Mobile auth standardized on `accessToken`
-- Idempotent mobile demo seed (`Mobile demo appointment`)
-- Doctor: reports GET, notifications `listForDoctor`, patient detail mapper, appointment status sort
-- Patient: family payload builder, profile/settings/conversation/file/call-session fixes
-- MySQL migration fix for `notification_source` (removed invalid `CREATE TYPE`)
-
-## 4️⃣ Key Gaps / Risks
-
-- Doctor pass rate limited by TestSprite using wrong routes (appointment PATCH, lab-test PATCH) and PDF content-type expectations.
-- Patient medical-profile PUT 500 needs follow-up.
-- Optional doctor re-run recommended after latest service-layer alias fixes.
+Top up credits on TestSprite, then run patient plan then doctor plan with `testsprite_patient_backend_test_plan.json` / `testsprite_doctor_backend_test_plan.json` copied to `testsprite_backend_test_plan.json`.

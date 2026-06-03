@@ -9,7 +9,7 @@ const list = asyncHandler(async (req, res) => {
 
 const create = asyncHandler(async (req, res) => {
   const data = await DoctorService.createAvailabilityBulk(req.user.id, req.body);
-  return createdResponse(res, { data, message: 'Availability saved' });
+  return createdResponse(res, { data, messageKey: 'AVAILABILITY_SAVED' });
 });
 
 module.exports = { list, create };

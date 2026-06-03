@@ -25,7 +25,7 @@ const updateInfo = asyncHandler(async (req, res) => {
     newValues: req.body,
     req,
   });
-  return successResponse(res, { data, message: 'Support information updated' });
+  return successResponse(res, { data, messageKey: 'SUPPORT_INFO_UPDATED' });
 });
 
 const listTickets = asyncHandler(async (req, res) => {
@@ -57,7 +57,7 @@ const updateStatus = asyncHandler(async (req, res) => {
     newValues: req.body,
     req,
   });
-  return successResponse(res, { data: mapTicketDetail(data), message: 'Status updated' });
+  return successResponse(res, { data: mapTicketDetail(data), messageKey: 'STATUS_UPDATED' });
 });
 
 const assignTicket = asyncHandler(async (req, res) => {
@@ -71,7 +71,7 @@ const assignTicket = asyncHandler(async (req, res) => {
     newValues: { assignedTo: assignedId },
     req,
   });
-  return successResponse(res, { data: mapTicketDetail(data), message: 'Ticket assigned' });
+  return successResponse(res, { data: mapTicketDetail(data), messageKey: 'TICKET_ASSIGNED' });
 });
 
 const addMessage = asyncHandler(async (req, res) => {
@@ -82,7 +82,7 @@ const addMessage = asyncHandler(async (req, res) => {
     body: req.body,
     files: req.files,
   });
-  return createdResponse(res, { data: mapMessage(data), message: 'Message sent' });
+  return createdResponse(res, { data: mapMessage(data), messageKey: 'MESSAGE_SENT' });
 });
 
 module.exports = {

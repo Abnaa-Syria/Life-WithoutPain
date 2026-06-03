@@ -36,8 +36,6 @@ model SupportContactInfo {
   whatsappLink    String?  @db.VarChar(500)
   socialLinks     Json     @default("{}")
   workingHours    Json     @default("{}")
-  descriptionAr   String?  @db.Text
-  descriptionEn   String?  @db.Text
   updatedAt       DateTime @updatedAt
   updatedBy       Int?
 

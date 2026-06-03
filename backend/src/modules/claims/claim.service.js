@@ -1,6 +1,7 @@
 const ClaimBatchRepository = require('./claimBatch.repository');
 const ClaimItemRepository = require('./claimItem.repository');
 const { buildPagination } = require('../../utils/pagination');
+const { enrichInsuranceProvidersOnRecords } = require('../../i18n/enrichRelations');
 
 class ClaimService {
   static async createBatch(data) {
@@ -16,18 +17,19 @@ class ClaimService {
     const [data, total] = await Promise.all([
       ClaimBatchRepository.findMany({
         where, skip, take: limit, orderBy: { createdAt: 'desc' },
-        include: { provider: { select: { nameAr: true, nameEn: true } }, _count: { select: { items: true } } },
+        include: { provider: true, _count: { select: { items: true } } },
       }),
       ClaimBatchRepository.count({ where }),
     ]);
-    return { data, total, page, limit };
+    return { data: await enrichInsuranceProvidersOnRecords(data), total, page, limit };
   }
 
   static async getBatchById(id) {
-    return ClaimBatchRepository.findUnique({
+    const batch = await ClaimBatchRepository.findUnique({
       where: { id: parseInt(id) },
       include: { provider: true, items: { include: { appointment: true } } },
     });
+    return enrichInsuranceProvidersOnRecords(batch);
   }
 
   static async submitBatch(id) {

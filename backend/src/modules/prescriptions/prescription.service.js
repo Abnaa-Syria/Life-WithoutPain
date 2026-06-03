@@ -1,5 +1,6 @@
 const prisma = require('../../config/database');
 const PrescriptionRepository = require('./prescription.repository');
+const { enrichRecordsWithDoctorSpeciality } = require('../../i18n/enrichRelations');
 const { NotFoundError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
 const {
@@ -62,7 +63,7 @@ class PrescriptionService {
       }),
       PrescriptionRepository.count({ where }),
     ]);
-    return { data, total, page, limit };
+    return { data: await enrichRecordsWithDoctorSpeciality(data), total, page, limit };
   }
 
   static async getById(id) {
@@ -75,13 +76,13 @@ class PrescriptionService {
         appointment: true,
       },
     });
-    if (!data) throw new NotFoundError('Prescription not found');
-    return data;
+    if (!data) throw new NotFoundError('PRESCRIPTION_NOT_FOUND');
+    return enrichRecordsWithDoctorSpeciality(data);
   }
 
   static async getPdfForPatient(userId, id) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     const { assertPatientOwnsPrescription } = require('../../shared/utils/patientAppContext');
     await assertPatientOwnsPrescription(patient.id, id);
     return this.getPdf(id);
@@ -94,13 +95,13 @@ class PrescriptionService {
 
   static async getPdf(id) {
     const rx = await PrescriptionRepository.findUnique({ where: { id: parseInt(id) } });
-    if (!rx) throw new NotFoundError('Prescription not found');
+    if (!rx) throw new NotFoundError('PRESCRIPTION_NOT_FOUND');
     return rx.pdfUrl;
   }
 
   static async getQr(id) {
     const rx = await PrescriptionRepository.findUnique({ where: { id: parseInt(id) } });
-    if (!rx) throw new NotFoundError('Prescription not found');
+    if (!rx) throw new NotFoundError('PRESCRIPTION_NOT_FOUND');
     return rx.qrCodeValue;
   }
 
@@ -139,7 +140,7 @@ class PrescriptionService {
     })) || body.items;
 
     if (!items?.length) {
-      throw new BadRequestError('At least one prescription item is required');
+      throw new BadRequestError('PRESCRIPTION_ITEMS_REQUIRED');
     }
 
     return this.create({

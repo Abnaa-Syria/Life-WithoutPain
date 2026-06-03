@@ -42,16 +42,16 @@ class ConversationService {
         where: { id: appointmentId, patientId: body.patientId },
         select: { doctorId: true },
       });
-      if (!appointment) throw new BadRequestError('Invalid appointmentId for this patient');
+      if (!appointment) throw new BadRequestError('INVALID_APPOINTMENT_FOR_PATIENT');
       doctorId = appointment.doctorId;
     }
 
     if (!doctorId || Number.isNaN(doctorId)) {
-      throw new BadRequestError('doctorId is required');
+      throw new BadRequestError('DOCTOR_ID_REQUIRED');
     }
 
     const doctor = await DoctorRepository.findUnique({ where: { id: doctorId } });
-    if (!doctor) throw new BadRequestError('Invalid doctorId');
+    if (!doctor) throw new BadRequestError('INVALID_DOCTOR_ID');
 
     return ConversationRepository.create({
       data: {
@@ -70,7 +70,7 @@ class ConversationService {
         doctor: { include: { user: { select: { fullName: true, avatarUrl: true } } } },
       },
     });
-    if (!data) throw new NotFoundError('Conversation not found');
+    if (!data) throw new NotFoundError('CONVERSATION_NOT_FOUND');
     return data;
   }
 
@@ -96,7 +96,7 @@ class ConversationService {
         doctor: { select: { userId: true } },
       },
     });
-    if (!conversation) throw new NotFoundError('Conversation not found');
+    if (!conversation) throw new NotFoundError('CONVERSATION_NOT_FOUND');
 
     const msg = await MessageRepository.create({
       data: {

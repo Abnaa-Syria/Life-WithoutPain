@@ -23,7 +23,7 @@ const registerPatientSchema = z
     preferredLanguage: data.preferredLanguage,
   }))
   .refine((data) => data.fullName && data.phone, {
-    message: 'fullName (or name) and phone (or phoneNumber) are required',
+    message: 'REGISTRATION_FIELDS_REQUIRED',
   });
 
 const registerDoctorSchema = z.object({
@@ -58,7 +58,11 @@ const mobileLoginSchema = z
     phone: data.phone || data.phoneNumber,
     password: data.password,
   }))
-  .refine((data) => data.phone, { message: 'phone or phoneNumber is required' });
+  .refine((data) => data.phone, { message: 'REQUIRED' });
+
+const preferredLanguageSchema = z.object({
+  preferredLanguage: z.enum(['ar', 'en'], { message: 'PREFERRED_LANGUAGE_INVALID' }),
+});
 
 const verifyOtpSchema = z.object({
   userId: z.number().int().positive(),
@@ -101,4 +105,5 @@ module.exports = {
   resetPasswordSchema,
   changePasswordSchema,
   refreshTokenSchema,
+  preferredLanguageSchema,
 };

@@ -15,7 +15,7 @@ const getOne = asyncHandler(async (req, res) => {
 
 const confirm = asyncHandler(async (req, res) => {
   const data = await AppointmentService.updateStatusForDoctor(req.user.id, req.params.id, 'CONFIRMED');
-  return successResponse(res, { data, message: 'Appointment confirmed' });
+  return successResponse(res, { data, messageKey: 'APPOINTMENT_CONFIRMED' });
 });
 
 const reject = asyncHandler(async (req, res) => {
@@ -29,7 +29,7 @@ const cancel = asyncHandler(async (req, res) => {
   const data = await AppointmentService.updateStatusForDoctor(req.user.id, req.params.id, 'CANCELLED', {
     reason: req.body?.reason,
   });
-  return successResponse(res, { data, message: 'Appointment cancelled' });
+  return successResponse(res, { data, messageKey: 'APPOINTMENT_CANCELLED' });
 });
 
 module.exports = { list, getOne, confirm, reject, cancel };

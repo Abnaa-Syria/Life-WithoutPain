@@ -9,7 +9,7 @@ const getChat = asyncHandler(async (req, res) => {
 
 const sendMessage = asyncHandler(async (req, res) => {
   const data = await ConversationService.sendAppointmentMessageForDoctor(req.user.id, req.params.id, req.body);
-  return createdResponse(res, { data, message: 'Message sent' });
+  return createdResponse(res, { data, messageKey: 'MESSAGE_SENT' });
 });
 
 module.exports = { getChat, sendMessage };

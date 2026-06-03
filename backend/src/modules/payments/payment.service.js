@@ -17,7 +17,7 @@ class PaymentService {
     const hasHomeService = body.homeServiceRequestId != null;
 
     if (hasAppointment === hasHomeService) {
-      throw new BadRequestError('Provide exactly one of appointmentId or homeServiceRequestId');
+      throw new BadRequestError('PAYMENT_TARGET_REQUIRED');
     }
 
     const result = await paymentProvider.initiate({
@@ -27,12 +27,12 @@ class PaymentService {
     });
 
     const patient = await PatientRepository.findUnique({ where: { userId } });
-    if (!patient) throw new BadRequestError('Patient profile not found');
+    if (!patient) throw new BadRequestError('PATIENT_PROFILE_NOT_FOUND');
 
     if (hasAppointment) {
       const appointment = await AppointmentRepository.findUnique({ where: { id: body.appointmentId } });
       if (!appointment || appointment.patientId !== patient.id) {
-        throw new BadRequestError('Appointment not found');
+        throw new BadRequestError('APPOINTMENT_NOT_FOUND');
       }
     } else {
       await HomeServiceService.assertPatientOwnsRequest(patient.id, body.homeServiceRequestId);

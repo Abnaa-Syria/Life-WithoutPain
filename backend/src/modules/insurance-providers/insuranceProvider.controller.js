@@ -25,7 +25,7 @@ class InsuranceProviderController {
 
   static delete = asyncHandler(async (req, res) => {
     await InsuranceProviderService.delete(req.params.id);
-    return successResponse(res, { data: null, message: 'Provider deleted' });
+    return successResponse(res, { data: null, messageKey: 'PROVIDER_DELETED' });
   });
 }
 

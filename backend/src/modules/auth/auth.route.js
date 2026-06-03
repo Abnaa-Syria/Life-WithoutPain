@@ -14,6 +14,7 @@ const {
   resetPasswordSchema,
   changePasswordSchema,
   refreshTokenSchema,
+  preferredLanguageSchema,
 } = require('./auth.validator');
 
 const { uploadSingle } = require('../../middlewares/upload');
@@ -30,5 +31,6 @@ router.post('/reset-password', validate(resetPasswordSchema), controller.resetPa
 router.post('/change-password', authenticate, validate(changePasswordSchema), controller.changePassword);
 router.post('/logout', authenticate, controller.logout);
 router.get('/me', authenticate, controller.getMe);
+router.patch('/preferred-language', authenticate, validate(preferredLanguageSchema), controller.updatePreferredLanguage);
 
 module.exports = router;

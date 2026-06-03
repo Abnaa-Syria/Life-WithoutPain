@@ -11,8 +11,8 @@ const APPOINTMENT_PREVIEW_INCLUDE = {
     appointmentType: true,
     amount: true,
     patient: { include: { user: { select: { fullName: true } } } },
-    doctor: { include: { user: { select: { fullName: true } }, speciality: { select: { nameAr: true } } } },
-    service: { select: { nameAr: true, nameEn: true } },
+    doctor: { include: { user: { select: { fullName: true } }, speciality: true } },
+    service: true,
   },
 };
 
@@ -59,7 +59,7 @@ class DoctorRepository extends BaseRepository {
           take: 50,
           include: {
             patient: { include: { user: { select: { fullName: true } } } },
-            service: { select: { nameAr: true, nameEn: true } },
+            service: true,
           },
         },
         prescriptions: {

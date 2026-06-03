@@ -20,7 +20,7 @@ class ClaimController {
 
   static submitBatch = asyncHandler(async (req, res) => {
     const data = await ClaimService.submitBatch(req.params.id);
-    return successResponse(res, { data, message: 'Batch submitted' });
+    return successResponse(res, { data, messageKey: 'BATCH_SUBMITTED' });
   });
 
   static listItems = asyncHandler(async (req, res) => {

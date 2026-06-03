@@ -1,5 +1,6 @@
 const prisma = require('../../config/database');
 const NotificationRepository = require('./notification.repository');
+const SharedNotificationService = require('../../shared/notifications/NotificationService');
 const { buildPagination } = require('../../utils/pagination');
 const { getAllowedNotificationTypes } = require('../../shared/notifications/notificationPermissions');
 const { STAFF_ROLES } = require('../../constants');
@@ -24,10 +25,11 @@ class NotificationService {
     const where = buildWhere(userId, allowedTypes);
     if (query.isRead !== undefined) where.isRead = query.isRead === 'true';
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       NotificationRepository.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
       NotificationRepository.count({ where }),
     ]);
+    const data = await SharedNotificationService.enrichNotifications(rows);
     return { data, total, page, limit };
   }
 
@@ -36,10 +38,11 @@ class NotificationService {
     const where = { userId };
     if (query.isRead !== undefined) where.isRead = query.isRead === 'true';
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       prisma.notification.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
       prisma.notification.count({ where }),
     ]);
+    const data = await SharedNotificationService.enrichNotifications(rows);
     return { data, total, page, limit };
   }
 

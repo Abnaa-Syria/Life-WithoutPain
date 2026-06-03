@@ -6,6 +6,7 @@ const { buildPagination } = require('../../utils/pagination');
 const { createAuditLog } = require('../../middlewares/auditLog');
 const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 const prisma = require('../../config/database');
+const { enrichInsuranceCases } = require('../../i18n/enrichRelations');
 
 const CASE_INCLUDE = InsuranceRequestOrchestrator.caseInclude();
 
@@ -31,13 +32,13 @@ class InsuranceCaseService {
           patient: { include: { user: { select: { fullName: true } } } },
           provider: true,
           appointment: { select: { id: true, amount: true, appointmentDate: true } },
-          homeServiceRequest: { include: { service: { select: { nameEn: true, nameAr: true } } } },
+          homeServiceRequest: { include: { service: true } },
           approvals: { orderBy: { createdAt: 'desc' }, take: 1 },
         },
       }),
       InsuranceCaseRepository.count({ where }),
     ]);
-    return { data, total, page, limit };
+    return { data: await enrichInsuranceCases(data), total, page, limit };
   }
 
   static async getById(id) {
@@ -45,8 +46,8 @@ class InsuranceCaseService {
       where: { id: parseInt(id, 10) },
       include: CASE_INCLUDE,
     });
-    if (!data) throw new NotFoundError('Insurance case not found');
-    return data;
+    if (!data) throw new NotFoundError('INSURANCE_CASE_NOT_FOUND');
+    return enrichInsuranceCases(data);
   }
 
   static async _loadCase(id) {
@@ -54,7 +55,7 @@ class InsuranceCaseService {
       where: { id: parseInt(id, 10) },
       include: { approvals: { orderBy: { createdAt: 'desc' } } },
     });
-    if (!insuranceCase) throw new NotFoundError('Insurance case not found');
+    if (!insuranceCase) throw new NotFoundError('INSURANCE_CASE_NOT_FOUND');
     return insuranceCase;
   }
 
@@ -186,7 +187,7 @@ class InsuranceCaseService {
 
   static async addNote(id, note) {
     const current = await InsuranceCaseRepository.findUnique({ where: { id: parseInt(id, 10) } });
-    if (!current) throw new NotFoundError('Insurance case not found');
+    if (!current) throw new NotFoundError('INSURANCE_CASE_NOT_FOUND');
     const notes = current.notes
       ? `${current.notes}\n[${new Date().toISOString()}] ${note}`
       : `[${new Date().toISOString()}] ${note}`;
@@ -208,12 +209,12 @@ class InsuranceCaseService {
           provider: true,
           approvals: { orderBy: { createdAt: 'desc' }, take: 1 },
           appointment: { select: { id: true, appointmentDate: true, startTime: true } },
-          homeServiceRequest: { include: { service: { select: { nameEn: true, nameAr: true } } } },
+          homeServiceRequest: { include: { service: true } },
         },
       }),
       prisma.insuranceCase.count({ where }),
     ]);
-    return { data, total, page, limit };
+    return { data: await enrichInsuranceCases(data), total, page, limit };
   }
 }
 

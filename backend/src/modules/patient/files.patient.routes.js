@@ -17,7 +17,7 @@ router.get('/', asyncHandler(async (req, res) => {
 router.post('/', uploadSingle('file'), asyncHandler(async (req, res) => {
   const category = (req.body.category || 'OTHER').toUpperCase();
   if (!FILE_CATEGORIES.has(category)) {
-    throw new BadRequestError(`category must be one of: ${[...FILE_CATEGORIES].join(', ')}`);
+    throw new BadRequestError('FILE_CATEGORY_INVALID', { values: [...FILE_CATEGORIES].join(', ') });
   }
   const fileData = {
     fileUrl: req.file ? `/uploads/${req.file.filename}` : req.body.fileUrl,

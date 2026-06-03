@@ -1,0 +1,22 @@
+{
+  "INVALID_PHONE": "Invalid phone number format",
+  "INVALID_EMAIL": "Invalid email format",
+  "PASSWORD_MIN_LENGTH": "Password must be at least 8 characters",
+  "PASSWORD_UPPERCASE": "Password must contain at least one uppercase letter",
+  "PASSWORD_LOWERCASE": "Password must contain at least one lowercase letter",
+  "PASSWORD_NUMBER": "Password must contain at least one number",
+  "REQUIRED": "This field is required",
+  "INVALID_TYPE": "Invalid value type",
+  "STRING_MIN": "Must be at least {{min}} characters",
+  "STRING_MAX": "Must be at most {{max}} characters",
+  "NUMBER_MIN": "Must be at least {{min}}",
+  "NUMBER_MAX": "Must be at most {{max}}",
+  "INVALID_ENUM": "Invalid value",
+  "INVALID_DATE": "Invalid date",
+  "INVALID_BOOLEAN": "Invalid boolean",
+  "ARRAY_MIN": "At least {{min}} items required",
+  "ARRAY_MAX": "At most {{max}} items allowed",
+  "REGISTRATION_FIELDS_REQUIRED": "fullName (or name) and phone (or phoneNumber) are required",
+  "FAMILY_BOOKING_REQUIRES_MEMBER": "familyMemberId is required when bookingFor is family",
+  "PREFERRED_LANGUAGE_INVALID": "preferredLanguage must be ar or en"
+}

@@ -27,7 +27,7 @@ class CallSessionService {
 
   static async getById(id) {
     const data = await CallSessionRepository.findUnique({ where: { id: parseInt(id) } });
-    if (!data) throw new NotFoundError('Call session not found');
+    if (!data) throw new NotFoundError('CALL_SESSION_NOT_FOUND');
     return data;
   }
 
@@ -40,7 +40,7 @@ class CallSessionService {
 
   static async end(id) {
     const session = await CallSessionRepository.findUnique({ where: { id: parseInt(id) } });
-    if (!session) throw new NotFoundError('Call session not found');
+    if (!session) throw new NotFoundError('CALL_SESSION_NOT_FOUND');
 
     const duration = session.startedAt ? Math.floor((new Date() - session.startedAt) / 1000) : 0;
     return CallSessionRepository.update({

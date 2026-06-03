@@ -35,7 +35,7 @@ class RbacService {
 
   static async getRoleById(roleId) {
     const role = await this.getRoleWithPermissions(roleId);
-    if (!role) throw new NotFoundError('Role not found');
+    if (!role) throw new NotFoundError('ROLE_NOT_FOUND');
     return role;
   }
 
@@ -50,11 +50,11 @@ class RbacService {
   static async createRole(data, actorId, req) {
     const name = RbacService.normalizeRoleName(data.name);
     if (!name || name.length < 2) {
-      throw new BadRequestError('Role name must be at least 2 characters (e.g. CUSTOM_ROLE)');
+      throw new BadRequestError('ROLE_NAME_TOO_SHORT');
     }
 
     const existing = await prisma.role.findUnique({ where: { name } });
-    if (existing) throw new BadRequestError('Role name already exists');
+    if (existing) throw new BadRequestError('ROLE_NAME_EXISTS');
 
     const role = await prisma.role.create({
       data: {
@@ -70,9 +70,9 @@ class RbacService {
 
   static async updateRole(roleId, data, actorId, req) {
     const role = await prisma.role.findUnique({ where: { id: roleId } });
-    if (!role) throw new NotFoundError('Role not found');
+    if (!role) throw new NotFoundError('ROLE_NOT_FOUND');
     if (role.isSystem && data.name && data.name !== role.name) {
-      throw new ForbiddenError('System role name cannot be changed');
+      throw new ForbiddenError('SYSTEM_ROLE_NAME_LOCKED');
     }
 
     const updated = await prisma.role.update({
@@ -89,8 +89,8 @@ class RbacService {
 
   static async deleteRole(roleId, actorId, req) {
     const role = await prisma.role.findUnique({ where: { id: roleId } });
-    if (!role) throw new NotFoundError('Role not found');
-    if (role.isSystem) throw new ForbiddenError('System roles cannot be deleted');
+    if (!role) throw new NotFoundError('ROLE_NOT_FOUND');
+    if (role.isSystem) throw new ForbiddenError('SYSTEM_ROLE_DELETE_FORBIDDEN');
 
     await prisma.role.delete({ where: { id: roleId } });
     createAuditLog({ actorId, entityType: 'Role', entityId: roleId, action: 'DELETE', req });
@@ -99,9 +99,9 @@ class RbacService {
 
   static async setRolePermissions(roleId, permissionIds, actorId, req) {
     const role = await prisma.role.findUnique({ where: { id: roleId } });
-    if (!role) throw new NotFoundError('Role not found');
+    if (!role) throw new NotFoundError('ROLE_NOT_FOUND');
     if (role.name === ROLES.SUPER_ADMIN) {
-      throw new ForbiddenError('SUPER_ADMIN permissions cannot be modified');
+      throw new ForbiddenError('SUPER_ADMIN_PERMISSIONS_LOCKED');
     }
 
     await prisma.$transaction(async (tx) => {
@@ -135,20 +135,18 @@ class RbacService {
   static async assignUserRole(userId, roleName, actorId, req) {
     const normalizedRole = RbacService.normalizeRoleName(roleName);
     if (!USER_ROLE_ENUM.includes(normalizedRole)) {
-      throw new BadRequestError(
-        `Role "${normalizedRole}" cannot be assigned to users until it is added to the UserRole enum`,
-      );
+      throw new BadRequestError('RBAC_ROLE_NOT_IN_ENUM', { role: normalizedRole });
     }
 
     const dbRole = await prisma.role.findUnique({ where: { name: normalizedRole } });
     if (!dbRole) {
-      throw new BadRequestError(`Role "${normalizedRole}" is not defined in RBAC — run seed or create the role first`);
+      throw new BadRequestError('RBAC_ROLE_UNDEFINED', { role: normalizedRole });
     }
 
     if (actorId === userId && normalizedRole !== ROLES.SUPER_ADMIN) {
       const actorPerms = await getEffectivePermissions(actorId);
       if (!actorPerms.includes('roles.manage')) {
-        throw new ForbiddenError('Cannot change your own role without roles.manage');
+        throw new ForbiddenError('CANNOT_CHANGE_OWN_ROLE');
       }
     }
 
@@ -156,10 +154,10 @@ class RbacService {
       where: { role: ROLES.SUPER_ADMIN, deletedAt: null, status: 'ACTIVE' },
     });
     const target = await prisma.user.findUnique({ where: { id: userId } });
-    if (!target) throw new NotFoundError('User not found');
+    if (!target) throw new NotFoundError('USER_NOT_FOUND');
 
     if (target.role === ROLES.SUPER_ADMIN && normalizedRole !== ROLES.SUPER_ADMIN && superAdminCount <= 1) {
-      throw new ForbiddenError('Cannot demote the last active SUPER_ADMIN');
+      throw new ForbiddenError('LAST_SUPER_ADMIN');
     }
 
     const updated = await prisma.user.update({
@@ -175,7 +173,7 @@ class RbacService {
   static async setUserPermissionOverrides(userId, overrides, actorId, req) {
     if (actorId === userId) {
       const deniesManage = overrides.some((o) => o.permissionName === 'roles.manage' && o.granted === false);
-      if (deniesManage) throw new ForbiddenError('Cannot revoke your own roles.manage permission');
+      if (deniesManage) throw new ForbiddenError('CANNOT_REVOKE_OWN_ROLES_MANAGE');
     }
 
     await prisma.$transaction(async (tx) => {

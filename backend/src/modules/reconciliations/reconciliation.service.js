@@ -1,5 +1,6 @@
 const ReconciliationRepository = require('./reconciliation.repository');
 const { buildPagination } = require('../../utils/pagination');
+const { enrichInsuranceProvidersOnRecords } = require('../../i18n/enrichRelations');
 
 class ReconciliationService {
   static async list(query) {
@@ -11,11 +12,11 @@ class ReconciliationService {
     const [data, total] = await Promise.all([
       ReconciliationRepository.findMany({
         where, skip, take: limit, orderBy: { recordedAt: 'desc' },
-        include: { provider: { select: { nameAr: true, nameEn: true } } },
+        include: { provider: true },
       }),
       ReconciliationRepository.count({ where }),
     ]);
-    return { data, total, page, limit };
+    return { data: await enrichInsuranceProvidersOnRecords(data), total, page, limit };
   }
 
   static async create(data) {
@@ -23,10 +24,11 @@ class ReconciliationService {
   }
 
   static async getById(id) {
-    return ReconciliationRepository.findUnique({
+    const row = await ReconciliationRepository.findUnique({
       where: { id: parseInt(id) },
       include: { provider: true, claimBatch: true },
     });
+    return enrichInsuranceProvidersOnRecords(row);
   }
 }
 

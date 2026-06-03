@@ -4,7 +4,7 @@ const { asyncHandler } = require('../../utils/helpers');
 
 const create = asyncHandler(async (req, res) => {
   const data = await AppointmentService.create(req.user.id, req.body);
-  return createdResponse(res, { data, message: 'Appointment created' });
+  return createdResponse(res, { data, messageKey: 'APPOINTMENT_CREATED' });
 });
 
 const getAll = asyncHandler(async (req, res) => {
@@ -19,17 +19,17 @@ const getById = asyncHandler(async (req, res) => {
 
 const confirm = asyncHandler(async (req, res) => {
   const data = await AppointmentService.updateStatus(req.params.id, 'CONFIRMED', req.user.id);
-  return successResponse(res, { data, message: 'Appointment confirmed' });
+  return successResponse(res, { data, messageKey: 'APPOINTMENT_CONFIRMED' });
 });
 
 const reschedule = asyncHandler(async (req, res) => {
   const data = await AppointmentService.updateStatus(req.params.id, 'RESCHEDULED', req.user.id, req.body);
-  return successResponse(res, { data, message: 'Appointment rescheduled' });
+  return successResponse(res, { data, messageKey: 'APPOINTMENT_RESCHEDULED' });
 });
 
 const cancel = asyncHandler(async (req, res) => {
   const data = await AppointmentService.updateStatus(req.params.id, 'CANCELLED', req.user.id, req.body);
-  return successResponse(res, { data, message: 'Appointment cancelled' });
+  return successResponse(res, { data, messageKey: 'APPOINTMENT_CANCELLED' });
 });
 
 const start = asyncHandler(async (req, res) => {

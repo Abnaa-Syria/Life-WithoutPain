@@ -5,8 +5,6 @@ model DoctorProfile {
   userId             Int                @unique
   specialityId       Int?
   title              String?            @db.VarChar(100)
-  bio                String?            @db.Text
-  bioAr              String?            @db.Text
   yearsOfExperience  Int?
   licenseNumber      String            @db.VarChar(100)
   licenseExpiryDate  DateTime?          @db.Date

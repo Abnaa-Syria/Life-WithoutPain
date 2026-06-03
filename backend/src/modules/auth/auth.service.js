@@ -18,7 +18,7 @@ class AuthService {
       where: { OR: [{ email }, { phone: normalizedPhone }], deletedAt: null },
     });
     if (existingUser) {
-      throw new ConflictError('A user with this email or phone already exists');
+      throw new ConflictError('USER_ALREADY_EXISTS');
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
@@ -78,12 +78,12 @@ class AuthService {
       where: { OR: [{ email }, { phone: normalizedPhone }], deletedAt: null },
     });
     if (existingUser) {
-      throw new ConflictError('A user with this email or phone already exists');
+      throw new ConflictError('USER_ALREADY_EXISTS');
     }
 
     const finalLicenseNumber = licenceNumber || licenseNumber;
     if (!finalLicenseNumber) {
-      throw new ValidationError('Medical license number is required');
+      throw new ValidationError('MEDICAL_LICENSE_REQUIRED');
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
@@ -91,7 +91,7 @@ class AuthService {
     const expiryRaw = licenceExpiryDate || licenseExpiryDate;
     const parsedExpiry = expiryRaw ? new Date(`${expiryRaw}T00:00:00.000Z`) : null;
     if (parsedExpiry && Number.isNaN(parsedExpiry.getTime())) {
-      throw new ValidationError('Invalid medical license expiry date');
+      throw new ValidationError('INVALID_LICENSE_EXPIRY');
     }
 
     const profileCreate = {
@@ -178,12 +178,13 @@ class AuthService {
       phone: user.phone,
       role: user.role,
       isVerified: user.isVerified,
-      subSpecializations: (profileWithSubs?.subSpecialities || []).map((s) => ({
-        id: s.id,
-        specialityId: s.specialityId,
-        nameAr: s.nameAr,
-        nameEn: s.nameEn,
-      })),
+      subSpecializations: await (async () => {
+        const subs = profileWithSubs?.subSpecialities || [];
+        const { attachTranslations } = require('../../i18n/mapLocalized');
+        const { getLocale } = require('../../i18n/localeContext');
+        const locale = getLocale() || 'en';
+        return attachTranslations(subs, 'sub_speciality', ['name'], locale);
+      })(),
     };
   }
 
@@ -198,23 +199,23 @@ class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedError('Invalid credentials');
+      throw new UnauthorizedError('INVALID_CREDENTIALS');
     }
 
     if (user.status !== 'ACTIVE') {
-      throw new UnauthorizedError('Account is not active');
+      throw new UnauthorizedError('ACCOUNT_NOT_ACTIVE');
     }
 
     if (user.role === 'DOCTOR') {
       const doctorProfile = await prisma.doctorProfile.findUnique({ where: { userId: user.id } });
       if (doctorProfile && doctorProfile.verificationStatus !== 'APPROVED') {
-        throw new UnauthorizedError('Your account is pending admin approval');
+        throw new UnauthorizedError('ACCOUNT_PENDING_APPROVAL');
       }
     }
 
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
-      throw new UnauthorizedError('Invalid credentials');
+      throw new UnauthorizedError('INVALID_CREDENTIALS');
     }
 
     const accessToken = jwt.sign(
@@ -270,23 +271,23 @@ class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedError('Invalid credentials');
+      throw new UnauthorizedError('INVALID_CREDENTIALS');
     }
 
     if (user.status !== 'ACTIVE') {
-      throw new UnauthorizedError('Account is not active');
+      throw new UnauthorizedError('ACCOUNT_NOT_ACTIVE');
     }
 
     if (user.role === 'DOCTOR') {
       const doctorProfile = await prisma.doctorProfile.findUnique({ where: { userId: user.id } });
       if (doctorProfile && doctorProfile.verificationStatus !== 'APPROVED') {
-        throw new UnauthorizedError('Your account is pending admin approval');
+        throw new UnauthorizedError('ACCOUNT_PENDING_APPROVAL');
       }
     }
 
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
-      throw new UnauthorizedError('Invalid credentials');
+      throw new UnauthorizedError('INVALID_CREDENTIALS');
     }
 
     const accessToken = jwt.sign(
@@ -337,16 +338,16 @@ class AuthService {
 
   static assertPatientAppRole(user) {
     if (ADMIN_ROLES.includes(user.role)) {
-      throw new ForbiddenError('This account must sign in through the admin portal.');
+      throw new ForbiddenError('ADMIN_PORTAL_REQUIRED');
     }
     if (user.role !== ROLES.PATIENT) {
-      throw new ForbiddenError('This account cannot sign in to the patient app. Use the doctor app or contact support.');
+      throw new ForbiddenError('PATIENT_APP_FORBIDDEN');
     }
   }
 
   static async completeVerification({ userId, purpose }) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError('USER_NOT_FOUND');
 
     if (purpose === 'verification') {
       await prisma.user.update({
@@ -415,7 +416,7 @@ class AuthService {
     });
 
     if (!patientProfile) {
-      throw new NotFoundError('Patient profile not found');
+      throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     }
 
     return mapPatientLoginResponseDto({
@@ -438,7 +439,7 @@ class AuthService {
     });
 
     if (!otpRecord) {
-      throw new BadRequestError('Invalid or expired OTP');
+      throw new BadRequestError('INVALID_OTP');
     }
 
     await prisma.otpCode.update({
@@ -451,7 +452,7 @@ class AuthService {
 
   static async resendOtp({ userId, purpose }) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError('USER_NOT_FOUND');
 
     const recentOtp = await prisma.otpCode.findFirst({
       where: {
@@ -462,7 +463,7 @@ class AuthService {
     });
 
     if (recentOtp) {
-      throw new BadRequestError('Please wait before requesting a new OTP');
+      throw new BadRequestError('OTP_RATE_LIMITED');
     }
 
     const otpCode = generateOTP(config.otp.length);
@@ -487,11 +488,11 @@ class AuthService {
     });
 
     if (!tokenRecord || tokenRecord.revokedAt || tokenRecord.expiresAt < new Date()) {
-      throw new UnauthorizedError('Invalid or expired refresh token');
+      throw new UnauthorizedError('INVALID_REFRESH_TOKEN');
     }
 
     if (tokenRecord.user.deletedAt || tokenRecord.user.status !== 'ACTIVE') {
-      throw new UnauthorizedError('Account is not active');
+      throw new UnauthorizedError('ACCOUNT_NOT_ACTIVE');
     }
 
     await prisma.refreshToken.update({
@@ -554,7 +555,7 @@ class AuthService {
     });
 
     if (!otpRecord) {
-      throw new BadRequestError('Invalid or expired OTP');
+      throw new BadRequestError('INVALID_OTP');
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
@@ -570,15 +571,15 @@ class AuthService {
 
   static async changePassword(userId, { currentPassword, newPassword }) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError('USER_NOT_FOUND');
 
     const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!isValid) throw new BadRequestError('Current password is incorrect');
+    if (!isValid) throw new BadRequestError('CURRENT_PASSWORD_INCORRECT');
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
 
-    return { message: 'Password changed successfully' };
+    return { messageKey: 'PASSWORD_CHANGED' };
   }
 
   static async logout(userId, refreshToken) {
@@ -588,7 +589,7 @@ class AuthService {
         data: { revokedAt: new Date() },
       });
     }
-    return { message: 'Logged out successfully' };
+    return { messageKey: 'LOGOUT_SUCCESS' };
   }
 
   static async registerDoctorMobile({
@@ -650,7 +651,7 @@ class AuthService {
     });
 
     if (!patientProfile) {
-      throw new NotFoundError('Patient profile not found');
+      throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     }
 
     return mapPatientLoginResponseDto({
@@ -678,7 +679,7 @@ class AuthService {
     const user = await prisma.user.findFirst({
       where: { phone: normalizePhone(mobileNumber), role: 'DOCTOR', deletedAt: null },
     });
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError('USER_NOT_FOUND');
 
     return this.verifyOtp({ userId: user.id, code: otp, purpose: 'verification' });
   }
@@ -702,7 +703,7 @@ class AuthService {
       },
     });
 
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError('USER_NOT_FOUND');
 
     const { getEffectivePermissions } = require('../rbac/permission.service');
     const permissions = await getEffectivePermissions(userId, user.role);
@@ -732,9 +733,25 @@ class AuthService {
     return profile;
   }
 
+  static async updatePreferredLanguage(userId, preferredLanguage) {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { preferredLanguage },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        role: true,
+        preferredLanguage: true,
+      },
+    });
+    return user;
+  }
+
   static async deleteAccount(userId) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError('USER_NOT_FOUND');
 
     await prisma.$transaction([
       prisma.user.update({
@@ -750,7 +767,7 @@ class AuthService {
       }),
     ]);
 
-    return { message: 'Account deleted successfully' };
+    return { messageKey: 'ACCOUNT_DELETED' };
   }
 }
 

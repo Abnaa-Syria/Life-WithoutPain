@@ -1,0 +1,22 @@
+{
+  "INVALID_PHONE": "صيغة رقم الهاتف غير صالحة",
+  "INVALID_EMAIL": "صيغة البريد الإلكتروني غير صالحة",
+  "PASSWORD_MIN_LENGTH": "كلمة المرور 8 أحرف على الأقل",
+  "PASSWORD_UPPERCASE": "كلمة المرور يجب أن تحتوي حرفاً كبيراً",
+  "PASSWORD_LOWERCASE": "كلمة المرور يجب أن تحتوي حرفاً صغيراً",
+  "PASSWORD_NUMBER": "كلمة المرور يجب أن تحتوي رقماً",
+  "REQUIRED": "هذا الحقل مطلوب",
+  "INVALID_TYPE": "نوع القيمة غير صالح",
+  "STRING_MIN": "يجب ألا يقل عن {{min}} أحرف",
+  "STRING_MAX": "يجب ألا يزيد عن {{max}} أحرف",
+  "NUMBER_MIN": "يجب ألا يقل عن {{min}}",
+  "NUMBER_MAX": "يجب ألا يزيد عن {{max}}",
+  "INVALID_ENUM": "قيمة غير صالحة",
+  "INVALID_DATE": "تاريخ غير صالح",
+  "INVALID_BOOLEAN": "قيمة منطقية غير صالحة",
+  "ARRAY_MIN": "عنصر واحد على الأقل مطلوب",
+  "ARRAY_MAX": "الحد الأقصى {{max}} عناصر",
+  "REGISTRATION_FIELDS_REQUIRED": "الاسم والهاتف مطلوبان",
+  "FAMILY_BOOKING_REQUIRES_MEMBER": "معرف فرد العائلة مطلوب عند الحجز للعائلة",
+  "PREFERRED_LANGUAGE_INVALID": "اللغة المفضلة يجب أن تكون ar أو en"
+}

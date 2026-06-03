@@ -1,5 +1,6 @@
 const prisma = require('../../config/database');
 const MedicalReportRepository = require('./report.repository');
+const { enrichRecordsWithDoctorSpeciality } = require('../../i18n/enrichRelations');
 const { NotFoundError, BadRequestError } = require('../../shared/errors/AppError');
 const { buildPagination } = require('../../utils/pagination');
 const {
@@ -43,12 +44,17 @@ class ReportService {
       MedicalReportRepository.count({ where }),
     ]);
     
-    const formattedData = data.map(report => ({
+    const formattedData = data.map((report) => ({
       ...report,
       prescriptionNumber: report.prescription ? `RX-${report.prescription.id}` : null,
     }));
-    
-    return { data: formattedData, total, page, limit };
+
+    return {
+      data: await enrichRecordsWithDoctorSpeciality(formattedData),
+      total,
+      page,
+      limit,
+    };
   }
 
   static async getById(id) {
@@ -62,12 +68,13 @@ class ReportService {
         attachments: true,
       },
     });
-    if (!data) throw new NotFoundError('Report not found');
-    
-    return {
+    if (!data) throw new NotFoundError('REPORT_NOT_FOUND');
+
+    const formatted = {
       ...data,
       prescriptionNumber: data.prescription ? `RX-${data.prescription.id}` : null,
     };
+    return enrichRecordsWithDoctorSpeciality(formatted);
   }
 
   static async update(id, body) {
@@ -76,13 +83,13 @@ class ReportService {
 
   static async getPdf(id) {
     const report = await MedicalReportRepository.findUnique({ where: { id: parseInt(id) } });
-    if (!report) throw new NotFoundError('Report not found');
+    if (!report) throw new NotFoundError('REPORT_NOT_FOUND');
     return report.pdfUrl;
   }
 
   static async getPdfForPatient(userId, id) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
     const { assertPatientOwnsReport } = require('../../shared/utils/patientAppContext');
     await assertPatientOwnsReport(patient.id, id);
     return this.getPdf(id);

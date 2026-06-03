@@ -26,8 +26,10 @@ function mapMessage(msg) {
   };
 }
 
+const { pickLocalized } = require('../../i18n/mapLocalized');
+
 function mapSupportInfo(info, lang = 'ar') {
-  const isEn = lang === 'en';
+  const translations = info.translations || {};
   return {
     supportPhones: info.supportPhones,
     supportEmail: info.supportEmail,
@@ -35,9 +37,7 @@ function mapSupportInfo(info, lang = 'ar') {
     whatsappLink: info.whatsappLink,
     socialLinks: info.socialLinks,
     workingHours: info.workingHours,
-    description: isEn ? (info.descriptionEn || info.descriptionAr) : (info.descriptionAr || info.descriptionEn),
-    descriptionAr: info.descriptionAr,
-    descriptionEn: info.descriptionEn,
+    description: pickLocalized(translations, lang, 'description'),
     updatedAt: info.updatedAt,
   };
 }

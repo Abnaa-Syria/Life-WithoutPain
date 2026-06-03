@@ -4,27 +4,27 @@ const { asyncHandler } = require('../../utils/helpers');
 
 const getProfile = asyncHandler(async (req, res) => {
   const data = await PatientService.getProfile(req.user.id);
-  return successResponse(res, { data, message: 'Profile fetched successfully' });
+  return successResponse(res, { data, messageKey: 'PROFILE_FETCHED' });
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
   const data = await PatientService.updateProfile(req.user.id, req.body);
-  return successResponse(res, { data, message: 'Profile updated successfully' });
+  return successResponse(res, { data, messageKey: 'PROFILE_UPDATED' });
 });
 
 const getMedicalProfile = asyncHandler(async (req, res) => {
   const data = await PatientService.getMedicalProfile(req.user.id);
-  return successResponse(res, { data, message: 'Medical profile fetched successfully' });
+  return successResponse(res, { data, messageKey: 'MEDICAL_PROFILE_FETCHED' });
 });
 
 const updateMedicalProfile = asyncHandler(async (req, res) => {
   const data = await PatientService.updateMedicalProfile(req.user.id, req.body);
-  return successResponse(res, { data, message: 'Medical profile updated successfully' });
+  return successResponse(res, { data, messageKey: 'MEDICAL_PROFILE_UPDATED' });
 });
 
 const listMedicalProfileAttachments = asyncHandler(async (req, res) => {
   const data = await PatientService.listMedicalProfileAttachments(req.user.id);
-  return successResponse(res, { data, message: 'Attachments fetched successfully' });
+  return successResponse(res, { data, messageKey: 'ATTACHMENTS_FETCHED' });
 });
 
 const addMedicalProfileAttachments = asyncHandler(async (req, res) => {
@@ -34,57 +34,57 @@ const addMedicalProfileAttachments = asyncHandler(async (req, res) => {
     req.files,
     getAttachmentTitlesFromBody(req.body),
   );
-  return createdResponse(res, { data, message: 'Attachments uploaded successfully' });
+  return createdResponse(res, { data, messageKey: 'ATTACHMENTS_UPLOADED' });
 });
 
 const deleteMedicalProfileAttachment = asyncHandler(async (req, res) => {
   const data = await PatientService.deleteMedicalProfileAttachment(req.user.id, req.params.id);
-  return successResponse(res, { data, message: 'Attachment deleted successfully' });
+  return successResponse(res, { data, messageKey: 'ATTACHMENT_DELETED' });
 });
 
 const getFamilyMembers = asyncHandler(async (req, res) => {
   const data = await PatientService.getFamilyMembers(req.user.id);
-  return successResponse(res, { data, message: 'Family members fetched successfully' });
+  return successResponse(res, { data, messageKey: 'FAMILY_MEMBERS_FETCHED' });
 });
 
 const createFamilyMember = asyncHandler(async (req, res) => {
   const data = await PatientService.createFamilyMember(req.user.id, req.body);
-  return createdResponse(res, { data, message: 'Family member added successfully' });
+  return createdResponse(res, { data, messageKey: 'FAMILY_MEMBER_ADDED' });
 });
 
 const updateFamilyMember = asyncHandler(async (req, res) => {
   const data = await PatientService.updateFamilyMember(req.user.id, parseInt(req.params.id), req.body);
-  return successResponse(res, { data, message: 'Family member updated successfully' });
+  return successResponse(res, { data, messageKey: 'FAMILY_MEMBER_UPDATED' });
 });
 
 const deleteFamilyMember = asyncHandler(async (req, res) => {
   await PatientService.deleteFamilyMember(req.user.id, parseInt(req.params.id));
-  return successResponse(res, { data: null, message: 'Family member removed successfully' });
+  return successResponse(res, { data: null, messageKey: 'FAMILY_MEMBER_REMOVED' });
 });
 
 const getInsurances = asyncHandler(async (req, res) => {
   const data = await PatientService.getInsurances(req.user.id);
-  return successResponse(res, { data, message: 'Insurances fetched successfully' });
+  return successResponse(res, { data, messageKey: 'INSURANCES_FETCHED' });
 });
 
 const createInsurance = asyncHandler(async (req, res) => {
   const data = await PatientService.createInsurance(req.user.id, req.body);
-  return createdResponse(res, { data, message: 'Insurance linked successfully' });
+  return createdResponse(res, { data, messageKey: 'INSURANCE_LINKED' });
 });
 
 const updateInsurance = asyncHandler(async (req, res) => {
   const data = await PatientService.updateInsurance(req.user.id, parseInt(req.params.id), req.body);
-  return successResponse(res, { data, message: 'Insurance updated successfully' });
+  return successResponse(res, { data, messageKey: 'INSURANCE_UPDATED' });
 });
 
 const deleteInsurance = asyncHandler(async (req, res) => {
   await PatientService.deleteInsurance(req.user.id, parseInt(req.params.id));
-  return successResponse(res, { data: null, message: 'Insurance removed successfully' });
+  return successResponse(res, { data: null, messageKey: 'INSURANCE_REMOVED' });
 });
 
 const getMedicalFiles = asyncHandler(async (req, res) => {
   const { data, total, page, limit } = await PatientService.getMedicalFiles(req.user.id, req.query);
-  return paginatedResponse(res, { data, total, page, limit, message: 'Medical files fetched successfully' });
+  return paginatedResponse(res, { data, total, page, limit, messageKey: 'MEDICAL_FILES_FETCHED' });
 });
 
 const uploadMedicalFile = asyncHandler(async (req, res) => {
@@ -97,12 +97,12 @@ const uploadMedicalFile = asyncHandler(async (req, res) => {
     appointmentId: req.body.appointmentId ? parseInt(req.body.appointmentId) : null,
   };
   const data = await PatientService.uploadMedicalFile(req.user.id, fileData);
-  return createdResponse(res, { data, message: 'File uploaded successfully' });
+  return createdResponse(res, { data, messageKey: 'FILE_UPLOADED' });
 });
 
 const getDashboardSummary = asyncHandler(async (req, res) => {
   const data = await PatientService.getDashboardSummary(req.user.id);
-  return successResponse(res, { data, message: 'Dashboard summary fetched successfully' });
+  return successResponse(res, { data, messageKey: 'DASHBOARD_FETCHED' });
 });
 
 const getUpcomingAppointments = asyncHandler(async (req, res) => {
@@ -122,7 +122,7 @@ const getNotifications = asyncHandler(async (req, res) => {
 
 const updateSettings = asyncHandler(async (req, res) => {
   const data = await PatientService.updateSettings(req.user.id, req.body);
-  return successResponse(res, { data, message: 'Settings updated successfully' });
+  return successResponse(res, { data, messageKey: 'SETTINGS_UPDATED' });
 });
 
 module.exports = {

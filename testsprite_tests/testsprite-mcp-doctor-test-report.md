@@ -1,52 +1,44 @@
 # TestSprite Doctor Backend Report
 
+**Run date:** 2026-06-03  
+**Execution:** Local scripts in `testsprite_tests/TC*_test_doctor_*.py` (TestSprite cloud returned **403 — insufficient credits**, 23 remaining)
+
 ## 1️⃣ Document Metadata
 
 | Field | Value |
 |-------|-------|
-| Project | Life-WithoutPain |
-| Scope | Doctor mobile API (`/api/v1/doctor/*`) |
-| Date | 2026-06-03 |
-| Auth contract | `data.accessToken` + `data.refreshToken` |
+| Scope | Doctor API `/api/v1/doctor/*` (13 modules) |
+| Auth | `POST /api/v1/doctor/auth/login` → `data.accessToken` |
 | Demo account | `+966511111111` / `Password123` (`dr.ahmed@example.com`) |
-| Demo data | 3× `Mobile demo appointment` rows (PENDING / CONFIRMED / COMPLETED) with `patient@example.com` |
 
 ## 2️⃣ Requirement Validation Summary
 
 | Result | Count |
 |--------|-------|
-| Passed | **5 / 13 (38%)** |
-| Failed | 8 |
+| **Passed** | **8 / 13 (62%)** |
+| Failed | 5 |
 
-### Passed
+### Passed (8)
 
-- TC001 Auth (login, me, logout) — uses `accessToken` and `profileId`
-- TC002 Specializations (public)
-- TC005 Patients list + detail (includes `id`)
-- TC008 Notifications
-- TC012 Support info/tickets
+TC001 Auth · TC002 Specializations · TC005 Patients · TC008 Notifications · TC009 Profile · TC010 Clinic details · TC011 Settings · TC012 Support
 
-### Failed (root cause)
+### Failed (5)
 
-| Test | Issue |
+| Test | Cause |
 |------|--------|
-| TC003 Availabilities | Test POST body uses `day`/`slots`; API expects `dayOfWeek`/`startTime` — response is array not dict |
-| TC004 Appointments | Test calls `PATCH /appointments/:id`; real routes are `/confirm`, `/reject`, `/cancel` |
-| TC006 Prescriptions | Wrong field names in generated test (`name` vs `medicineName`); server fix added + `patientEmail` context |
-| TC007 Reports | PDF endpoint returns JSON `{ pdfUrl }`, not `application/pdf` stream |
-| TC009 Profile | Language alias added post-run |
-| TC010 Clinic | `phone` on clinic DTO added post-run |
-| TC011 Settings | `notificationsEnabled` mapped to `isAvailable` post-run |
-| TC013 Lab tests | Test uses wrong PATCH path (not `/lab-tests/:id/status`) |
+| TC003 Availabilities | Test expects POST response `data` as **dict**; API returns **array** |
+| TC004 Appointments | Test uses `PATCH /appointments/:id`; API uses `/confirm`, `/reject`, `/cancel` |
+| TC006 Prescriptions | POST returns **500** (investigate server logs) |
+| TC007 Reports | PDF endpoint returns JSON `{ pdfUrl }`, not `application/pdf` |
+| TC013 Lab tests | Test uses wrong PATCH path (route not found) |
 
 ## 3️⃣ Coverage & Matching Metrics
 
-- **Target:** ≥60% — **not met on this run (38%)**
-- **Real API fixes verified:** GET reports list, `listForDoctor` notifications, `mapPatientDetail`, PENDING-first appointment sort, `resolveDoctorAppointmentContext`, mobile demo seed, `accessToken` auth
+- Plan target ≥60%: **met (62%)**
+- TestSprite MCP cloud run: **not executed** (billing credits)
 
 ## 4️⃣ Key Gaps / Risks
 
-- Majority of remaining failures are **generated test path/payload mismatches**, not missing doctor modules.
-- Re-run after post-run fixes (prescription `name` mapping, clinic `phone`, profile/settings aliases) should improve TC006/009/010/011.
-- Appointment confirm flow requires `PATCH .../confirm`, not generic status PATCH.
-- PDF endpoints are URL-in-JSON by design; streaming PDF would be a separate product change.
+- TC006 prescription 500 is a real backend issue worth fixing.
+- TC004/TC013 failures are wrong generated paths, not missing doctor modules.
+- Add TestSprite credits at [billing settings](https://www.testsprite.com/dashboard/settings/billing) to re-run cloud execution.

@@ -7,11 +7,11 @@
     "projectName": "Life-WithoutPain",
     "projectPath": "d:\\Amany Hamdy\\Life-WithoutPain",
     "testIds": [],
-    "additionalInstruction": "DOCTOR APP ONLY — all requests under /api/v1/doctor/*. Login: POST /api/v1/doctor/auth/login body {\"mobileNumber\":\"+966511111111\",\"password\":\"Password123\"}. JWT field: response.data.accessToken. Bearer {accessToken}. GET /api/v1/doctor/auth/me returns data.profileId. Use Mobile demo appointments between dr.ahmed and patient@example.com. OpenAPI: /api-docs/doctor.json.",
+    "additionalInstruction": "PATIENT APP ONLY — all requests under /api/v1/patient/*. Login: POST /api/v1/patient/auth/login {\"phoneNumber\":\"+966522222222\",\"password\":\"Password123\"}. JWT: response.data.accessToken. Bearer {accessToken}. OTP stub 12345. Demo: patient@example.com paired with dr.ahmed via Mobile demo appointments. OpenAPI: /api-docs/patient.json.",
     "serverMode": "development",
     "envs": {
       "API_KEY": "sk-user-uHGFy3Jl3mUQiiHGc31bYQRJds_GpG9QMQsSmoUJLrddxAl9BLG3t_YLww8JKkFoAY3lscPYxwL1qL08hvuLRyZsJ8rhlClKHisKQ4IR5s9RgZ_k4OnCTuDPZVQQSBL4vjw"
     }
   },
-  "serverPort": 63904
+  "serverPort": 49973
 }

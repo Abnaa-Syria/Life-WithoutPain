@@ -46,12 +46,12 @@ const upcoming = asyncHandler(async (req, res) => {
 
 const cancel = asyncHandler(async (req, res) => {
   const data = await AppointmentService.cancelForPatient(req.user.id, req.params.id, req.body);
-  return successResponse(res, { data: mapAppointmentListItem(data), message: 'Appointment cancelled' });
+  return successResponse(res, { data: mapAppointmentListItem(data), messageKey: 'APPOINTMENT_CANCELLED' });
 });
 
 const reschedule = asyncHandler(async (req, res) => {
   const data = await AppointmentService.rescheduleForPatient(req.user.id, req.params.id, req.body);
-  return successResponse(res, { data: mapAppointmentListItem(data), message: 'Appointment rescheduled' });
+  return successResponse(res, { data: mapAppointmentListItem(data), messageKey: 'APPOINTMENT_RESCHEDULED' });
 });
 
 const getSession = asyncHandler(async (req, res) => {

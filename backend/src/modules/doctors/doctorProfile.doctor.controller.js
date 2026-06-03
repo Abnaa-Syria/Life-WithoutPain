@@ -15,7 +15,7 @@ const getProfile = asyncHandler(async (req, res) => {
 
 const updateProfile = asyncHandler(async (req, res) => {
   const data = await DoctorService.updateProfileForDoctor(req.user.id, req.body);
-  return successResponse(res, { data, message: 'Profile updated' });
+  return successResponse(res, { data, messageKey: 'PROFILE_UPDATED' });
 });
 
 const getClinicDetails = asyncHandler(async (req, res) => {
@@ -25,7 +25,7 @@ const getClinicDetails = asyncHandler(async (req, res) => {
 
 const updateClinicDetails = asyncHandler(async (req, res) => {
   const data = await DoctorService.updateClinicDetails(req.user.id, req.body);
-  return successResponse(res, { data, message: 'Clinic details updated' });
+  return successResponse(res, { data, messageKey: 'CLINIC_DETAILS_UPDATED' });
 });
 
 const getSettings = asyncHandler(async (req, res) => {
@@ -35,7 +35,7 @@ const getSettings = asyncHandler(async (req, res) => {
 
 const updateSettings = asyncHandler(async (req, res) => {
   const data = await DoctorService.updateSettings(req.user.id, req.body);
-  return successResponse(res, { data, message: 'Settings updated' });
+  return successResponse(res, { data, messageKey: 'SETTINGS_UPDATED' });
 });
 
 module.exports = {

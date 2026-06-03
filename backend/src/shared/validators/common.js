@@ -12,16 +12,16 @@ const idParamSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 
-const phoneSchema = z.string().regex(/^\+?[0-9]{9,15}$/, 'Invalid phone number format');
+const phoneSchema = z.string().regex(/^\+?[0-9]{9,15}$/, 'INVALID_PHONE');
 
-const emailSchema = z.string().email('Invalid email format').toLowerCase();
+const emailSchema = z.string().email('INVALID_EMAIL').toLowerCase();
 
 const passwordSchema = z
   .string()
-  .min(8, 'Password must be at least 8 characters')
-  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-  .regex(/[0-9]/, 'Password must contain at least one number');
+  .min(8, 'PASSWORD_MIN_LENGTH')
+  .regex(/[A-Z]/, 'PASSWORD_UPPERCASE')
+  .regex(/[a-z]/, 'PASSWORD_LOWERCASE')
+  .regex(/[0-9]/, 'PASSWORD_NUMBER');
 
 const dateSchema = z.coerce.date();
 
@@ -31,6 +31,17 @@ const bilingualFieldSchema = (maxLength = 255) =>
     en: z.string().min(1).max(maxLength),
   });
 
+const translationsSchema = (fields = ['name'], maxLength = 255) => {
+  const localeShape = {};
+  for (const field of fields) {
+    localeShape[field] = z.string().min(1).max(maxLength === Infinity ? 10000 : maxLength).optional();
+  }
+  return z.object({
+    en: z.object(localeShape),
+    ar: z.object(localeShape),
+  });
+};
+
 module.exports = {
   paginationSchema,
   idParamSchema,
@@ -39,4 +50,5 @@ module.exports = {
   passwordSchema,
   dateSchema,
   bilingualFieldSchema,
+  translationsSchema,
 };

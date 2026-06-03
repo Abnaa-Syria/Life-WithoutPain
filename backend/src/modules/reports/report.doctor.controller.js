@@ -9,7 +9,7 @@ const list = asyncHandler(async (req, res) => {
 
 const create = asyncHandler(async (req, res) => {
   const data = await ReportService.createForDoctor(req.user.id, req.body);
-  return createdResponse(res, { data, message: 'Report created' });
+  return createdResponse(res, { data, messageKey: 'REPORT_CREATED' });
 });
 
 const getOne = asyncHandler(async (req, res) => {

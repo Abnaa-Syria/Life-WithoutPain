@@ -6,6 +6,7 @@ const { eventEmitter, EVENTS } = require('../../shared/events/eventEmitter');
 const { resolveDoctorProfile, assertDoctorOwnsAppointment } = require('../../shared/utils/doctorAppContext');
 const { resolvePatientProfile, assertPatientOwnsAppointment } = require('../../shared/utils/patientAppContext');
 const { isComingAppointment } = require('../../shared/utils/patientAppMappers');
+const { enrichAppointments } = require('../../i18n/enrichRelations');
 
 function appointmentOrderBy(dateDir = 'desc', timeDir = 'desc') {
   return [{ appointmentDate: dateDir }, { startTime: timeDir }];
@@ -103,28 +104,28 @@ class AppointmentService {
         ? await prisma.patientInsurance.count({ where: { patientId: patient.id } })
         : 0;
       if (!policyCount) {
-        throw new BadRequestError('Add an insurance policy before booking with medical insurance.');
+        throw new BadRequestError('INSURANCE_REQUIRED_BEFORE_BOOKING');
       }
     }
     if (data.bookingFor === 'family' && !data.familyMemberId) {
-      throw new BadRequestError('familyMemberId is required when booking for a family member');
+      throw new BadRequestError('FAMILY_MEMBER_ID_REQUIRED');
     }
 
     if (data.serviceId) {
       const service = await prisma.service.findUnique({ where: { id: data.serviceId } });
       if (service?.type === 'HOME') {
-        throw new BadRequestError('Home visits must be requested via POST /patient/home-services');
+        throw new BadRequestError('HOME_VISIT_WRONG_ENDPOINT');
       }
     }
 
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     if (data.bookingFor === 'family' && data.familyMemberId) {
       const member = await prisma.familyMember.findFirst({
         where: { id: data.familyMemberId, patientId: patient.id },
       });
-      if (!member) throw new BadRequestError('Family member not found');
+      if (!member) throw new BadRequestError('FAMILY_MEMBER_NOT_FOUND_BOOKING');
     }
 
     return this.create(userId, {
@@ -178,7 +179,7 @@ class AppointmentService {
       });
       const filtered = rows.filter((row) => isComingAppointment(row));
       const total = filtered.length;
-      const data = filtered.slice(skip, skip + limit);
+      const data = await enrichAppointments(filtered.slice(skip, skip + limit));
       return { data, total, page, limit };
     }
 
@@ -186,7 +187,7 @@ class AppointmentService {
       prisma.appointment.findMany({ where, skip, take: limit, orderBy, include }),
       prisma.appointment.count({ where }),
     ]);
-    return { data, total, page, limit };
+    return { data: await enrichAppointments(data), total, page, limit };
   }
 
   static async getByIdForPatient(userId, id) {
@@ -212,8 +213,8 @@ class AppointmentService {
         familyMember: true,
       },
     });
-    if (!appointment) throw new NotFoundError('Appointment not found');
-    return appointment;
+    if (!appointment) throw new NotFoundError('APPOINTMENT_NOT_FOUND');
+    return enrichAppointments(appointment);
   }
 
   static async cancelForPatient(userId, id, data) {
@@ -237,12 +238,12 @@ class AppointmentService {
 
   static async create(userId, data) {
     const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-    if (!patient) throw new NotFoundError('Patient profile not found');
+    if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
 
     const doctor = await prisma.doctorProfile.findUnique({ where: { id: data.doctorId } });
-    if (!doctor) throw new NotFoundError('Doctor not found');
+    if (!doctor) throw new NotFoundError('DOCTOR_NOT_FOUND');
     if (!doctor.isPubliclyBookable || doctor.verificationStatus !== 'APPROVED') {
-      throw new BadRequestError('Doctor is not available for booking');
+      throw new BadRequestError('DOCTOR_NOT_AVAILABLE');
     }
 
     // Validate time slot availability
@@ -252,7 +253,7 @@ class AppointmentService {
     });
 
     if (!availability) {
-      throw new BadRequestError('Selected time slot is not available');
+      throw new BadRequestError('SLOT_NOT_AVAILABLE');
     }
 
     // Check double booking
@@ -270,7 +271,7 @@ class AppointmentService {
     });
 
     if (existingAppointment) {
-      throw new BadRequestError('This time slot is already booked');
+      throw new BadRequestError('SLOT_ALREADY_BOOKED');
     }
 
     const appointment = await prisma.appointment.create({
@@ -304,7 +305,7 @@ class AppointmentService {
       await InsuranceRequestOrchestrator.createForAppointment(appointment, {
         patientInsuranceId: data.patientInsuranceId,
       });
-      return prisma.appointment.findUnique({
+      const booked = await prisma.appointment.findUnique({
         where: { id: appointment.id },
         include: {
           doctor: { include: { user: { select: { fullName: true, avatarUrl: true } }, speciality: true } },
@@ -313,9 +314,10 @@ class AppointmentService {
           insuranceCases: { orderBy: { createdAt: 'desc' }, take: 1 },
         },
       });
+      return enrichAppointments(booked);
     }
 
-    return appointment;
+    return enrichAppointments(appointment);
   }
 
   static async getAll(userRole, userId, query) {
@@ -324,7 +326,7 @@ class AppointmentService {
 
     if (userRole === 'PATIENT') {
       const patient = await prisma.patientProfile.findUnique({ where: { userId } });
-      if (!patient) throw new NotFoundError('Patient profile not found');
+      if (!patient) throw new NotFoundError('PATIENT_PROFILE_NOT_FOUND');
       where.patientId = patient.id;
     } else if (userRole === 'DOCTOR') {
       const doctor = await prisma.doctorProfile.findUnique({ where: { userId } });
@@ -370,17 +372,17 @@ class AppointmentService {
         reviews: true,
       },
     });
-    if (!appointment) throw new NotFoundError('Appointment not found');
+    if (!appointment) throw new NotFoundError('APPOINTMENT_NOT_FOUND');
 
     if (userRole === 'PATIENT') {
       const patient = await prisma.patientProfile.findUnique({ where: { userId } });
       if (!patient || appointment.patientId !== patient.id) {
-        throw new ForbiddenError('You do not have access to this appointment');
+        throw new ForbiddenError('APPOINTMENT_ACCESS_DENIED');
       }
     } else if (userRole === 'DOCTOR') {
       const doctor = await prisma.doctorProfile.findUnique({ where: { userId } });
       if (!doctor || appointment.doctorId !== doctor.id) {
-        throw new ForbiddenError('You do not have access to this appointment');
+        throw new ForbiddenError('APPOINTMENT_ACCESS_DENIED');
       }
     }
 
@@ -389,11 +391,14 @@ class AppointmentService {
 
   static async updateStatus(id, newStatus, userId, data = {}) {
     const appointment = await prisma.appointment.findUnique({ where: { id: parseInt(id) } });
-    if (!appointment) throw new NotFoundError('Appointment not found');
+    if (!appointment) throw new NotFoundError('APPOINTMENT_NOT_FOUND');
 
     const allowed = APPOINTMENT_STATUS_TRANSITIONS[appointment.status] || [];
     if (!allowed.includes(newStatus)) {
-      throw new BadRequestError(`Cannot transition from ${appointment.status} to ${newStatus}`);
+      throw new BadRequestError('APPOINTMENT_STATUS_TRANSITION_INVALID', {
+        from: appointment.status,
+        to: newStatus,
+      });
     }
 
     const updateData = { status: newStatus };
@@ -466,7 +471,7 @@ class AppointmentService {
         orderBy: appointmentOrderBy('desc', 'desc'),
         include: {
           patient: { include: { user: { select: { fullName: true, avatarUrl: true } } } },
-          service: { select: { nameAr: true, nameEn: true } },
+          service: true,
         },
       }),
       prisma.appointment.count({ where }),

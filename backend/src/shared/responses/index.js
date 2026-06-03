@@ -1,40 +1,48 @@
-const successResponse = (res, { data = null, message = 'Success', meta = null, statusCode = 200 }) => {
+const { translateSuccess } = require('../../i18n');
+const { getLocale } = require('../../i18n/localeContext');
+
+function resolveLocale(res) {
+  return res?.req?.locale || getLocale() || 'en';
+}
+
+function resolveMessage({ message, messageKey, messageParams }, locale) {
+  if (messageKey) {
+    return translateSuccess(messageKey, messageParams || {}, locale);
+  }
+  if (message) {
+    return message;
+  }
+  return translateSuccess('SUCCESS', {}, locale);
+}
+
+const successResponse = (res, { data = null, message = null, messageKey = 'SUCCESS', messageParams = null, meta = null, statusCode = 200 } = {}) => {
+  const locale = resolveLocale(res);
   const response = {
     success: true,
-    message,
+    message: resolveMessage({ message, messageKey, messageParams }, locale),
     data,
   };
   if (meta) response.meta = meta;
   return res.status(statusCode).json(response);
 };
 
-const createdResponse = (res, { data = null, message = 'Created successfully' }) => {
-  return successResponse(res, { data, message, statusCode: 201 });
+const createdResponse = (res, options = {}) => {
+  return successResponse(res, {
+    ...options,
+    messageKey: options.messageKey || 'CREATED',
+    statusCode: 201,
+  });
 };
 
-const paginatedResponse = (res, { data, total, page, limit, message = 'Data fetched successfully' }) => {
+const paginatedResponse = (res, { data, total, page, limit, messageKey = 'DATA_FETCHED', message = null, messageParams = null }) => {
   const totalPages = Math.ceil(total / limit);
   return successResponse(res, {
     data,
     message,
-    meta: {
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1,
-    },
+    messageKey,
+    messageParams,
+    meta: { total, page, limit, totalPages },
   });
 };
 
-const noContentResponse = (res) => {
-  return res.status(204).send();
-};
-
-module.exports = {
-  successResponse,
-  createdResponse,
-  paginatedResponse,
-  noContentResponse,
-};
+module.exports = { successResponse, createdResponse, paginatedResponse };

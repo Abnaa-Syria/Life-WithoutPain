@@ -10,7 +10,7 @@ class SettingService {
     const setting = await SystemSettingRepository.findFirst({ where: { key } });
     if (!setting) {
       const { NotFoundError } = require('../../shared/errors/AppError');
-      throw new NotFoundError('Setting not found');
+      throw new NotFoundError('SETTING_NOT_FOUND');
     }
     return setting;
   }

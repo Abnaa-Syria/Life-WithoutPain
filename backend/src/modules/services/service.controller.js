@@ -25,7 +25,7 @@ class ServiceController {
 
   static delete = asyncHandler(async (req, res) => {
     await ServiceService.delete(req.params.id);
-    return successResponse(res, { data: null, message: 'Service deleted' });
+    return successResponse(res, { data: null, messageKey: 'SERVICE_DELETED' });
   });
 }
 

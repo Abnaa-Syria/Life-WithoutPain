@@ -25,7 +25,7 @@ class SpecialityController {
 
   static delete = asyncHandler(async (req, res) => {
     await SpecialityService.delete(req.params.id);
-    return successResponse(res, { data: null, message: 'Speciality deleted' });
+    return successResponse(res, { data: null, messageKey: 'SPECIALITY_DELETED' });
   });
 }
 

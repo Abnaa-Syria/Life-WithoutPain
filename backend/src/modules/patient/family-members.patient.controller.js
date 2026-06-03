@@ -17,12 +17,12 @@ const create = asyncHandler(async (req, res) => {
 const update = asyncHandler(async (req, res) => {
   const payload = PatientService.buildFamilyMemberPayload(req.body);
   const data = await PatientService.updateFamilyMember(req.user.id, parseInt(req.params.id, 10), payload);
-  return successResponse(res, { data: mapFamilyMember(data), message: 'Family member updated' });
+  return successResponse(res, { data: mapFamilyMember(data), messageKey: 'FAMILY_MEMBER_UPDATED' });
 });
 
 const remove = asyncHandler(async (req, res) => {
   await PatientService.deleteFamilyMember(req.user.id, parseInt(req.params.id, 10));
-  return successResponse(res, { message: 'Family member deleted' });
+  return successResponse(res, { messageKey: 'FAMILY_MEMBER_DELETED' });
 });
 
 module.exports = { list, create, update, remove };
